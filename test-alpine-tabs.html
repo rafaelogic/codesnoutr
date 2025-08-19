@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpine.js Tab Test</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        .tab-button { padding: 8px 16px; border: 1px solid #ccc; margin-right: 4px; cursor: pointer; }
+        .tab-button.active { background: blue; color: white; }
+        .tab-content { margin-top: 16px; padding: 16px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Testing Alpine.js Tab Structure</h1>
+    
+    <!-- Test the same structure as our fixed smart-assistant -->
+    <div x-data="{ activeTab: 'chat' }">
+        <div>
+            <button @click="activeTab = 'chat'" 
+                    :class="activeTab === 'chat' ? 'tab-button active' : 'tab-button'">
+                Chat
+            </button>
+            <button @click="activeTab = 'suggestions'" 
+                    :class="activeTab === 'suggestions' ? 'tab-button active' : 'tab-button'">
+                Suggestions
+            </button>
+            <button @click="activeTab = 'tips'" 
+                    :class="activeTab === 'tips' ? 'tab-button active' : 'tab-button'">
+                Tips
+            </button>
+        </div>
+        
+        <div x-show="activeTab === 'chat'" class="tab-content">
+            <h3>Chat Content</h3>
+            <p>This is the chat tab content.</p>
+        </div>
+        
+        <div x-show="activeTab === 'suggestions'" class="tab-content">
+            <h3>Suggestions Content</h3>
+            <p>This is the suggestions tab content.</p>
+        </div>
+        
+        <div x-show="activeTab === 'tips'" class="tab-content">
+            <h3>Tips Content</h3>
+            <p>This is the tips tab content.</p>
+        </div>
+    </div>
+    
+    <script>
+        console.log('Alpine.js loaded and activeTab should be available');
+    </script>
+</body>
+</html>

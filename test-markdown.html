@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Test</title>
+    <style>
+        .markdown-content {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            font-family: Arial, sans-serif;
+        }
+        .markdown-content ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .markdown-content li {
+            margin: 5px 0;
+        }
+        .markdown-content h2 {
+            color: #333;
+            font-size: 1.2em;
+            margin: 15px 0 10px 0;
+        }
+        .markdown-content code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .markdown-content pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="markdown-content" id="result">
+        Loading...
+    </div>
+
+    <script>
+        function parseMarkdown(text) {
+            // Headers
+            text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            
+            // Bold and italic
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Code blocks (must be before inline code)
+            text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            text = text.replace(/```\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            
+            // Inline code
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Simple list processing
+            const lines = text.split('\n');
+            let inList = false;
+            let inOrderedList = false;
+            let result = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Check for bullet points
+                if (line.match(/^[\*\-\+•]\s+(.*)$/)) {
+                    const content = line.replace(/^[\*\-\+•]\s+/, '');
+                    if (!inList) {
+                        result.push('<ul>');
+                        inList = true;
+                    }
+                    if (inOrderedList) {
+                        result.push('</ol>');
+                        inOrderedList = false;
+                    }
+                    result.push('<li>' + content + '</li>');
+                }
+                // Check for numbered lists
+                else if (line.match(/^\d+\.\s+(.*)$/)) {
+                    const content = line.replace(/^\d+\.\s+/, '');
+                    if (!inOrderedList) {
+                        result.push('<ol>');
+                        inOrderedList = true;
+                    }
+                    if (inList) {
+                        result.push('</ul>');
+                        inList = false;
+                    }
+                    result.push('<li>' + content + '</li>');
+                }
+                // Regular line
+                else {
+                    if (inList) {
+                        result.push('</ul>');
+                        inList = false;
+                    }
+                    if (inOrderedList) {
+                        result.push('</ol>');
+                        inOrderedList = false;
+                    }
+                    result.push(line);
+                }
+            }
+            
+            // Close any open lists
+            if (inList) result.push('</ul>');
+            if (inOrderedList) result.push('</ol>');
+            
+            text = result.join('\n');
+            
+            // Line breaks and paragraphs
+            text = text.replace(/\n\n/g, '</p><p>');
+            text = '<p>' + text + '</p>';
+            
+            // Clean up empty paragraphs
+            text = text.replace(/<p><\/p>/g, '');
+            text = text.replace(/<p>(<[hou])/g, '$1');
+            text = text.replace(/(<\/[hou][^>]*>)<\/p>/g, '$1');
+            
+            return text;
+        }
+
+        // Test with the problematic content
+        const testContent = `Some important PHP/Laravel best practices to follow include:
+
+## Best practices
+• Use Laravel Eloquent ORM for database interactions to ensure secure and efficient data handling.
+• Implement validation using Laravel's built-in validation features to prevent security vulnerabilities and ensure data integrity.
+• Utilize Laravel's middleware for handling authentication, authorization, and other cross-cutting concerns.
+• Follow the PSR coding standards to maintain a consistent and readable codebase.
+• Optimize database queries by using eager loading and query optimizations to improve performance.`;
+
+        document.getElementById('result').innerHTML = parseMarkdown(testContent);
+    </script>
+</body>
+</html>

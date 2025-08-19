@@ -1,0 +1,74 @@
+{
+    "name": "rafaelogic/codesnoutr",
+    "description": "A comprehensive Laravel code scanner that detects security vulnerabilities, performance issues, and code quality problems with AI-powered auto-fixes",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rafa Rafael",
+            "email": "40rrafael@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/support": "^10.0|^11.0|^12.0",
+        "illuminate/console": "^10.0|^11.0|^12.0",
+        "illuminate/database": "^10.0|^11.0|^12.0",
+        "livewire/livewire": "^3.0",
+        "nikic/php-parser": "^4.0|^5.0",
+        "symfony/finder": "^6.0|^7.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0",
+        "mockery/mockery": "^1.4",
+        "laravel/pint": "^1.0",
+        "larastan/larastan": "^2.0|^3.0",
+        "phpstan/extension-installer": "^1.1",
+        "phpstan/phpstan-deprecation-rules": "^1.0",
+        "phpstan/phpstan-phpunit": "^1.0"
+    },
+    "suggest": {
+        "openai-php/client": "For AI-powered auto-fixes",
+        "barryvdh/laravel-debugbar": "For debugbar integration",
+        "spatie/laravel-pdf": "For PDF report generation"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rafaelogic\\CodeSnoutr\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rafaelogic\\CodeSnoutr\\CodeSnoutrServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "format": "vendor/bin/pint",
+        "format-test": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse",
+        "audit": "composer audit",
+        "all-checks": [
+            "@format-test",
+            "@analyse", 
+            "@test",
+            "@audit"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    }
+}

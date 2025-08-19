@@ -1,0 +1,56 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+/coverage/
+.phpunit.cache/
+build/
+
+# Package specific
+/tests/fixtures/temp/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.testing
+
+# Cache
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+storage/logs/
+
+# Node.js (if using frontend build tools)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Laravel Mix / Vite
+/public/hot
+/public/storage
+/storage/*.key
+mix-manifest.json
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package build artifacts
+dist/
+*.tar.gz
+*.zip
