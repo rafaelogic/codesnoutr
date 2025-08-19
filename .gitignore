@@ -1,6 +1,3 @@
-# Test App
-/tests/TestApp
-
 # Dependencies
 /vendor/
 composer.lock
