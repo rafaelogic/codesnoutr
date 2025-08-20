@@ -91,6 +91,34 @@
 - ✅ **Scalability**: Efficient queue management for large codebases
 - ✅ **Extensibility**: Modular architecture for future enhancements
 
+## Technical Implementation Details
+
+### Context-Aware Static Analysis
+The enhanced scanner includes intelligent exception handling for:
+
+**Console Commands**: Recognizes Laravel command properties like `$signature`, `$description`, `$hidden`
+**Eloquent Models**: Handles framework properties like `$table`, `$fillable`, `$hidden`, `$casts`
+**Jobs & Events**: Supports Laravel job properties and event dispatching patterns
+**Snake Case Variables**: Smart detection of variables assigned from PHP constants
+
+### Queue Management System
+- **Auto-Detection**: Checks if Laravel queue workers are running
+- **Smart Startup**: Automatically starts workers when needed
+- **Status Monitoring**: Real-time queue health reporting
+- **Background Processing**: Seamless job handling for large scans
+
+### Expanded Issues Interface
+- **Dynamic State**: `$expandedIssues` property tracks expanded rows
+- **Toggle Method**: `toggleIssueExpansion()` manages individual issue expansion
+- **Reset Logic**: Proper cleanup when switching views or refreshing data
+- **Smooth UX**: No page refreshes, instant feedback
+
+### Workflow Enhancements
+- **Auto-Redirect**: Seamless navigation after issue resolution
+- **Event System**: Livewire events coordinate UI state changes
+- **Modern Hover**: Glow border effects replace scaling animations
+- **File Grouping**: Collapsible sections with persistent state
+
 ## Next Steps
 
 ### Immediate Priorities
