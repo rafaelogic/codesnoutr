@@ -5,9 +5,91 @@
         <p class="mt-2 text-gray-600 dark:text-gray-400">Configure and start a new code analysis scan</p>
     </div>
 
-    @if($isScanning)
-    <!-- Scanning Progress -->
+    @if($isScanning || $isCheckingQueue)
+    <!-- Scanning Progress or Queue Check -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-theme">
+        @if($isCheckingQueue)
+        <!-- Queue Status Check -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Preparing Scan</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $queueMessage }}</p>
+            </div>
+            @php $badge = $this->getQueueStatusBadge(); @endphp
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $badge['class'] }}">
+                {{ $badge['text'] }}
+            </span>
+        </div>
+        
+        <!-- Queue Check Progress -->
+        <div class="mb-4">
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <span>Status</span>
+                <span wire:loading wire:target="checkAndStartQueue">
+                    <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </div>
+            
+            @if($queueStatus === 'checking')
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full animate-pulse" style="width: 50%"></div>
+            </div>
+            @elseif($queueStatus === 'ready')
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 100%"></div>
+            </div>
+            @elseif($queueStatus === 'error')
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-red-600 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+            @endif
+        </div>
+
+        @if($queueStatus === 'error')
+        <div class="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-md p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Queue Setup Failed</h3>
+                    <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                        <p>{{ $queueMessage }}</p>
+                    </div>
+                    <div class="mt-3">
+                        <button wire:click="resetQueueStatus" 
+                                class="bg-red-100 dark:bg-red-800 px-3 py-1 rounded-md text-sm font-medium text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-700">
+                            Retry Queue Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @elseif($queueStatus === 'ready')
+        <div class="bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800 rounded-md p-4 mb-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-green-800 dark:text-green-200">Queue Ready</h3>
+                    <div class="mt-2 text-sm text-green-700 dark:text-green-300">
+                        <p>{{ $queueMessage }}. Starting scan...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @else
+        <!-- Scanning Progress -->
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Scanning in Progress</h3>
@@ -56,6 +138,7 @@
                 <span class="ml-2 font-medium text-gray-900 dark:text-white">{{ $currentScan->started_at->format('H:i:s') }}</span>
             </div>
         </div>
+        @endif
         @endif
     </div>
     @else
@@ -433,6 +516,30 @@
             // Additional progress handling if needed
         });
 
+        Livewire.on('queue-status-updated', (event) => {
+            console.log('Queue status updated:', event);
+            
+            // Handle different queue statuses
+            if (event.status === 'ready') {
+                // Queue is ready, scan will start automatically
+                setTimeout(() => {
+                    console.log('Queue is ready, starting scan...');
+                }, 1000);
+            } else if (event.status === 'error') {
+                console.error('Queue setup failed:', event.message);
+            }
+        });
+
+        Livewire.on('delayed-scan-start', () => {
+            console.log('Delayed scan start triggered');
+            setTimeout(() => {
+                const component = Livewire.find('{{ $this->getId() }}');
+                if (component) {
+                    component.call('proceedWithScan');
+                }
+            }, 2000); // 2 second delay to show queue ready status
+        });
+
         Livewire.on('scan-completed', (event) => {
             clearInterval(progressInterval);
             console.log('Scan completed event received:', event);
@@ -469,7 +576,7 @@
         progressInterval = setInterval(() => {
             const component = Livewire.find('{{ $this->getId() }}');
             if (component) {
-                component.call('updateProgress');
+                component.call('checkScanProgress');
             }
         }, 1000);
     @endif

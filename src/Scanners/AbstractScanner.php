@@ -7,6 +7,7 @@ use Rafaelogic\CodeSnoutr\Scanners\Rules\SecurityRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\PerformanceRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\QualityRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\LaravelRules;
+use Rafaelogic\CodeSnoutr\Scanners\Rules\InheritanceRules;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PhpParser\NodeTraverser;
@@ -37,6 +38,7 @@ abstract class AbstractScanner
             'performance' => new PerformanceRules(),
             'quality' => new QualityRules(),
             'laravel' => new LaravelRules(),
+            'inheritance' => new InheritanceRules(),
         ];
     }
 

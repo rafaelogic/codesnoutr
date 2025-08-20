@@ -39,19 +39,22 @@ class LaravelRules extends AbstractRuleEngine
         foreach ($lines as $lineNumber => $line) {
             $lineNumber++; // 1-based
             
-            // Check for raw SQL in Eloquent models
+            // Check for raw SQL in Eloquent models with exceptions for complex queries
             if (preg_match('/DB::(select|insert|update|delete|statement)/', $line)) {
-                $this->addIssue($this->createIssue(
-                    $filePath,
-                    $lineNumber,
-                    'laravel',
-                    'info',
-                    'laravel.raw_sql_in_model',
-                    'Raw SQL in Model',
-                    'Using raw SQL queries in models bypasses Eloquent benefits.',
-                    'Use Eloquent methods or Query Builder for better maintainability.',
-                    $this->getCodeContext($content, $lineNumber)
-                ));
+                // Skip if this appears to be a legitimate complex query scenario
+                if (!$this->isLegitimateRawSqlUsage($line, $content)) {
+                    $this->addIssue($this->createIssue(
+                        $filePath,
+                        $lineNumber,
+                        'laravel',
+                        'info',
+                        'laravel.raw_sql_in_model',
+                        'Raw SQL in Model',
+                        'Using raw SQL queries in models bypasses Eloquent benefits.',
+                        'Use Eloquent methods or Query Builder for better maintainability.',
+                        $this->getCodeContext($content, $lineNumber)
+                    ));
+                }
             }
             
             // Check for missing timestamps
@@ -298,5 +301,121 @@ class LaravelRules extends AbstractRuleEngine
                 }
             }
         }
+    }
+
+    /**
+     * Check if raw SQL usage is legitimate (complex queries, performance optimizations)
+     */
+    protected function isLegitimateRawSqlUsage(string $line, string $content): bool
+    {
+        // Allow raw SQL for complex aggregations
+        if (preg_match('/(COUNT|SUM|AVG|MAX|MIN|GROUP_CONCAT|CASE\s+WHEN)/i', $line)) {
+            return true;
+        }
+
+        // Allow raw SQL for database-specific functions
+        if (preg_match('/(JSON_EXTRACT|MATCH\s+AGAINST|ST_|REGEXP|SUBSTRING)/i', $line)) {
+            return true;
+        }
+
+        // Allow raw SQL in migration files
+        if (preg_match('/\d{4}_\d{2}_\d{2}_\d{6}_/', $content)) {
+            return true;
+        }
+
+        // Allow raw SQL in seeder files
+        if (str_contains($content, 'extends Seeder') || str_contains($content, 'database/seeds/')) {
+            return true;
+        }
+
+        // Allow raw SQL for performance-critical operations (with comment indicating intention)
+        if (preg_match('/\/\*.*performance.*\*\/|\/\/.*performance/i', $line)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a class implements inheritance patterns that might require specific properties
+     */
+    protected function hasFrameworkInheritance(string $content): bool
+    {
+        $patterns = [
+            '/extends\s+(Command|Controller|Model|Job|Event|Listener|Request|Mailable|Notification|ServiceProvider)/',
+            '/implements\s+(ShouldQueue|ShouldBroadcast|Arrayable|Jsonable)/',
+            '/use\s+(Dispatchable|InteractsWithQueue|Queueable|SerializesModels|InteractsWithSockets)/'
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $content)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if this is a legitimate Laravel framework property
+     */
+    protected function isFrameworkProperty(string $variableName, string $content): bool
+    {
+        // Console Command properties
+        if (preg_match('/extends\s+Command/', $content) && 
+            in_array($variableName, ['signature', 'description', 'hidden', 'name'])) {
+            return true;
+        }
+
+        // Model properties
+        if (preg_match('/extends\s+Model/', $content)) {
+            $modelProps = [
+                'table', 'primaryKey', 'keyType', 'incrementing', 'timestamps',
+                'dateFormat', 'connection', 'fillable', 'guarded', 'hidden',
+                'visible', 'appends', 'dates', 'casts', 'touches', 'with',
+                'withCount', 'perPage', 'exists', 'wasRecentlyCreated'
+            ];
+            if (in_array($variableName, $modelProps)) {
+                return true;
+            }
+        }
+
+        // Controller properties
+        if (preg_match('/extends\s+(Controller|BaseController)/', $content) && 
+            $variableName === 'middleware') {
+            return true;
+        }
+
+        // Job properties
+        if (preg_match('/implements\s+ShouldQueue|use\s+Queueable/', $content)) {
+            $jobProps = ['connection', 'queue', 'tries', 'timeout', 'retryAfter', 'maxExceptions', 'backoff'];
+            if (in_array($variableName, $jobProps)) {
+                return true;
+            }
+        }
+
+        // Event properties
+        if (preg_match('/implements\s+ShouldBroadcast/', $content)) {
+            $eventProps = ['broadcastOn', 'broadcastAs', 'broadcastWith'];
+            if (in_array($variableName, $eventProps)) {
+                return true;
+            }
+        }
+
+        // Form Request properties
+        if (preg_match('/extends\s+FormRequest/', $content)) {
+            if (in_array($variableName, ['redirectRoute', 'redirect', 'errorBag'])) {
+                return true;
+            }
+        }
+
+        // Service Provider properties
+        if (preg_match('/extends\s+ServiceProvider/', $content)) {
+            if (in_array($variableName, ['defer', 'provides'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

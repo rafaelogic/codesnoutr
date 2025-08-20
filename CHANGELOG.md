@@ -19,28 +19,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Professional loading states and feedback
   - Improved markdown processing for complex responses
   - Enhanced chat experience with bullet points and formatting
+  - Modern glow border hover effects for all cards
+  - Smooth visual feedback without scaling effects
 - **Advanced Response Processing**
   - Recursive markdown parser for nested AI responses
   - Support for code examples, best practices, and structured content
   - UTF-8 character handling and encoding fixes
   - Robust error handling for complex data structures
+- **Enhanced Scan Results Interface**
+  - Expandable issue details in detailed table view
+  - Smart file grouping with collapsible sections
+  - Context-aware variable exception handling for snake_case
+  - Enhanced queue management with auto-start functionality
+  - Real-time queue status monitoring
 
 ### Changed
 - Improved AI response formatting with better structure handling
 - Enhanced chat interface with cleaner loading states
 - Optimized markdown processing for better performance
+- Updated hover effects to use glow borders instead of scale transformations
+- Enhanced scan results workflow with automatic redirects after issue resolution
 
 ### Fixed
 - Unicode bullet point rendering in chat messages
 - Complex nested AI response display issues
 - Base64 encoding/decoding for UTF-8 content
 - Livewire component state management for AI features
+- **Critical**: Fixed undefined `$expandedIssues` variable in detailed table view
+- Improved state management for expanded issue functionality
+- Enhanced reset logic for file group data
 
 ### Technical Improvements
 - Modular AI service architecture for future extensibility
 - Comprehensive debugging and logging for AI integration
 - Professional UI/UX with attention to detail
 - Cross-browser scrollbar styling support
+- Robust Livewire component state management
+- Context-aware static analysis for PHP constants and inheritance
+- Enhanced queue detection and management system
 
 ## [1.0.0] - 2025-08-18
 

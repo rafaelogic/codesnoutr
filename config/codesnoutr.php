@@ -240,6 +240,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Queue Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for background job processing
+    |
+    */
+    'queue' => [
+        'enabled' => env('CODESNOUTR_QUEUE_ENABLED', true),
+        'name' => env('CODESNOUTR_QUEUE_NAME', 'default'),
+        'connection' => env('CODESNOUTR_QUEUE_CONNECTION', config('queue.default')),
+        'timeout' => env('CODESNOUTR_QUEUE_TIMEOUT', 300),
+        'memory' => env('CODESNOUTR_QUEUE_MEMORY', 512),
+        'sleep' => env('CODESNOUTR_QUEUE_SLEEP', 3),
+        'tries' => env('CODESNOUTR_QUEUE_TRIES', 3),
+        'auto_start' => env('CODESNOUTR_QUEUE_AUTO_START', true),
+        'monitor_interval' => env('CODESNOUTR_QUEUE_MONITOR_INTERVAL', 30), // seconds
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Cache Settings
     |--------------------------------------------------------------------------
     */

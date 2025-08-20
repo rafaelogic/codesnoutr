@@ -1,4 +1,20 @@
 <div class="p-6">
+    <!-- Global Loading Indicator -->
+    <div wire:loading.flex class="fixed inset-0 z-50 bg-black bg-opacity-50 items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center space-x-4">
+                <svg class="w-8 h-8 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div>
+                    <p class="text-lg font-medium text-gray-900 dark:text-white">Loading...</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Please wait while we fetch the data</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Page Header -->
     <div class="mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -55,7 +71,7 @@
     <!-- Scan Summary -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <!-- Total Issues -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-theme">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-red-300 dark:hover:border-red-600 hover:shadow-red-500/10 dark:hover:shadow-red-400/10 transition-all duration-300">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="h-8 w-8 bg-red-100 dark:bg-red-900 rounded-md flex items-center justify-center">
@@ -72,7 +88,7 @@
         </div>
 
         <!-- Files Scanned -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-theme">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-blue-500/10 dark:hover:shadow-blue-400/10 transition-all duration-300">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-md flex items-center justify-center">
@@ -89,7 +105,7 @@
         </div>
 
         <!-- Resolved Issues -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-theme">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-green-300 dark:hover:border-green-600 hover:shadow-green-500/10 dark:hover:shadow-green-400/10 transition-all duration-300">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="h-8 w-8 bg-green-100 dark:bg-green-900 rounded-md flex items-center justify-center">
@@ -106,7 +122,7 @@
         </div>
 
         <!-- Scan Duration -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-theme">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-purple-500/10 dark:hover:shadow-purple-400/10 transition-all duration-300">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
                     <div class="h-8 w-8 bg-purple-100 dark:bg-purple-900 rounded-md flex items-center justify-center">
@@ -124,7 +140,7 @@
     </div>
 
     <!-- Filters and Search -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8 transition-theme">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-indigo-500/10 dark:hover:shadow-indigo-400/10 transition-all duration-300">
         <!-- View Mode Toggle -->
         <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white">View Options</h3>
@@ -134,7 +150,14 @@
                     <svg class="w-4 h-4 mr-1.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
-                    Grouped
+                    By Issue
+                </button>
+                <button wire:click="setViewMode('file-grouped')"
+                        class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors {{ $viewMode === 'file-grouped' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white' }}">
+                    <svg class="w-4 h-4 mr-1.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    By File
                 </button>
                 <button wire:click="setViewMode('detailed')"
                         class="px-3 py-1.5 text-sm font-medium rounded-md transition-colors {{ $viewMode === 'detailed' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white' }}">
@@ -213,7 +236,7 @@
             </div>
         </div>
 
-        @if($issues && $issues->count() > 0)
+        @if(($issues && $issues->count() > 0) || ($fileGroupedIssues && $fileGroupedIssues->count() > 0))
         <!-- Bulk Selection -->
         <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-4">
@@ -265,7 +288,7 @@
         <!-- Enhanced Grouped View -->
         <div class="space-y-8">
             @foreach($groupedIssues as $groupKey => $group)
-            <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-500 transform hover:scale-[1.02]">
+            <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-2xl hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-indigo-500/20 dark:hover:shadow-indigo-400/20 transition-all duration-500">
                 <!-- Enhanced Group Header -->
                 <div class="relative px-8 py-6 bg-gradient-to-br from-white via-gray-50 to-white dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 border-b border-gray-200 dark:border-gray-600">
                     <!-- Background Pattern -->
@@ -318,7 +341,7 @@
                                 @endphp
                                 
                                 <div class="flex flex-col items-center space-y-2">
-                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r {{ $severityConfig['gradient'] }} border-2 {{ $severityConfig['border'] }} shadow-lg {{ $severityConfig['glow'] }} {{ $severityConfig['pulse'] }} group-hover:scale-110 transition-transform duration-300">
+                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r {{ $severityConfig['gradient'] }} border-2 {{ $severityConfig['border'] }} shadow-lg {{ $severityConfig['glow'] }} {{ $severityConfig['pulse'] }} transition-all duration-300">
                                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="{{ $severityConfig['icon'] }}" clip-rule="evenodd"/>
                                         </svg>
@@ -481,7 +504,7 @@
                                 
                                 <!-- Enhanced View Details Button -->
                                 <a href="{{ $detailsUrl }}"
-                                   class="group inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 rounded-lg shadow-lg hover:shadow-xl border border-indigo-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                   class="group inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 rounded-lg shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 border border-indigo-500 hover:border-indigo-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                                     <svg class="w-4 h-4 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -497,7 +520,7 @@
                         <!-- Enhanced File List Preview -->
                         <div class="space-y-3">
                             @foreach($group['files']->take(3) as $index => $file)
-                            <div class="group relative flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/30 dark:to-gray-800/30 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 transition-all duration-300 hover:shadow-md">
+                            <div class="group relative flex items-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/30 dark:to-gray-800/30 rounded-xl border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/10 dark:hover:shadow-indigo-400/10 transition-all duration-300">
                                 <!-- File Icon with Type Detection -->
                                 <div class="flex-shrink-0 mr-4">
                                     @php
@@ -511,7 +534,7 @@
                                             default => ['bg' => 'from-gray-500 to-gray-600', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z']
                                         };
                                     @endphp
-                                    <div class="w-12 h-12 bg-gradient-to-br {{ $iconConfig['bg'] }} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                    <div class="w-12 h-12 bg-gradient-to-br {{ $iconConfig['bg'] }} rounded-xl flex items-center justify-center shadow-lg transition-all duration-300">
                                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconConfig['icon'] }}"/>
                                         </svg>
@@ -608,30 +631,428 @@
 
             @endforeach
         </div>
+    @elseif($viewMode === 'file-grouped' && $fileGroupedIssues && $fileGroupedIssues->count() > 0)
+        <!-- File-Grouped View with Lazy Loading -->
+        <div class="space-y-6" wire:loading.class="opacity-50">
+            @foreach($fileGroupedIssues as $fileGroup)
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-2xl hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-indigo-500/20 dark:hover:shadow-indigo-400/20 transition-all duration-300">
+                <!-- File Header -->
+                <div class="px-6 py-5 bg-gradient-to-r from-gray-50 via-white to-gray-50 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-4">
+                            <!-- File Icon -->
+                            <div class="flex-shrink-0">
+                                @php
+                                    $extension = $fileGroup['file_extension'] ?? '';
+                                    $iconConfig = match($extension) {
+                                        'php' => ['bg' => 'from-indigo-500 to-purple-600', 'icon' => 'M12 18.5l-3-3 3-3M18 18.5l3-3-3-3'],
+                                        'js', 'ts' => ['bg' => 'from-yellow-400 to-orange-500', 'icon' => 'M4 6h16M4 12h16M4 18h16'],
+                                        'css', 'scss' => ['bg' => 'from-blue-400 to-cyan-500', 'icon' => 'M7 21h10M12 3v18M5 7l2-2M19 7l-2-2'],
+                                        'html', 'blade' => ['bg' => 'from-red-400 to-pink-500', 'icon' => 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4'],
+                                        'json', 'xml' => ['bg' => 'from-green-400 to-emerald-500', 'icon' => 'M8 12l4 4 4-4m0-6l-4 4-4-4'],
+                                        default => ['bg' => 'from-gray-500 to-gray-600', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z']
+                                    };
+                                @endphp
+                                <div class="w-16 h-16 bg-gradient-to-br {{ $iconConfig['bg'] }} rounded-xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconConfig['icon'] }}"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- File Information -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h3 class="text-xl font-bold text-gray-900 dark:text-white font-mono">
+                                        {{ $fileGroup['file_name'] }}
+                                    </h3>
+                                    @if($fileGroup['file_extension'])
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                        .{{ $fileGroup['file_extension'] }}
+                                    </span>
+                                    @endif
+                                    
+                                    <!-- Severity Badge -->
+                                    @php
+                                        $severityConfig = match($fileGroup['highest_severity']) {
+                                            'critical' => ['gradient' => 'from-red-500 to-red-600', 'text' => 'Critical'],
+                                            'high' => ['gradient' => 'from-orange-500 to-orange-600', 'text' => 'High'],
+                                            'medium' => ['gradient' => 'from-yellow-500 to-amber-600', 'text' => 'Medium'],
+                                            'low' => ['gradient' => 'from-blue-500 to-blue-600', 'text' => 'Low'],
+                                            default => ['gradient' => 'from-gray-500 to-gray-600', 'text' => 'Info']
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-bold text-white bg-gradient-to-r {{ $severityConfig['gradient'] }}">
+                                        {{ $severityConfig['text'] }}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-sm text-gray-600 dark:text-gray-400 font-mono mb-3 truncate" title="{{ $fileGroup['file_path'] }}">
+                                    {{ $fileGroup['file_path'] }}
+                                </p>
+                                
+                                <!-- Stats Row -->
+                                <div class="flex items-center space-x-6 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        <span class="text-gray-700 dark:text-gray-300">
+                                            <span class="font-semibold">{{ $fileGroup['total_issues'] }}</span> {{ Str::plural('issue', $fileGroup['total_issues']) }}
+                                        </span>
+                                    </div>
+                                    
+                                    @if($fileGroup['resolved_issues'] > 0)
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span class="text-gray-700 dark:text-gray-300">
+                                            <span class="font-semibold">{{ $fileGroup['resolved_issues'] }}</span> resolved
+                                        </span>
+                                    </div>
+                                    @endif
+                                    
+                                    @if($fileGroup['pending_issues'] > 0)
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                        <span class="text-gray-700 dark:text-gray-300">
+                                            <span class="font-semibold">{{ $fileGroup['pending_issues'] }}</span> pending
+                                        </span>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Circle and Actions -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Progress Circle -->
+                            <div class="flex-shrink-0">
+                                @php
+                                    $progressPercentage = $fileGroup['total_issues'] > 0 ? round(($fileGroup['resolved_issues'] / $fileGroup['total_issues']) * 100) : 0;
+                                @endphp
+                                <div class="text-center space-y-2">
+                                    <div class="relative w-16 h-16">
+                                        <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 64 64">
+                                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="none" class="text-gray-200 dark:text-gray-700"/>
+                                            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" fill="none" 
+                                                    class="{{ $progressPercentage >= 100 ? 'text-green-500' : ($progressPercentage >= 50 ? 'text-yellow-500' : 'text-red-500') }}"
+                                                    stroke-dasharray="175.93" 
+                                                    stroke-dashoffset="{{ 175.93 - (175.93 * $progressPercentage / 100) }}"
+                                                    stroke-linecap="round"/>
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">{{ $progressPercentage }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Expand/Collapse Button -->
+                            <div class="flex-shrink-0">
+                                <button wire:click="toggleFileExpansion('{{ $fileGroup['file_path'] }}')"
+                                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 rounded-lg shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 border border-indigo-500 hover:border-indigo-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                    @if($this->isFileLoading($fileGroup['file_path']))
+                                        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Loading...
+                                    @elseif($this->isFileExpanded($fileGroup['file_path']))
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+                                        </svg>
+                                        Hide Issues
+                                    @else
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                        View Issues
+                                    @endif
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Issues List (Loaded on Demand) -->
+                @if($this->isFileExpanded($fileGroup['file_path']))
+                <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                    @php
+                        $loadedIssueGroups = $this->getLoadedFileIssueGroups($fileGroup['file_path']);
+                    @endphp
+                    
+                    @if($loadedIssueGroups->count() > 0)
+                        @foreach($loadedIssueGroups as $issueGroup)
+                        <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <!-- Issue Group Header -->
+                            <div class="flex items-start space-x-4 mb-4">
+                                <!-- Issue Severity -->
+                                <div class="flex-shrink-0">
+                                    @php
+                                        $severityConfig = match($issueGroup['severity_name']) {
+                                            'critical' => ['color' => 'text-red-600 dark:text-red-400', 'bg' => 'bg-red-100 dark:bg-red-900/20', 'icon' => 'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'],
+                                            'high' => ['color' => 'text-orange-600 dark:text-orange-400', 'bg' => 'bg-orange-100 dark:bg-orange-900/20', 'icon' => 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z'],
+                                            'medium' => ['color' => 'text-yellow-600 dark:text-yellow-400', 'bg' => 'bg-yellow-100 dark:bg-yellow-900/20', 'icon' => 'M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'],
+                                            'low' => ['color' => 'text-blue-600 dark:text-blue-400', 'bg' => 'bg-blue-100 dark:bg-blue-900/20', 'icon' => 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'],
+                                            default => ['color' => 'text-gray-600 dark:text-gray-400', 'bg' => 'bg-gray-100 dark:bg-gray-900/20', 'icon' => 'M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z']
+                                        };
+                                    @endphp
+                                    <div class="w-12 h-12 {{ $severityConfig['bg'] }} rounded-lg flex items-center justify-center">
+                                        <svg class="w-6 h-6 {{ $severityConfig['color'] }}" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="{{ $severityConfig['icon'] }}" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                
+                                <!-- Issue Group Information -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1 min-w-0 space-y-3">
+                                            <!-- Issue Title -->
+                                            <h4 class="text-xl font-bold text-gray-900 dark:text-white">
+                                                {{ $issueGroup['title'] }}
+                                            </h4>
+                                            
+                                            <!-- Issue Description -->
+                                            @if($issueGroup['description'])
+                                            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                                {{ $issueGroup['description'] }}
+                                            </p>
+                                            @endif
+                                            
+                                            <!-- Stats and Meta -->
+                                            <div class="flex flex-wrap gap-3 items-center">
+                                                <!-- Occurrences Count -->
+                                                <div class="flex items-center space-x-2">
+                                                    <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                                                        <span class="font-semibold">{{ $issueGroup['total_occurrences'] }}</span> {{ Str::plural('occurrence', $issueGroup['total_occurrences']) }}
+                                                    </span>
+                                                </div>
+                                                
+                                                @if($issueGroup['resolved_occurrences'] > 0)
+                                                <div class="flex items-center space-x-2">
+                                                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                                                        <span class="font-semibold">{{ $issueGroup['resolved_occurrences'] }}</span> resolved
+                                                    </span>
+                                                </div>
+                                                @endif
+                                                
+                                                <!-- Category -->
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200">
+                                                    {{ ucfirst($issueGroup['category']) }}
+                                                </span>
+                                                
+                                                <!-- Rule ID -->
+                                                @if($issueGroup['rule_id'])
+                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200">
+                                                    {{ $issueGroup['rule_id'] }}
+                                                </span>
+                                                @endif
+                                            </div>
+                                            
+                                            <!-- Suggestion -->
+                                            @if($issueGroup['suggestion'])
+                                            <div class="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                                <div class="flex items-start space-x-2">
+                                                    <svg class="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                                    </svg>
+                                                    <div class="flex-1">
+                                                        <p class="text-sm text-green-800 dark:text-green-200 font-medium">Suggestion:</p>
+                                                        <p class="text-sm text-green-700 dark:text-green-300 mt-1">{{ $issueGroup['suggestion'] }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Issue Instances with Code -->
+                            <div class="space-y-4 ml-16 max-h-[600px] overflow-y-auto">
+                                @foreach($issueGroup['instances'] as $instance)
+                                <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden hover:shadow-2xl hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-indigo-500/20 dark:hover:shadow-indigo-400/20 transition-all duration-500 {{ $instance['fixed'] ? 'bg-green-50 dark:bg-green-900/10' : 'bg-white dark:bg-gray-800' }}">
+                                    <!-- Instance Header -->
+                                    <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                                                Line {{ $instance['line_number'] }}
+                                                @if($instance['column_number'])
+                                                    :{{ $instance['column_number'] }}
+                                                @endif
+                                            </span>
+                                            
+                                            <!-- Status -->
+                                            @if($instance['fixed'])
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                {{ $instance['fix_method'] === 'ignored' ? 'Ignored' : 'Fixed' }}
+                                            </span>
+                                            @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                Pending
+                                            </span>
+                                            @endif
+                                        </div>
+                                        
+                                        <!-- Actions -->
+                                        @if(!$instance['fixed'])
+                                        <div class="flex items-center space-x-1">
+                                            <button wire:click="resolveIssue({{ $instance['id'] }})" 
+                                                    class="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                                    title="Mark as Resolved">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                            </button>
+                                            <button wire:click="markAsIgnored({{ $instance['id'] }})" 
+                                                    class="p-1.5 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
+                                                    title="Mark as Ignored">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
+                                                </svg>
+                                            </button>
+                                            <button wire:click="markAsFalsePositive({{ $instance['id'] }})" 
+                                                    class="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Mark as False Positive">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Code Snippet -->
+                                    @if(is_array($instance['code_snippet']))
+                                    <div class="p-0">
+                                        <div class="bg-gray-900 text-gray-100 font-mono text-sm overflow-x-auto">
+                                            @foreach($instance['code_snippet'] as $line)
+                                            <div class="flex {{ $line['is_target'] ? 'bg-red-900/30 border-l-4 border-red-500' : '' }}">
+                                                <div class="px-3 py-1 text-gray-500 text-right min-w-[3rem] select-none border-r border-gray-700">
+                                                    {{ $line['number'] }}
+                                                </div>
+                                                <div class="px-3 py-1 flex-1">
+                                                    <pre class="whitespace-pre-wrap">{{ $line['content'] }}</pre>
+                                                </div>
+                                            </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    @else
+                                    <div class="p-4">
+                                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 font-mono text-sm">
+                                            <pre class="whitespace-pre-wrap">{{ $instance['code_snippet'] }}</pre>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+                        
+                        <!-- Load More Issues Button -->
+                        @if($this->fileHasMorePages($fileGroup['file_path']))
+                        <div class="p-6 border-t border-gray-200 dark:border-gray-700">
+                            <div class="text-center">
+                                <button wire:click="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')"
+                                        class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                        wire:loading.attr="disabled"
+                                        wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
+                                    <span wire:loading.remove wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                        </svg>
+                                        Load More Issues
+                                    </span>
+                                    <span wire:loading wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
+                                        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Loading...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        @endif
+                    @else
+                    <div class="p-6 text-center">
+                        <div wire:loading wire:target="toggleFileExpansion('{{ $fileGroup['file_path'] }}')">
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="w-5 h-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">Loading issues...</span>
+                            </div>
+                        </div>
+                        <div wire:loading.remove wire:target="toggleFileExpansion('{{ $fileGroup['file_path'] }}')">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No issues to display</p>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+                @endif
+            </div>
+            @endforeach
+            
+            <!-- Load More File Groups Button -->
+            @if($this->hasMoreFileGroups())
+            <div class="mt-8 text-center">
+                <button wire:click="loadMoreFileGroups"
+                        class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-lg shadow-sm text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                        wire:loading.attr="disabled"
+                        wire:target="loadMoreFileGroups">
+                    <span class="inline-flex" wire:loading.remove wire:target="loadMoreFileGroups">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Load More Files
+                    </span>
+                    <span class="inline-flex" wire:loading wire:target="loadMoreFileGroups">
+                        <svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading...
+                    </span>
+                </button>
+            </div>
+            @endif
+        </div>
     @elseif($viewMode === 'detailed' && $issues && $issues->count() > 0)
         <!-- Detailed Table View -->
         @include('codesnoutr::components.scan-results.detailed-table')
     @else
         <!-- Empty State -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center transition-theme">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-gray-500/10 dark:hover:shadow-gray-400/10 transition-all duration-300">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all')
+                @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all' || $selectedFile !== 'all')
                     No issues match your filters
                 @else
                     No issues found
                 @endif
             </h3>
             <p class="mt-2 text-gray-500 dark:text-gray-400">
-                @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all')
+                @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all' || $selectedFile !== 'all')
                     Try adjusting your search criteria or filters.
                 @else
                     This scan completed successfully with no issues detected.
                 @endif
             </p>
-            @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all')
+            @if($searchTerm || $selectedSeverity !== 'all' || $selectedCategory !== 'all' || $selectedFile !== 'all')
             <div class="mt-6">
                 <button wire:click="clearFilters" 
                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -643,7 +1064,7 @@
     @endif
     @else
     <!-- No Scan Selected -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center transition-theme">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-gray-500/10 dark:hover:shadow-gray-400/10 transition-all duration-300">
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
@@ -658,4 +1079,24 @@
     </div>
     @endif
 </div>
+
+<script>
+document.addEventListener('livewire:init', () => {
+    // Listen for redirect to scan results event
+    Livewire.on('redirect-to-scan-results', (event) => {
+        if (event.scanId) {
+            // Small delay to allow the UI to update before redirect
+            setTimeout(() => {
+                // Redirect to the main scan results page for this scan
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.split('?')[0]; // Remove query parameters
+                window.location.href = baseUrl; // Reload the page without filters
+            }, 500);
+        } else {
+            // Fallback: redirect to dashboard if no scan ID
+            window.location.href = '{{ route("codesnoutr.dashboard") }}';
+        }
+    });
+});
+</script>
 

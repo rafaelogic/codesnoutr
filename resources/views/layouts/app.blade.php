@@ -303,9 +303,9 @@
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-theme">
     <div class="min-h-screen flex flex-col">
         <!-- Navigation -->
-        <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-theme">
-            <div class="mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
+        <nav class="fixed flex w-full bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-theme" style="z-index: 99;">
+            <div class="flex-1 px-4 sm:px-6 lg:px-8">
+                <div class="flex w-full justify-between h-16">
                     <!-- Logo and Main Navigation -->
                     <div class="flex items-center">
                         <div class="flex-shrink-0 flex items-center">
@@ -320,19 +320,19 @@
                         <!-- Desktop Navigation -->
                         <div class="hidden md:ml-10 md:flex md:space-x-8">
                             <a href="{{ route('codesnoutr.dashboard') }}" 
-                               class="@if(request()->routeIs('codesnoutr.dashboard')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-1 px-1 pt-1 pb-4 text-sm font-medium transition-colors">
+                               class="@if(request()->routeIs('codesnoutr.dashboard')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-2 px-1 pt-1 text-sm font-medium transition-colors">
                                 Dashboard
                             </a>
                             <a href="{{ route('codesnoutr.scan') }}" 
-                               class="@if(request()->routeIs('codesnoutr.scan*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-1 px-1 pt-1 pb-4 text-sm font-medium transition-colors">
+                               class="@if(request()->routeIs('codesnoutr.scan*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-2 px-1 pt-1 text-sm font-medium transition-colors">
                                 Scan
                             </a>
                             <a href="{{ route('codesnoutr.results') }}" 
-                               class="@if(request()->routeIs('codesnoutr.results*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-1 px-1 pt-1 pb-4 text-sm font-medium transition-colors">
+                               class="@if(request()->routeIs('codesnoutr.results*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-2 px-1 pt-1 text-sm font-medium transition-colors">
                                 Results
                             </a>
                             <a href="{{ route('codesnoutr.settings') }}" 
-                               class="@if(request()->routeIs('codesnoutr.settings*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-1 px-1 pt-1 pb-4 text-sm font-medium transition-colors">
+                               class="@if(request()->routeIs('codesnoutr.settings*')) border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif dark:text-gray-300 dark:hover:text-white border-b-2 px-1 pt-1 text-sm font-medium transition-colors">
                                 Settings
                             </a>
                         </div>
@@ -393,7 +393,7 @@
         </nav>
 
         <!-- Page Content -->
-        <main class="flex-1">
+        <main class="flex-1 max-w-[90%] mx-auto lg:mt-20">
             @yield('content')
         </main>
 
@@ -402,7 +402,7 @@
 
         <!-- Footer -->
         <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-theme">
-            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <div class="flex-1 max-w-[90%] mx-auto py-4 px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
                     <div>
                         <span>CodeSnoutr v1.0</span>

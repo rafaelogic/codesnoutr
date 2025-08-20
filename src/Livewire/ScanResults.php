@@ -23,8 +23,17 @@ class ScanResults extends Component
     public $showFixSuggestions = true;
     public $selectedIssues = [];
     public $showBulkActions = false;
-    public $viewMode = 'grouped'; // 'grouped' or 'detailed'
+    public $viewMode = 'file-grouped'; // 'grouped', 'file-grouped', or 'detailed'
     public $maxGroupsPerPage = 10; // Limit groups to prevent memory issues
+    public $fileGroupsPerPage = 5; // Files per page in file-grouped view
+    public $issuesPerFile = 10; // Issues per file initially loaded
+    public $currentFileGroupPage = 1; // Current page for file groups
+    public $allFileGroups = []; // Store all loaded file groups
+    public $loadedFileGroups = []; // Store loaded file group data (for individual file issues)
+    public $loadingFiles = []; // Track which files are currently loading
+    public $expandedFiles = []; // Track which files are expanded to show all issues
+    public $expandedIssues = []; // Track which individual issues are expanded in detailed view
+    public $isLoading = false; // Global loading state
 
     protected $queryString = [
         'selectedSeverity' => ['except' => 'all'],
@@ -33,7 +42,7 @@ class ScanResults extends Component
         'searchTerm' => ['except' => ''],
         'sortBy' => ['except' => 'severity'],
         'sortDirection' => ['except' => 'desc'],
-        'viewMode' => ['except' => 'grouped'],
+        'viewMode' => ['except' => 'file-grouped'],
         'page' => ['except' => 1],
     ];
 
@@ -60,10 +69,17 @@ class ScanResults extends Component
 
         if ($this->viewMode === 'grouped') {
             $groupedIssues = $this->getGroupedIssues();
+            $fileGroupedIssues = null;
+            $issues = null;
+        } elseif ($this->viewMode === 'file-grouped') {
+            // For file-grouped view, only load summary data initially
+            $fileGroupedIssues = $this->getFileGroupSummaries();
+            $groupedIssues = null;
             $issues = null;
         } else {
             $issues = $this->getFilteredIssues();
             $groupedIssues = null;
+            $fileGroupedIssues = null;
         }
         
         $stats = $this->getIssueStats();
@@ -72,6 +88,7 @@ class ScanResults extends Component
         return view('codesnoutr::livewire.scan-results', [
             'issues' => $issues,
             'groupedIssues' => $groupedIssues,
+            'fileGroupedIssues' => $fileGroupedIssues,
             'stats' => $stats,
             'files' => $files,
             'severityOptions' => $this->getSeverityOptions(),
@@ -120,6 +137,353 @@ class ScanResults extends Component
         $query->orderBy($this->sortBy, $this->sortDirection);
 
         return $query->paginate(15);
+    }
+
+    protected function getFileGroupedIssues()
+    {
+        if (!$this->scan) {
+            return collect();
+        }
+
+        // Return accumulated file groups from all loaded pages
+        return collect($this->allFileGroups);
+    }
+
+    protected function getFileGroupSummaries($loadNew = false)
+    {
+        if (!$this->scan) {
+            return collect();
+        }
+
+        if ($loadNew || empty($this->allFileGroups)) {
+            $this->loadFileGroupPage($this->currentFileGroupPage);
+        }
+
+        return collect($this->allFileGroups);
+    }
+
+    protected function loadFileGroupPage($page)
+    {
+        if (!$this->scan) {
+            return;
+        }
+
+        $query = $this->scan->issues();
+
+        // Apply filters
+        if ($this->selectedSeverity !== 'all') {
+            $query->where('severity', $this->selectedSeverity);
+        }
+
+        if ($this->selectedCategory !== 'all') {
+            $query->where('category', $this->selectedCategory);
+        }
+
+        if ($this->selectedFile !== 'all') {
+            $query->where('file_path', $this->selectedFile);
+        }
+
+        if ($this->searchTerm) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
+            });
+        }
+
+        // Use database aggregation to get file summaries without loading all issues
+        $fileGroups = $query->selectRaw('
+                file_path,
+                COUNT(*) as total_issues,
+                COUNT(CASE WHEN fixed = 1 THEN 1 END) as resolved_issues,
+                MAX(CASE 
+                    WHEN severity = "critical" THEN 5
+                    WHEN severity = "high" THEN 4
+                    WHEN severity = "medium" THEN 3
+                    WHEN severity = "low" THEN 2
+                    WHEN severity = "info" THEN 1
+                    ELSE 0
+                END) as highest_severity_level
+            ')
+            ->groupBy('file_path')
+            ->orderByRaw('highest_severity_level DESC, total_issues DESC')
+            ->offset(($page - 1) * $this->fileGroupsPerPage)
+            ->limit($this->fileGroupsPerPage)
+            ->get();
+
+        $newFileGroups = $fileGroups->map(function ($group) {
+            $severityMap = [5 => 'critical', 4 => 'high', 3 => 'medium', 2 => 'low', 1 => 'info'];
+            $highestSeverity = $severityMap[$group->highest_severity_level] ?? 'info';
+            
+            return [
+                'file_path' => $group->file_path,
+                'file_name' => basename($group->file_path),
+                'file_extension' => pathinfo($group->file_path, PATHINFO_EXTENSION),
+                'total_issues' => (int)$group->total_issues,
+                'resolved_issues' => (int)$group->resolved_issues,
+                'pending_issues' => (int)$group->total_issues - (int)$group->resolved_issues,
+                'highest_severity' => $highestSeverity,
+                'issues_loaded' => false, // Flag to track if issues are loaded
+                'issues' => collect(), // Will be loaded on demand
+                'has_more_pages' => false, // Will be set when loading issues
+                'current_page' => 1,
+            ];
+        });
+
+        // If this is page 1, replace all file groups, otherwise append
+        if ($page === 1) {
+            $this->allFileGroups = $newFileGroups->toArray();
+        } else {
+            $this->allFileGroups = array_merge($this->allFileGroups, $newFileGroups->toArray());
+        }
+    }
+
+    /**
+     * Load issues for a specific file via AJAX
+     */
+    public function loadFileIssues($filePath, $page = 1)
+    {
+        $this->isLoading = true;
+        $this->loadingFiles[] = $filePath;
+
+        try {
+            if (!$this->scan) {
+                return;
+            }
+
+            $query = $this->scan->issues()->where('file_path', $filePath);
+
+            // Apply current filters
+            if ($this->selectedSeverity !== 'all') {
+                $query->where('severity', $this->selectedSeverity);
+            }
+
+            if ($this->selectedCategory !== 'all') {
+                $query->where('category', $this->selectedCategory);
+            }
+
+            if ($this->searchTerm) {
+                $query->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $this->searchTerm . '%');
+                });
+            }
+
+            // Get all issues for this file and group them by title
+            $allIssues = $query->orderByRaw('
+                    CASE 
+                        WHEN severity = "critical" THEN 5
+                        WHEN severity = "high" THEN 4
+                        WHEN severity = "medium" THEN 3
+                        WHEN severity = "low" THEN 2
+                        WHEN severity = "info" THEN 1
+                        ELSE 0
+                    END DESC
+                ')
+                ->orderBy('line_number')
+                ->get();
+
+            // Group issues by title
+            $groupedIssues = $allIssues->groupBy('title')->map(function ($issues, $title) use ($filePath) {
+                $firstIssue = $issues->first();
+                
+                return [
+                    'title' => $title,
+                    'description' => $firstIssue->description,
+                    'severity' => $issues->max(function ($issue) {
+                        $priority = ['critical' => 5, 'high' => 4, 'medium' => 3, 'low' => 2, 'info' => 1];
+                        return $priority[$issue->severity] ?? 0;
+                    }),
+                    'severity_name' => $this->getSeverityName($issues->max(function ($issue) {
+                        $priority = ['critical' => 5, 'high' => 4, 'medium' => 3, 'low' => 2, 'info' => 1];
+                        return $priority[$issue->severity] ?? 0;
+                    })),
+                    'category' => $firstIssue->category,
+                    'rule_id' => $firstIssue->rule_id,
+                    'suggestion' => $firstIssue->suggestion,
+                    'total_occurrences' => $issues->count(),
+                    'resolved_occurrences' => $issues->where('fixed', true)->count(),
+                    'instances' => $issues->map(function ($issue) use ($filePath) {
+                        return [
+                            'id' => $issue->id,
+                            'line_number' => $issue->line_number,
+                            'column_number' => $issue->column_number,
+                            'code_snippet' => $this->getCodeSnippet($filePath, $issue->line_number),
+                            'fixed' => $issue->fixed,
+                            'fix_method' => $issue->fix_method,
+                            'fixed_at' => $issue->fixed_at,
+                            'created_at' => $issue->created_at,
+                        ];
+                    })->sortBy('line_number')->values(),
+                ];
+            });
+
+            // Apply pagination to grouped issues
+            $paginatedGroups = $groupedIssues->forPage($page, $this->issuesPerFile);
+            $hasMorePages = $groupedIssues->count() > ($page * $this->issuesPerFile);
+
+            // Update the loaded file groups data
+            $fileKey = md5($filePath);
+            
+            if (!isset($this->loadedFileGroups[$fileKey])) {
+                $this->loadedFileGroups[$fileKey] = [
+                    'file_path' => $filePath,
+                    'issue_groups' => collect(),
+                    'current_page' => 0,
+                    'has_more_pages' => true,
+                ];
+            }
+
+            if ($page === 1) {
+                $this->loadedFileGroups[$fileKey]['issue_groups'] = $paginatedGroups;
+            } else {
+                $this->loadedFileGroups[$fileKey]['issue_groups'] = $this->loadedFileGroups[$fileKey]['issue_groups']->concat($paginatedGroups);
+            }
+
+            $this->loadedFileGroups[$fileKey]['current_page'] = $page;
+            $this->loadedFileGroups[$fileKey]['has_more_pages'] = $hasMorePages;
+
+            // Mark file as expanded
+            if (!in_array($filePath, $this->expandedFiles)) {
+                $this->expandedFiles[] = $filePath;
+            }
+
+        } finally {
+            $this->isLoading = false;
+            $this->loadingFiles = array_diff($this->loadingFiles, [$filePath]);
+        }
+    }
+
+    /**
+     * Get code snippet around a specific line
+     */
+    protected function getCodeSnippet($filePath, $lineNumber, $contextLines = 2)
+    {
+        try {
+            // Check if file exists and is readable
+            if (!file_exists($filePath) || !is_readable($filePath)) {
+                return "// Code not available";
+            }
+
+            $lines = file($filePath, FILE_IGNORE_NEW_LINES);
+            if ($lines === false) {
+                return "// Code not available";
+            }
+
+            $totalLines = count($lines);
+            $startLine = max(0, $lineNumber - $contextLines - 1);
+            $endLine = min($totalLines - 1, $lineNumber + $contextLines - 1);
+
+            $snippet = [];
+            for ($i = $startLine; $i <= $endLine; $i++) {
+                $lineNum = $i + 1;
+                $isTargetLine = $lineNum == $lineNumber;
+                $snippet[] = [
+                    'number' => $lineNum,
+                    'content' => $lines[$i] ?? '',
+                    'is_target' => $isTargetLine
+                ];
+            }
+
+            return $snippet;
+        } catch (\Exception $e) {
+            return "// Code snippet unavailable: " . $e->getMessage();
+        }
+    }
+
+    /**
+     * Get severity name from priority number
+     */
+    protected function getSeverityName($priority)
+    {
+        $severityMap = [5 => 'critical', 4 => 'high', 3 => 'medium', 2 => 'low', 1 => 'info'];
+        return $severityMap[$priority] ?? 'info';
+    }
+
+    /**
+     * Load more issues for a file (pagination)
+     */
+    public function loadMoreFileIssues($filePath)
+    {
+        $fileKey = md5($filePath);
+        $currentPage = $this->loadedFileGroups[$fileKey]['current_page'] ?? 0;
+        $this->loadFileIssues($filePath, $currentPage + 1);
+    }
+
+    /**
+     * Toggle file expansion
+     */
+    public function toggleFileExpansion($filePath)
+    {
+        if (in_array($filePath, $this->expandedFiles)) {
+            // Collapse file
+            $this->expandedFiles = array_diff($this->expandedFiles, [$filePath]);
+        } else {
+            // Expand file - load issues if not already loaded
+            $fileKey = md5($filePath);
+            if (!isset($this->loadedFileGroups[$fileKey]) || $this->loadedFileGroups[$fileKey]['issue_groups']->isEmpty()) {
+                $this->loadFileIssues($filePath);
+            } else {
+                $this->expandedFiles[] = $filePath;
+            }
+        }
+    }
+
+    /**
+     * Toggle individual issue expansion in detailed view
+     */
+    public function toggleIssueExpansion($issueId)
+    {
+        if (in_array($issueId, $this->expandedIssues)) {
+            // Collapse issue
+            $this->expandedIssues = array_diff($this->expandedIssues, [$issueId]);
+        } else {
+            // Expand issue
+            $this->expandedIssues[] = $issueId;
+        }
+    }
+
+    /**
+     * Load next page of file groups
+     */
+    public function loadMoreFileGroups()
+    {
+        $this->currentFileGroupPage++;
+        $this->loadFileGroupPage($this->currentFileGroupPage);
+    }
+
+    /**
+     * Get the loaded issue groups for a specific file
+     */
+    public function getLoadedFileIssueGroups($filePath)
+    {
+        $fileKey = md5($filePath);
+        return $this->loadedFileGroups[$fileKey]['issue_groups'] ?? collect();
+    }
+
+    /**
+     * Check if a file has more issues to load
+     */
+    public function fileHasMorePages($filePath)
+    {
+        $fileKey = md5($filePath);
+        return $this->loadedFileGroups[$fileKey]['has_more_pages'] ?? false;
+    }
+
+    /**
+     * Check if a file is currently loading
+     */
+    public function isFileLoading($filePath)
+    {
+        return in_array($filePath, $this->loadingFiles);
+    }
+
+    /**
+     * Check if a file is expanded
+     */
+    public function isFileExpanded($filePath)
+    {
+        return in_array($filePath, $this->expandedFiles);
     }
 
     protected function getGroupedIssues()
@@ -316,18 +680,21 @@ class ScanResults extends Component
     {
         $this->selectedSeverity = $severity;
         $this->resetPage();
+        $this->resetFileGroupData();
     }
 
     public function setCategoryFilter($category)
     {
         $this->selectedCategory = $category;
         $this->resetPage();
+        $this->resetFileGroupData();
     }
 
     public function setFileFilter($file)
     {
         $this->selectedFile = $file;
         $this->resetPage();
+        $this->resetFileGroupData();
     }
 
     public function clearFilters()
@@ -337,12 +704,59 @@ class ScanResults extends Component
         $this->selectedFile = 'all';
         $this->searchTerm = '';
         $this->resetPage();
+        $this->resetFileGroupData();
+    }
+
+    protected function resetFileGroupData()
+    {
+        $this->currentFileGroupPage = 1;
+        $this->allFileGroups = [];
+        $this->loadedFileGroups = [];
+        $this->expandedFiles = [];
+        $this->expandedIssues = [];
+        $this->loadingFiles = [];
     }
 
     public function setViewMode($mode)
     {
         $this->viewMode = $mode;
         $this->resetPage();
+        $this->resetFileGroupData();
+    }
+
+    public function hasMoreFileGroups()
+    {
+        if (!$this->scan) {
+            return false;
+        }
+
+        $query = $this->scan->issues();
+
+        // Apply filters
+        if ($this->selectedSeverity !== 'all') {
+            $query->where('severity', $this->selectedSeverity);
+        }
+
+        if ($this->selectedCategory !== 'all') {
+            $query->where('category', $this->selectedCategory);
+        }
+
+        if ($this->selectedFile !== 'all') {
+            $query->where('file_path', $this->selectedFile);
+        }
+
+        if ($this->searchTerm) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
+            });
+        }
+
+        $totalFiles = $query->distinct('file_path')->count('file_path');
+        $loadedFiles = $this->currentFileGroupPage * $this->fileGroupsPerPage;
+
+        return $totalFiles > $loadedFiles;
     }
 
     public function sortBy($field)
@@ -428,8 +842,42 @@ class ScanResults extends Component
 
     public function selectAllIssues()
     {
-        $issues = $this->getFilteredIssues();
-        $this->selectedIssues = $issues->pluck('id')->toArray();
+        if ($this->viewMode === 'file-grouped') {
+            // For file-grouped view, we need to get all issue IDs from the database
+            // without loading them all into memory
+            if (!$this->scan) {
+                return;
+            }
+
+            $query = $this->scan->issues();
+            
+            // Apply current filters
+            if ($this->selectedSeverity !== 'all') {
+                $query->where('severity', $this->selectedSeverity);
+            }
+
+            if ($this->selectedCategory !== 'all') {
+                $query->where('category', $this->selectedCategory);
+            }
+
+            if ($this->selectedFile !== 'all') {
+                $query->where('file_path', $this->selectedFile);
+            }
+
+            if ($this->searchTerm) {
+                $query->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
+                });
+            }
+
+            // Get only IDs to avoid memory issues
+            $this->selectedIssues = $query->pluck('id')->toArray();
+        } else {
+            $issues = $this->getFilteredIssues();
+            $this->selectedIssues = $issues->pluck('id')->toArray();
+        }
         $this->showBulkActions = !empty($this->selectedIssues);
     }
 
@@ -443,12 +891,19 @@ class ScanResults extends Component
     {
         $issue = Issue::find($issueId);
         if ($issue) {
+            $filePath = $issue->file_path;
             $issue->update([
                 'fixed' => true,
                 'fixed_at' => now(),
                 'fix_method' => 'manual'
             ]);
+            
+            // Refresh the file group data for this file
+            $this->refreshFileGroup($filePath);
             $this->dispatch('issue-resolved', issueId: $issueId);
+            
+            // Redirect to scan results main display after successful resolution
+            $this->dispatch('redirect-to-scan-results', scanId: $this->scanId);
         }
     }
 
@@ -456,11 +911,18 @@ class ScanResults extends Component
     {
         $issue = Issue::find($issueId);
         if ($issue) {
+            $filePath = $issue->file_path;
             $issue->update([
                 'fixed' => true,
                 'fix_method' => 'ignored'
             ]);
+            
+            // Refresh the file group data for this file
+            $this->refreshFileGroup($filePath);
             $this->dispatch('issue-ignored', issueId: $issueId);
+            
+            // Redirect to scan results main display after successful action
+            $this->dispatch('redirect-to-scan-results', scanId: $this->scanId);
         }
     }
 
@@ -468,11 +930,30 @@ class ScanResults extends Component
     {
         $issue = Issue::find($issueId);
         if ($issue) {
+            $filePath = $issue->file_path;
             $issue->update([
                 'fixed' => true,
                 'fix_method' => 'false_positive'
             ]);
+            
+            // Refresh the file group data for this file
+            $this->refreshFileGroup($filePath);
             $this->dispatch('issue-false-positive', issueId: $issueId);
+            
+            // Redirect to scan results main display after successful action
+            $this->dispatch('redirect-to-scan-results', scanId: $this->scanId);
+        }
+    }
+
+    /**
+     * Refresh loaded issues for a specific file
+     */
+    protected function refreshFileGroup($filePath)
+    {
+        $fileKey = md5($filePath);
+        if (isset($this->loadedFileGroups[$fileKey]) && in_array($filePath, $this->expandedFiles)) {
+            // Reload the first page of issues for this file
+            $this->loadFileIssues($filePath, 1);
         }
     }
 
@@ -592,11 +1073,13 @@ class ScanResults extends Component
     {
         $this->loadScan();
         $this->resetPage();
+        $this->resetFileGroupData();
     }
 
     public function updatedSearchTerm()
     {
         $this->resetPage();
+        $this->resetFileGroupData();
     }
 
     public function getSeverityColor($severity)

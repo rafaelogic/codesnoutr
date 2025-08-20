@@ -5,6 +5,7 @@ namespace Rafaelogic\CodeSnoutr\Livewire;
 use Livewire\Component;
 use Rafaelogic\CodeSnoutr\ScanManager;
 use Rafaelogic\CodeSnoutr\Models\Scan;
+use Rafaelogic\CodeSnoutr\Services\QueueService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -125,6 +126,9 @@ class ScanForm extends Component
     public $showFileBrowser = false;
     public $currentBrowsePath = '';
     public $browseItems = [];
+    public $queueStatus = 'checking';
+    public $queueMessage = '';
+    public $isCheckingQueue = false;
 
     protected $rules = [
         'scanType' => 'required|in:file,directory,codebase',
@@ -209,17 +213,78 @@ class ScanForm extends Component
             return;
         }
 
-        $this->isScanning = true;
-        $this->scanProgress = 0;
-        $this->currentScan = null;
+        // Check and ensure queue is running before starting scan
+        $this->checkAndStartQueue();
+    }
+
+    protected function checkAndStartQueue()
+    {
+        $this->isCheckingQueue = true;
+        $this->queueStatus = 'checking';
+        $this->queueMessage = 'Checking if queue is running...';
 
         try {
-            // Start scanning process - ScanManager will create the scan record
-            $this->performScan();
+            $queueService = app(QueueService::class);
+            
+            // Check if queue auto-start is enabled
+            if (!config('codesnoutr.queue.auto_start', true)) {
+                $this->isCheckingQueue = false;
+                $this->queueStatus = 'skipped';
+                $this->queueMessage = 'Queue auto-start is disabled';
+                $this->performScan();
+                return;
+            }
+
+            $result = $queueService->ensureQueueIsRunning();
+            
+            $this->isCheckingQueue = false;
+
+            if ($result['success']) {
+                $this->queueStatus = 'ready';
+                $this->queueMessage = $result['message'];
+                
+                // Emit success event for UI feedback
+                $this->dispatch('queue-status-updated', [
+                    'status' => 'ready',
+                    'message' => $result['message'],
+                    'action_taken' => $result['action_taken'],
+                ]);
+
+                // Proceed with scan after a brief delay to show queue status
+                $this->dispatch('delayed-scan-start');
+                
+            } else {
+                $this->queueStatus = 'error';
+                $this->queueMessage = $result['message'];
+                $this->addError('queue', 'Queue setup failed: ' . $result['message']);
+                
+                // Emit error event for UI feedback
+                $this->dispatch('queue-status-updated', [
+                    'status' => 'error',
+                    'message' => $result['message'],
+                    'action_taken' => $result['action_taken'] ?? 'failed',
+                ]);
+            }
 
         } catch (\Exception $e) {
-            $this->isScanning = false;
-            $this->addError('scan', 'Failed to start scan: ' . $e->getMessage());
+            $this->isCheckingQueue = false;
+            $this->queueStatus = 'error';
+            $this->queueMessage = 'Exception checking queue: ' . $e->getMessage();
+            $this->addError('queue', 'Failed to check queue status: ' . $e->getMessage());
+            
+            // Emit error event for UI feedback
+            $this->dispatch('queue-status-updated', [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'action_taken' => 'exception',
+            ]);
+        }
+    }
+
+    public function proceedWithScan()
+    {
+        if ($this->queueStatus === 'ready') {
+            $this->performScan();
         }
     }
 
@@ -260,32 +325,42 @@ class ScanForm extends Component
 
     protected function performScan()
     {
-        // Create scan record first
-        $scan = Scan::create([
-            'type' => $this->scanType,
-            'target' => $this->target,
-            'status' => 'pending',
-            'scan_options' => [
-                'path' => $this->target,
-                'categories' => $this->ruleCategories,
-                'options' => $this->scanOptions,
-            ],
-            'started_at' => now(),
-        ]);
+        $this->isScanning = true;
+        $this->scanProgress = 0;
+        $this->currentScan = null;
 
-        $this->currentScan = $scan;
+        try {
+            // Create scan record first
+            $scan = Scan::create([
+                'type' => $this->scanType,
+                'target' => $this->target,
+                'status' => 'pending',
+                'scan_options' => [
+                    'path' => $this->target,
+                    'categories' => $this->ruleCategories,
+                    'options' => $this->scanOptions,
+                ],
+                'started_at' => now(),
+            ]);
 
-        // Dispatch background job for scanning
-        \Rafaelogic\CodeSnoutr\Jobs\ScanCodebaseJob::dispatch(
-            $scan->id,
-            $this->scanType,
-            $this->target,
-            $this->ruleCategories,
-            $this->scanOptions
-        );
+            $this->currentScan = $scan;
 
-        // Start polling for progress
-        $this->startProgressPolling();
+            // Dispatch background job for scanning
+            \Rafaelogic\CodeSnoutr\Jobs\ScanCodebaseJob::dispatch(
+                $scan->id,
+                $this->scanType,
+                $this->target,
+                $this->ruleCategories,
+                $this->scanOptions
+            );
+
+            // Start polling for progress
+            $this->startProgressPolling();
+
+        } catch (\Exception $e) {
+            $this->isScanning = false;
+            $this->addError('scan', 'Failed to start scan: ' . $e->getMessage());
+        }
     }
 
     public function startProgressPolling()
@@ -465,5 +540,51 @@ class ScanForm extends Component
             'laravel' => 'Laravel-specific best practices for Eloquent, routes, validation, and Blade',
             default => 'General code analysis'
         };
+    }
+
+    public function checkQueueStatus()
+    {
+        try {
+            $queueService = app(QueueService::class);
+            $status = $queueService->getCachedQueueStatus();
+            
+            $this->dispatch('queue-status-checked', [
+                'is_running' => $status['is_running'],
+                'process_count' => $status['process_count'],
+                'driver' => $status['driver'] ?? 'unknown',
+                'last_checked' => now()->toTimeString(),
+            ]);
+            
+            return $status;
+            
+        } catch (\Exception $e) {
+            $this->dispatch('queue-status-error', [
+                'message' => 'Failed to check queue status: ' . $e->getMessage()
+            ]);
+            
+            return [
+                'is_running' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function getQueueStatusBadge()
+    {
+        return match($this->queueStatus) {
+            'checking' => ['class' => 'bg-blue-100 text-blue-800', 'text' => 'Checking Queue'],
+            'ready' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Queue Ready'],
+            'error' => ['class' => 'bg-red-100 text-red-800', 'text' => 'Queue Error'],
+            'skipped' => ['class' => 'bg-gray-100 text-gray-800', 'text' => 'Queue Skipped'],
+            default => ['class' => 'bg-gray-100 text-gray-800', 'text' => 'Unknown'],
+        };
+    }
+
+    public function resetQueueStatus()
+    {
+        $this->queueStatus = 'checking';
+        $this->queueMessage = '';
+        $this->isCheckingQueue = false;
+        $this->resetErrorBag('queue');
     }
 }
