@@ -1,7 +1,3 @@
-@extends('codesnoutr::layouts.app')
-
-@section('title', 'Scan Results - CodeSnoutr')
-
-@section('content')
+<x-templates.app-layout title="Scan Results">
     @livewire('codesnoutr-scan-results', ['scanId' => $scan->id])
-@endsection
+</x-templates.app-layout>

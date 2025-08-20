@@ -88,6 +88,9 @@ class CodeSnoutrServiceProvider extends ServiceProvider
         // Register Livewire components
         $this->registerLivewireComponents();
 
+        // Register Blade components
+        $this->registerBladeComponents();
+
         // Register debugbar collector if debugbar is installed
         $this->registerDebugbarCollector();
     }
@@ -111,11 +114,48 @@ class CodeSnoutrServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register Blade components
+     */
+    protected function registerBladeComponents(): void
+    {
+        if (method_exists($this->app['blade.compiler'], 'component')) {
+            // Register atomic design components
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.icon', 'atoms.icon');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.button', 'atoms.button');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.input', 'atoms.input');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.badge', 'atoms.badge');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.spinner', 'atoms.spinner');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.progress-bar', 'atoms.progress-bar');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.alert', 'atoms.alert');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.tooltip', 'atoms.tooltip');
+            
+            // Register molecule components
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.search-box', 'molecules.search-box');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.stat-card', 'molecules.stat-card');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.card', 'molecules.card');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.navigation', 'molecules.navigation');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.empty-state', 'molecules.empty-state');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.dropdown-item', 'molecules.dropdown-item');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.file-upload', 'molecules.file-upload');
+            
+            // Register organism components
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.header', 'organisms.header');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.sidebar', 'organisms.sidebar');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.scan-form', 'organisms.scan-form');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.scan-results', 'organisms.scan-results');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.data-table', 'organisms.data-table');
+            
+            // Register template components
+            $this->app['blade.compiler']->component('codesnoutr::components.templates.app-layout', 'templates.app-layout');
+        }
+    }
+
+    /**
      * Register debugbar collector
      */
     protected function registerDebugbarCollector(): void
     {
-        if (class_exists(\Barryvdh\Debugbar\LaravelDebugbar::class) && config('codesnoutr.debugbar.enabled', true)) {
+        if (class_exists('Barryvdh\Debugbar\LaravelDebugbar') && config('codesnoutr.debugbar.enabled', true)) {
             $debugbar = $this->app->make('debugbar');
             $debugbar->addCollector(new \Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector());
         }

@@ -111,6 +111,19 @@ return [
                 'service_container' => true,
             ],
         ],
+        'blade' => [
+            'enabled' => true,
+            'rules' => [
+                'xss_vulnerabilities' => true,
+                'csrf_protection' => true,
+                'template_complexity' => true,
+                'performance_optimization' => true,
+                'accessibility_compliance' => true,
+                'seo_optimization' => true,
+                'best_practices' => true,
+                'code_quality' => true,
+            ],
+        ],
     ],
 
     /*

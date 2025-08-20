@@ -312,22 +312,59 @@ class QualityRules extends AbstractRuleEngine
                 ));
             }
             
-            // Check for magic numbers
+            // Check for magic numbers (but exclude HTML attributes and CSS properties)
             if (preg_match('/[^\\w]([0-9]{2,})[^\\w]/', $line, $matches)) {
                 $number = $matches[1];
-                if ($number != '100' && $number != '200' && $number != '404') { // Common HTTP codes
-                    $this->addIssue($this->createIssue(
-                        $filePath,
-                        $lineNumber,
-                        'quality',
-                        'info',
-                        'quality.magic_number',
-                        'Magic Number',
-                        'Hard-coded numbers make code less maintainable.',
-                        'Consider using named constants for magic numbers.',
-                        $this->getCodeContext($content, $lineNumber)
-                    ));
+                
+                // Skip common legitimate numbers
+                if (in_array($number, ['100', '200', '404', '500', '9999'])) {
+                    continue;
                 }
+                
+                // Skip HTML attributes (width, height, size, etc.)
+                if (preg_match('/\b(width|height|size|maxlength|min|max|step|rows|cols|tabindex|colspan|rowspan|scale)=[\'"]\d+[\'"]/', $line)) {
+                    continue;
+                }
+                
+                // Skip CSS properties (z-index, font-size, width, height, etc.)
+                if (preg_match('/\b(z-index|font-size|line-height|width|height|margin|padding|top|right|bottom|left|opacity|order|flex|grid|border-radius|font-weight):\s*\d+/', $line)) {
+                    continue;
+                }
+                
+                // Skip CSS units (px, em, rem, %, vh, vw, etc.)
+                if (preg_match('/\d+(px|em|rem|%|vh|vw|pt|pc|in|cm|mm|ex|ch|vmin|vmax)/', $line)) {
+                    continue;
+                }
+                
+                // Skip HTML color values (#ffffff, rgb(255,255,255), etc.)
+                if (preg_match('/#[0-9a-fA-F]+|rgb\(|rgba\(|hsl\(|hsla\(/', $line)) {
+                    continue;
+                }
+                
+                // Skip dates and times (YYYY-MM-DD, timestamps, etc.)
+                if (preg_match('/\d{4}-\d{2}-\d{2}|\d{4}_\d{2}_\d{2}|\d{10,}/', $line)) {
+                    continue;
+                }
+                
+                // Skip Blade template context (only flag PHP code)
+                if (str_ends_with($filePath, '.blade.php')) {
+                    // Only check within @php blocks or PHP variables
+                    if (!preg_match('/@php|<\?php|\$\w+\s*=/', $line)) {
+                        continue;
+                    }
+                }
+                
+                $this->addIssue($this->createIssue(
+                    $filePath,
+                    $lineNumber,
+                    'quality',
+                    'info',
+                    'quality.magic_number',
+                    'Magic Number',
+                    'Hard-coded numbers make code less maintainable.',
+                    'Consider using named constants for magic numbers.',
+                    $this->getCodeContext($content, $lineNumber)
+                ));
             }
             
             // Check for empty catch blocks

@@ -149,7 +149,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Scan Type</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label class="relative">
-                    <input type="radio" wire:model.live="scanType" value="file" class="peer sr-only">
+                    <input type="radio" wire:model.live="scanType" value="file" class="peer sr-only" / />
                     <div class="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         <div class="flex items-center space-x-3">
                             <div class="flex-shrink-0">
@@ -166,7 +166,7 @@
                 </label>
 
                 <label class="relative">
-                    <input type="radio" wire:model.live="scanType" value="directory" class="peer sr-only">
+                    <input type="radio" wire:model.live="scanType" value="directory" class="peer sr-only" / />
                     <div class="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         <div class="flex items-center space-x-3">
                             <div class="flex-shrink-0">
@@ -183,7 +183,7 @@
                 </label>
 
                 <label class="relative">
-                    <input type="radio" wire:model.live="scanType" value="codebase" class="peer sr-only">
+                    <input type="radio" wire:model.live="scanType" value="codebase" class="peer sr-only" / />
                     <div class="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 cursor-pointer peer-checked:border-indigo-500 peer-checked:bg-indigo-50 dark:peer-checked:bg-indigo-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
                         <div class="flex items-center space-x-3">
                             <div class="flex-shrink-0">
@@ -216,7 +216,7 @@
                            id="target"
                            wire:model.blur="target" 
                            placeholder="{{ $scanType === 'file' ? 'app/Http/Controllers/UserController.php' : 'app/Http/Controllers' }}"
-                           class="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                           class="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                     <button type="button" 
                             wire:click="browseForPath"
                             class="px-3 py-2 bg-gray-100 dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -279,7 +279,7 @@
                                wire:model.live="ruleCategories" 
                                value="{{ $category }}"
                                @checked(in_array($category, $ruleCategories))
-                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-offset-0">
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500 focus:ring-offset-0" />
                     </div>
                     <div class="ml-3">
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -325,19 +325,19 @@
                     <label class="flex items-center">
                         <input type="checkbox" 
                                wire:model.live="scanOptions.ignore_vendor" 
-                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500" />
                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ignore vendor/</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" 
                                wire:model.live="scanOptions.ignore_node_modules" 
-                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500" />
                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ignore node_modules/</span>
                     </label>
                     <label class="flex items-center">
                         <input type="checkbox" 
                                wire:model.live="scanOptions.ignore_storage" 
-                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                               class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500" />
                         <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ignore storage/</span>
                     </label>
                 </div>
@@ -354,7 +354,7 @@
                            max="104857600" 
                            step="1048576"
                            placeholder="10485760"
-                           class="block w-full md:w-48 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                           class="block w-full md:w-48 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Default: 10MB (10485760 bytes)</p>
                 </div>
 
@@ -367,7 +367,7 @@
                            id="file_extensions"
                            wire:model.blur="fileExtensionsString"
                            placeholder="php,blade.php"
-                           class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                           class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Default: php</p>
                 </div>
             </div>

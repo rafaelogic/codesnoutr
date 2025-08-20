@@ -1,7 +1,3 @@
-@extends('codesnoutr::layouts.app')
-
-@section('title', 'Dashboard - CodeSnoutr')
-
-@section('content')
+<x-templates.app-layout title="Dashboard" subtitle="Overview of your code analysis activity" pageType="dashboard">
     @livewire('codesnoutr-dashboard')
-@endsection
+</x-templates.app-layout>

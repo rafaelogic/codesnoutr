@@ -176,7 +176,7 @@
                 <input type="text" 
                        wire:model.live.debounce.300ms="searchTerm" 
                        placeholder="Search issues..."
-                       class="p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                       class="p-2 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
 
             <!-- Severity Filter -->
@@ -243,7 +243,7 @@
                 <label class="flex items-center">
                     <input type="checkbox" 
                            wire:click="selectAllIssues"
-                           class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500">
+                           class="h-4 w-4 text-indigo-600 border-gray-300 dark:border-gray-600 rounded focus:ring-indigo-500" />
                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Select All</span>
                 </label>
                 @if($selectedIssues && count($selectedIssues) > 0)
@@ -747,7 +747,7 @@
                             
                             <!-- Expand/Collapse Button -->
                             <div class="flex-shrink-0">
-                                <button wire:click="toggleFileExpansion('{{ $fileGroup['file_path'] }}')"
+                                <button wire:click="toggleFileExpansion({{ json_encode($fileGroup['file_path']) }})"
                                         class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 rounded-lg shadow-lg hover:shadow-xl hover:shadow-indigo-500/30 border border-indigo-500 hover:border-indigo-400 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
                                     @if($this->isFileLoading($fileGroup['file_path']))
                                         <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -963,17 +963,17 @@
                         @if($this->fileHasMorePages($fileGroup['file_path']))
                         <div class="p-6 border-t border-gray-200 dark:border-gray-700">
                             <div class="text-center">
-                                <button wire:click="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')"
+                                <button wire:click="loadMoreFileIssues({{ json_encode($fileGroup['file_path']) }})"
                                         class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
                                         wire:loading.attr="disabled"
-                                        wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
-                                    <span wire:loading.remove wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
+                                        wire:target="loadMoreFileIssues({{ json_encode($fileGroup['file_path']) }})">
+                                    <span wire:loading.remove wire:target="loadMoreFileIssues({{ json_encode($fileGroup['file_path']) }})">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                                         </svg>
                                         Load More Issues
                                     </span>
-                                    <span wire:loading wire:target="loadMoreFileIssues('{{ $fileGroup['file_path'] }}')">
+                                    <span wire:loading wire:target="loadMoreFileIssues({{ json_encode($fileGroup['file_path']) }})">
                                         <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -986,7 +986,7 @@
                         @endif
                     @else
                     <div class="p-6 text-center">
-                        <div wire:loading wire:target="toggleFileExpansion('{{ $fileGroup['file_path'] }}')">
+                        <div wire:loading wire:target="toggleFileExpansion({{ json_encode($fileGroup['file_path']) }})">>
                             <div class="flex items-center justify-center space-x-2">
                                 <svg class="w-5 h-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -995,7 +995,7 @@
                                 <span class="text-sm text-gray-600 dark:text-gray-400">Loading issues...</span>
                             </div>
                         </div>
-                        <div wire:loading.remove wire:target="toggleFileExpansion('{{ $fileGroup['file_path'] }}')">
+                        <div wire:loading.remove wire:target="toggleFileExpansion({{ json_encode($fileGroup['file_path']) }})">>
                             <p class="text-sm text-gray-500 dark:text-gray-400">No issues to display</p>
                         </div>
                     </div>
@@ -1079,24 +1079,4 @@
     </div>
     @endif
 </div>
-
-<script>
-document.addEventListener('livewire:init', () => {
-    // Listen for redirect to scan results event
-    Livewire.on('redirect-to-scan-results', (event) => {
-        if (event.scanId) {
-            // Small delay to allow the UI to update before redirect
-            setTimeout(() => {
-                // Redirect to the main scan results page for this scan
-                const currentUrl = window.location.href;
-                const baseUrl = currentUrl.split('?')[0]; // Remove query parameters
-                window.location.href = baseUrl; // Reload the page without filters
-            }, 500);
-        } else {
-            // Fallback: redirect to dashboard if no scan ID
-            window.location.href = '{{ route("codesnoutr.dashboard") }}';
-        }
-    });
-});
-</script>
 

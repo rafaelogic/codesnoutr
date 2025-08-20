@@ -1,9 +1,3 @@
-@extends('codesnoutr::layouts.app')
-
-@section('title', 'Scan Wizard - CodeSnoutr')
-
-@section('content')
-<div class="max-w-4xl mx-auto">
+<x-templates.app-layout title="Scan Wizard">
     @livewire('codesnoutr-scan-wizard')
-</div>
-@endsection
+</x-templates.app-layout>

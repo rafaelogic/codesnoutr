@@ -1,4 +1,178 @@
-/* CodeSnoutr Custom Styles */
+/* CodeSnoutr Atomic Design System */
+
+/* =================================
+   Atomic Design Utilities
+   ================================= */
+
+/* Button System */
+.btn {
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn--primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 border border-transparent;
+}
+
+.btn--secondary {
+    @apply bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 border border-gray-300;
+}
+
+.btn--danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-transparent;
+}
+
+.btn--success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 border border-transparent;
+}
+
+.btn--warning {
+    @apply bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500 border border-transparent;
+}
+
+.btn--ghost {
+    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-50 focus:ring-gray-500 border border-transparent;
+}
+
+.btn--xs { @apply px-2.5 py-1.5 text-xs rounded; }
+.btn--sm { @apply px-3 py-2 text-sm rounded-md; }
+.btn--md { @apply px-4 py-2 text-sm rounded-md; }
+.btn--lg { @apply px-4 py-2 text-base rounded-md; }
+.btn--xl { @apply px-6 py-3 text-base rounded-md; }
+
+/* Input System */
+.input {
+    @apply block w-full border rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0;
+}
+
+.input--default {
+    @apply border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900;
+}
+
+.input--error {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50;
+}
+
+.input--success {
+    @apply border-green-300 focus:border-green-500 focus:ring-green-500 bg-green-50;
+}
+
+.input--warning {
+    @apply border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50;
+}
+
+.input--disabled {
+    @apply bg-gray-50 text-gray-500 cursor-not-allowed;
+}
+
+.input--sm { @apply px-3 py-1.5 text-sm; }
+.input--md { @apply px-3 py-2 text-sm; }
+.input--lg { @apply px-4 py-3 text-base; }
+
+/* Badge System */
+.badge {
+    @apply inline-flex items-center font-medium rounded-full;
+}
+
+.badge--primary { @apply bg-blue-100 text-blue-800; }
+.badge--secondary { @apply bg-gray-100 text-gray-800; }
+.badge--success { @apply bg-green-100 text-green-800; }
+.badge--danger { @apply bg-red-100 text-red-800; }
+.badge--warning { @apply bg-yellow-100 text-yellow-800; }
+.badge--info { @apply bg-cyan-100 text-cyan-800; }
+.badge--gray { @apply bg-gray-100 text-gray-600; }
+
+.badge--sm { @apply px-2 py-0.5 text-xs; }
+.badge--md { @apply px-2.5 py-0.5 text-xs; }
+.badge--lg { @apply px-3 py-1 text-sm; }
+
+/* Icon System */
+.icon {
+    @apply inline-block flex-shrink-0;
+}
+
+.icon--xs { @apply w-3 h-3; }
+.icon--sm { @apply w-4 h-4; }
+.icon--md { @apply w-5 h-5; }
+.icon--lg { @apply w-6 h-6; }
+.icon--xl { @apply w-8 h-8; }
+.icon--2xl { @apply w-10 h-10; }
+
+.icon--current { @apply text-current; }
+.icon--primary { @apply text-blue-600; }
+.icon--secondary { @apply text-gray-600; }
+.icon--success { @apply text-green-600; }
+.icon--danger { @apply text-red-600; }
+.icon--warning { @apply text-yellow-600; }
+.icon--muted { @apply text-gray-400; }
+
+/* Alert System */
+.alert {
+    @apply rounded-md border;
+}
+
+.alert--info {
+    @apply bg-blue-50 border-blue-200 text-blue-800;
+}
+
+.alert--success {
+    @apply bg-green-50 border-green-200 text-green-800;
+}
+
+.alert--warning {
+    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+}
+
+.alert--danger {
+    @apply bg-red-50 border-red-200 text-red-800;
+}
+
+.alert--sm { @apply p-3; }
+.alert--md { @apply p-4; }
+.alert--lg { @apply p-6; }
+
+/* Form Field System */
+.form-field {
+    @apply space-y-1;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700;
+}
+
+.form-error {
+    @apply flex items-center space-x-1 text-red-600 text-sm;
+}
+
+.form-help {
+    @apply text-sm text-gray-500;
+}
+
+/* Dark Mode Variants */
+.dark .btn--secondary {
+    @apply bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600;
+}
+
+.dark .input--default {
+    @apply border-gray-600 bg-gray-700 text-white focus:border-blue-400;
+}
+
+.dark .badge--primary { @apply bg-blue-900 text-blue-200; }
+.dark .badge--secondary { @apply bg-gray-700 text-gray-300; }
+.dark .badge--success { @apply bg-green-900 text-green-200; }
+.dark .badge--danger { @apply bg-red-900 text-red-200; }
+.dark .badge--warning { @apply bg-yellow-900 text-yellow-200; }
+
+.dark .alert--info { @apply bg-blue-900 border-blue-800 text-blue-200; }
+.dark .alert--success { @apply bg-green-900 border-green-800 text-green-200; }
+.dark .alert--warning { @apply bg-yellow-900 border-yellow-800 text-yellow-200; }
+.dark .alert--danger { @apply bg-red-900 border-red-800 text-red-200; }
+
+.dark .form-label { @apply text-gray-300; }
+.dark .form-help { @apply text-gray-400; }
+
+/* =================================
+   Legacy CodeSnoutr Styles
+   ================================= */
 
 /* Severity badges */
 .severity-critical {

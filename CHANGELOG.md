@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Comprehensive Blade Template Rules** - Complete scanning engine for Laravel Blade templates
+  - XSS vulnerability detection with safe variable recognition
+  - CSRF protection validation for all form methods
+  - Performance optimization (N+1 queries, inline styles, template complexity)
+  - Accessibility compliance checking (alt text, form labels, ARIA)
+  - SEO optimization analysis (meta tags, structured content)
+  - Code quality enforcement (deprecated syntax, hardcoded values)
+  - Best practices validation (component usage, section structure)
 - **AI Smart Assistant** - Complete AI-powered chat interface for code scanning assistance
   - OpenAI integration with conversation management
   - Context-aware suggestions and tips
@@ -48,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Critical**: Fixed undefined `$expandedIssues` variable in detailed table view
 - Improved state management for expanded issue functionality
 - Enhanced reset logic for file group data
+- **Critical**: Fixed "View Issues" button functionality in file-grouped scan results
+- Resolved Livewire wire:click event handling for file path parameters
+- Fixed file path encoding issues preventing expand/collapse functionality
+- Resolved Alpine.js conflicts by removing duplicate CDN loading
+- Enhanced Livewire 3.x compatibility and debugging capabilities
 
 ### Technical Improvements
 - Modular AI service architecture for future extensibility

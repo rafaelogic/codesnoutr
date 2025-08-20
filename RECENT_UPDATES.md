@@ -2,6 +2,34 @@
 
 ## Latest Enhancements (August 2025)
 
+### 🎨 Comprehensive Blade Template Rules
+
+#### New BladeRules Engine
+- **Complete Blade Analysis**: Dedicated scanning engine for Laravel Blade templates
+- **Security Focus**: XSS vulnerability detection, CSRF protection, input sanitization
+- **Performance Optimization**: N+1 query detection, inline style analysis, template complexity
+- **Accessibility Compliance**: Alt text validation, form label checking, ARIA attribute analysis
+- **SEO Optimization**: Meta tag validation, structured content analysis
+- **Code Quality**: Deprecated syntax detection, hardcoded value identification, unused variable tracking
+
+#### Template Security Features
+- **XSS Protection**: Detects unsafe `{!! !!}` usage with intelligent safe variable recognition
+- **CSRF Validation**: Comprehensive form analysis for missing CSRF protection
+- **Input Sanitization**: Identifies direct request input usage and superglobal access
+- **Safe Practices**: Recognizes legitimate HTML content variables (markdown, SVG, etc.)
+
+#### Performance Analysis
+- **N+1 Query Detection**: Identifies relationship access in loops that may cause performance issues
+- **Style Optimization**: Flags inline styles and style tags that should be externalized
+- **Template Complexity**: Analyzes nesting depth and complexity scores for maintainability
+- **Component Usage**: Promotes reusable components over repeated code
+
+#### Accessibility & SEO
+- **Image Alt Text**: Ensures all images have proper alt attributes
+- **Form Labels**: Validates proper labeling and ARIA attributes for form inputs
+- **Meta Elements**: Checks for essential SEO elements like title tags and descriptions
+- **Semantic Structure**: Promotes proper HTML structure and accessibility standards
+
 ### 🎨 User Interface Improvements
 
 #### Modern Hover Effects

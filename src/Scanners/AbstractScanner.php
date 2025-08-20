@@ -8,6 +8,7 @@ use Rafaelogic\CodeSnoutr\Scanners\Rules\PerformanceRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\QualityRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\LaravelRules;
 use Rafaelogic\CodeSnoutr\Scanners\Rules\InheritanceRules;
+use Rafaelogic\CodeSnoutr\Scanners\Rules\BladeRules;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PhpParser\NodeTraverser;
@@ -39,6 +40,7 @@ abstract class AbstractScanner
             'quality' => new QualityRules(),
             'laravel' => new LaravelRules(),
             'inheritance' => new InheritanceRules(),
+            'blade' => new BladeRules(),
         ];
     }
 
@@ -146,97 +148,18 @@ abstract class AbstractScanner
     {
         $issues = [];
 
-        // Basic Blade-specific checks
-        if (in_array('security', $categories)) {
-            $issues = array_merge($issues, $this->checkBladeSecurityIssues($filePath, $content));
-        }
-
-        if (in_array('quality', $categories)) {
-            $issues = array_merge($issues, $this->checkBladeQualityIssues($filePath, $content));
-        }
-
-        return $issues;
-    }
-
-    /**
-     * Check Blade files for security issues
-     */
-    protected function checkBladeSecurityIssues(string $filePath, string $content): array
-    {
-        $issues = [];
-        $lines = explode("\n", $content);
-
-        foreach ($lines as $lineNumber => $line) {
-            $lineNumber++; // 1-based line numbers
-
-            // Check for unescaped output
-            if (preg_match('/\{\!\!\s*\$.*?\!\!\}/', $line)) {
-                $issues[] = [
-                    'file_path' => $filePath,
-                    'line_number' => $lineNumber,
-                    'category' => 'security',
-                    'severity' => 'warning',
-                    'rule_name' => 'unescaped_output',
-                    'rule_id' => 'security.unescaped_output',
-                    'title' => 'Unescaped Output in Blade',
-                    'description' => 'Using {!! !!} syntax can lead to XSS vulnerabilities.',
-                    'suggestion' => 'Use {{ }} syntax for automatic escaping, or explicitly escape with e() helper.',
-                    'context' => [
-                        'code' => [$line],
-                        'line_content' => trim($line),
-                    ],
-                ];
+        // Use comprehensive Blade rules engine
+        if (isset($this->rules['blade'])) {
+            // Create empty AST for Blade files (not needed for template analysis)
+            $ast = [];
+            $bladeIssues = $this->rules['blade']->analyze($filePath, $ast, $content);
+            
+            // Filter issues by requested categories
+            foreach ($bladeIssues as $issue) {
+                if (empty($categories) || in_array($issue['category'], $categories)) {
+                    $issues[] = $issue;
+                }
             }
-
-            // Check for potential XSS in JavaScript
-            if (preg_match('/\{\{\s*\$.*?\}\}/', $line) && stripos($line, '<script') !== false) {
-                $issues[] = [
-                    'file_path' => $filePath,
-                    'line_number' => $lineNumber,
-                    'category' => 'security',
-                    'severity' => 'critical',
-                    'rule_name' => 'xss_in_script',
-                    'rule_id' => 'security.xss_in_script',
-                    'title' => 'Potential XSS in JavaScript',
-                    'description' => 'Blade output inside script tags can lead to XSS vulnerabilities.',
-                    'suggestion' => 'Use JSON encoding: @json($variable) or escape properly.',
-                    'context' => [
-                        'code' => [$line],
-                        'line_content' => trim($line),
-                    ],
-                ];
-            }
-        }
-
-        return $issues;
-    }
-
-    /**
-     * Check Blade files for quality issues
-     */
-    protected function checkBladeQualityIssues(string $filePath, string $content): array
-    {
-        $issues = [];
-        $lines = explode("\n", $content);
-
-        // Check for overly complex templates
-        $phpBlocks = preg_match_all('/@php.*?@endphp/s', $content);
-        if ($phpBlocks > 3) {
-            $issues[] = [
-                'file_path' => $filePath,
-                'line_number' => 1,
-                'category' => 'quality',
-                'severity' => 'warning',
-                'rule_name' => 'complex_blade_template',
-                'rule_id' => 'quality.complex_blade_template',
-                'title' => 'Complex Blade Template',
-                'description' => 'Template contains too many @php blocks, consider moving logic to controller.',
-                'suggestion' => 'Move complex logic to the controller or create a view composer.',
-                'context' => [
-                    'php_blocks_count' => $phpBlocks,
-                    'recommendation' => 'Max recommended: 3 @php blocks',
-                ],
-            ];
         }
 
         return $issues;

@@ -14,7 +14,7 @@ function initDarkMode() {
     }
 }
 
-// Toggle dark mode
+// Toggle dark mode (for compatibility with existing code)
 function toggleDarkMode() {
     const isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
