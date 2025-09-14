@@ -416,57 +416,6 @@ class DashboardController
     }
 
     /**
-     * Debug CSRF and session information
-     */
-    public function debugCsrf(): JsonResponse
-    {
-        return response()->json([
-            'csrf_token' => csrf_token(),
-            'session_id' => session()->getId(),
-            'session_started' => session()->isStarted(),
-            'middleware_loaded' => true,
-            'app_key' => config('app.key') ? 'SET' : 'NOT_SET',
-            'session_driver' => config('session.driver'),
-            'session_lifetime' => config('session.lifetime'),
-            'session_path' => config('session.path'),
-            'session_domain' => config('session.domain'),
-            'session_secure' => config('session.secure'),
-            'session_http_only' => config('session.http_only'),
-            'session_same_site' => config('session.same_site'),
-            'env' => app()->environment(),
-            'debug_mode' => config('app.debug'),
-            'route_middleware' => request()->route() ? request()->route()->gatherMiddleware() : [],
-        ]);
-    }
-
-    /**
-     * Debug route information
-     */
-    public function debugRoutes(): JsonResponse
-    {
-        $routes = collect(Route::getRoutes())->filter(function($route) {
-            $name = $route->getName();
-            return $name && str_contains($name, 'codesnoutr');
-        })->map(function($route) {
-            return [
-                'name' => $route->getName(),
-                'uri' => $route->uri(),
-                'methods' => $route->methods(),
-                'action' => $route->getActionName(),
-            ];
-        });
-        
-        return response()->json([
-            'routes_loaded' => true,
-            'codesnoutr_routes' => $routes->values(),
-            'target_route_exists' => Route::has('codesnoutr.scan-results.group-details'),
-            'locale' => app()->getLocale(),
-            'request_url' => request()->url(),
-            'app_url' => config('app.url'),
-        ]);
-    }
-
-    /**
      * Display group file details
      */
     public function groupFileDetails(string $scanId, string $title, string $category, string $severity, Request $request): View|RedirectResponse

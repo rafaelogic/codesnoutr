@@ -57,33 +57,8 @@ Route::middleware(['web'])
         Route::get('/codesnoutr/scan-results/{scan}/group/{title}/{category}/{severity}', [DashboardController::class, 'groupFileDetails'])
             ->name('scan-results.group-details');
             
-        // Test route for debugging
-        Route::get('/codesnoutr/test-group/{scan}/{title}/{category}/{severity}', function($scan, $title, $category, $severity) {
-            return response()->json([
-                'message' => 'Route working!',
-                'parameters' => [
-                    'scan' => $scan,
-                    'title' => urldecode($title),
-                    'category' => $category,
-                    'severity' => $severity,
-                ],
-                'url' => request()->url(),
-            ]);
-        })->name('test-group-details');
-            
-        // Debug route to test route loading
-        Route::get('/codesnoutr/debug/routes', [DashboardController::class, 'debugRoutes'])->name('debug.routes');
-        
-        // Debug route to test CSRF token
-        Route::get('/codesnoutr/debug/csrf', [DashboardController::class, 'debugCsrf'])->name('debug.csrf');
-        
         // Settings
         Route::get('/codesnoutr/settings', [DashboardController::class, 'settings'])->name('settings');
-        
-        // Test Livewire route
-        Route::get('/codesnoutr/test-livewire', function() {
-            return view('codesnoutr::test-livewire');
-        })->name('test-livewire');
         
         // Reports
         Route::get('/codesnoutr/reports', [DashboardController::class, 'reports'])->name('reports');

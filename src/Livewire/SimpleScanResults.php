@@ -38,16 +38,6 @@ class SimpleScanResults extends Component
         $this->scan = Scan::find($this->scanId);
     }
 
-    public function testConnection()
-    {
-        Log::info('SimpleScanResults testConnection called', [
-            'component_id' => $this->getId(),
-            'timestamp' => now()->toDateTimeString()
-        ]);
-        
-        return 'Simple test successful!';
-    }
-
     public function updatedSeverityFilter()
     {
         $this->resetPage();

@@ -45,7 +45,7 @@ class ScanResults extends Component
     public $selectedFileStats = null; // Stats for the selected file
     public $directoryStats = []; // Overall directory statistics
     public $fileLoading = false; // Track if file issues are being loaded
-    public $issuesPerPage = 2; // Very small limit to test Livewire functionality
+    public $issuesPerPage = 25;
     public $currentIssuePage = 1; // Current page for issues
     public $totalIssuePages = 1; // Total pages for issues
     public $maxInstancesPerIssue = 3; // Limit instances per issue group
@@ -787,11 +787,22 @@ class ScanResults extends Component
             $fixStats = $this->scan->issues()
                 ->selectRaw('
                     COUNT(*) as total,
-                    COUNT(CASE WHEN fix_method = "manual" THEN 1 END) as resolved_count,
+                    COUNT(CASE WHEN fixed = 1 THEN 1 END) as resolved_count,
                     COUNT(CASE WHEN fix_method = "ignored" THEN 1 END) as ignored_count,
                     COUNT(CASE WHEN fix_method = "false_positive" THEN 1 END) as false_positive_count
                 ')
                 ->first();
+
+            // Add some debug logging to track any discrepancies
+            Log::info('Issue stats calculated', [
+                'scan_id' => $this->scanId,
+                'database_total' => $fixStats->total ?? 0,
+                'scan_issues_found' => $this->scan->issues_found ?? 0,
+                'scan_total_issues' => $this->scan->total_issues ?? 0,
+                'severity_stats' => $severityStats->toArray(),
+                'category_stats' => $categoryStats->toArray(),
+                'resolved_count' => $fixStats->resolved_count ?? 0,
+            ]);
 
             return [
                 'total' => $fixStats->total ?? 0,
@@ -1662,44 +1673,6 @@ class ScanResults extends Component
     }
 
     /**
-     * Simple test method to verify Livewire connectivity
-     */
-    public function testConnection()
-    {
-        try {
-            Log::info('testConnection method called - Livewire is working!', [
-                'component_id' => $this->getId(),
-                'scanId' => $this->scanId,
-                'timestamp' => now()->toDateTimeString()
-            ]);
-            
-            // Don't modify any properties that would trigger DOM updates
-            // Just log and return success
-            
-            return 'Test completed successfully';
-        } catch (\Exception $e) {
-            Log::error('testConnection failed', [
-                'error' => $e->getMessage(),
-                'component_id' => $this->getId()
-            ]);
-            return 'Test failed: ' . $e->getMessage();
-        }
-    }
-
-    /**
-     * Safe test method that only logs
-     */
-    public function safeTest()
-    {
-        Log::info('safeTest method called', [
-            'component_id' => $this->getId(),
-            'timestamp' => now()->toDateTimeString()
-        ]);
-        
-        return 'Safe test completed';
-    }
-
-    /**
      * Refresh data method to reload component data after dehydration
      */
     public function refreshData()
@@ -2305,8 +2278,8 @@ class ScanResults extends Component
         // Count total issues
         $totalIssues = $this->scan->issues()->count();
         
-        // Count resolved issues
-        $resolvedIssues = $this->scan->issues()->whereNotNull('fixed_at')->count();
+        // Count resolved issues - using consistent logic with getIssueStats()
+        $resolvedIssues = $this->scan->issues()->where('fixed', true)->count();
 
         $this->directoryStats = [
             'affected_files' => $affectedFiles,

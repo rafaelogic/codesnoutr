@@ -35,9 +35,29 @@
                 </div>
                 @if($scan)
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {{ ucfirst($scan->type) }} scan of {{ $scan->target ?: 'full codebase' }}
+                    {{ ucfirst($scan->type) }} scan of 
+                    @php
+                        $scanTarget = 'full codebase';
+                        
+                        // Try to get a meaningful scan target
+                        if ($scan->target) {
+                            $scanTarget = $scan->target;
+                        } elseif ($scan->paths_scanned && is_array($scan->paths_scanned) && count($scan->paths_scanned) > 0) {
+                            if (count($scan->paths_scanned) === 1) {
+                                $scanTarget = $scan->paths_scanned[0];
+                            } else {
+                                $scanTarget = count($scan->paths_scanned) . ' directories/files';
+                            }
+                        }
+                        
+                        // For display, show just the directory/file name if it's a path
+                        if (str_contains($scanTarget, '/') && $scanTarget !== 'full codebase') {
+                            $scanTarget = basename(rtrim($scanTarget, '/')) ?: dirname($scanTarget);
+                        }
+                    @endphp
+                    <strong>{{ $scanTarget }}</strong>
                     • {{ $scan->created_at->format('M j, Y g:i A') }}
-                    • {{ number_format($stats['total']) }} issues found
+                    • {{ number_format($stats['total']) }} {{ Str::plural('issue', $stats['total']) }} found
                 </p>
                 @endif
             </div>
