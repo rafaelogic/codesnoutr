@@ -543,21 +543,52 @@
                                             @if(!$instance['fixed'])
                                             <div class="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                                                 @if($this->isAiConfigured())
-                                                    <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                        </svg>
-                                                        <div>
-                                                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Auto-Fix Ready</p>
-                                                            <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">AI-powered code suggestions and automatic fixes are available for this issue.</p>
-                                                            <button class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors">
-                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                    @if(!empty($instance['ai_fix']))
+                                                        <!-- AI Fix Generated -->
+                                                        <div class="space-y-3">
+                                                            <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                                                <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                                 </svg>
-                                                                Generate Fix
-                                                            </button>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-medium text-green-800 dark:text-green-200">AI Fix Generated</p>
+                                                                    <p class="text-sm text-green-600 dark:text-green-400 mt-1">AI has analyzed this issue and provided a fix suggestion.</p>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- AI Fix Content -->
+                                                            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                                                <div class="flex items-center justify-between mb-3">
+                                                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">AI-Generated Fix Suggestion</h4>
+                                                                    @if(!empty($instance['ai_confidence']))
+                                                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                                                        {{ round($instance['ai_confidence'] * 100) }}% confidence
+                                                                    </span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                                                                    {!! nl2br(e($instance['ai_fix'])) !!}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    @else
+                                                        <!-- AI Fix Available -->
+                                                        <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                            </svg>
+                                                            <div>
+                                                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Auto-Fix Ready</p>
+                                                                <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">AI-powered code suggestions and automatic fixes are available for this issue.</p>
+                                                                <button wire:click="generateAutoFix({{ $instance['id'] }})" class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors">
+                                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                                    </svg>
+                                                                    Generate Fix
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 @else
                                                     <div class="flex items-start space-x-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                                                         <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
