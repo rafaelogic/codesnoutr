@@ -12,7 +12,11 @@
         'md' => 'w-5 h-5',
         'lg' => 'w-6 h-6',
         'xl' => 'w-8 h-8',
-        '2xl' => 'w-10 h-10'
+        '2xl' => 'w-10 h-10',
+        '3xl' => 'w-12 h-12',
+        '4xl' => 'w-14 h-14',
+        '5xl' => 'w-16 h-16',
+        '6xl' => 'w-20 h-20'
     ];
     
     $colorClasses = [
@@ -63,6 +67,7 @@
             'archive' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />',
             'external-link' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />',
             'flag' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2h6.5a2 2 0 012 2v6a2 2 0 01-2 2H12l-1-2H6a2 2 0 00-2 2z" />',
+            'code' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />',
             'default' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
         ],
         'solid' => [

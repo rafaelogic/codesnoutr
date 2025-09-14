@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Code Snoutr icon</title>
+  <desc id="desc">Stylized pig snout with two code chevrons</desc>
+
+  <!-- Background circle (subtle) -->
+  <circle cx="64" cy="64" r="60" fill="#F7FBFF"/>
+
+  <!-- Left chevron -->
+  <path d="M34 48 L20 64 L34 80" fill="none" stroke="#2B6CB0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Right chevron -->
+  <path d="M94 48 L108 64 L94 80" fill="none" stroke="#2B6CB0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Snout base (rounded capsule) -->
+  <rect x="36" y="46" width="56" height="36" rx="18" ry="18" fill="#F6AD55" stroke="#DD6B20" stroke-width="2"/>
+
+  <!-- Nostril left -->
+  <ellipse cx="52" cy="64" rx="5.5" ry="7" fill="#C05621"/>
+
+  <!-- Nostril right -->
+  <ellipse cx="76" cy="64" rx="5.5" ry="7" fill="#C05621"/>
+
+  <!-- Small highlight on snout -->
+  <ellipse cx="62" cy="54" rx="10" ry="4" fill="#FFD8A8" opacity="0.6"/>
+
+  <!-- Optional subtle drop shadow under snout -->
+  <ellipse cx="64" cy="86" rx="26" ry="6" fill="#000" opacity="0.06"/>
+
+</svg>

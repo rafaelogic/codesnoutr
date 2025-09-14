@@ -90,11 +90,11 @@ class Setting extends Model
     }
 
     /**
-     * Set OpenAI API key (encrypted)
+     * Set OpenAI API key (not encrypted - for developer access)
      */
     public static function setOpenAiApiKey(string $apiKey): static
     {
-        return static::set('openai_api_key', $apiKey, 'ai', true);
+        return static::set('openai_api_key', $apiKey, 'ai', false);
     }
 
     /**

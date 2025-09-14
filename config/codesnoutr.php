@@ -164,8 +164,11 @@ return [
             'temperature' => 0.1,
         ],
         'auto_fix' => [
-            'enabled' => false,
-            'require_confirmation' => true,
+            'enabled' => env('CODESNOUTR_AI_AUTO_FIX_ENABLED', false),
+            'backup_disk' => env('CODESNOUTR_AUTO_FIX_BACKUP_DISK', 'local'),
+            'min_confidence' => env('CODESNOUTR_AUTO_FIX_MIN_CONFIDENCE', 80),
+            'safe_mode' => env('CODESNOUTR_AUTO_FIX_SAFE_MODE', true),
+            'require_confirmation' => env('CODESNOUTR_AUTO_FIX_REQUIRE_CONFIRMATION', true),
             'create_backup' => true,
             'max_file_size' => 50 * 1024, // 50KB
         ],

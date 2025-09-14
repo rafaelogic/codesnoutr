@@ -1,0 +1,221 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CodeSnoutr styles */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    body {
+        @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    }
+    
+    /* Focus styles */
+    *:focus {
+        @apply outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+    }
+}
+
+@layer components {
+    /* Button variants */
+    .btn {
+        @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200;
+    }
+    
+    .btn-primary {
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+    }
+    
+    .btn-secondary {
+        @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+    }
+    
+    .btn-outline {
+        @apply border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-indigo-500;
+    }
+    
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    }
+    
+    .btn-success {
+        @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+    }
+    
+    /* Card components */
+    .card {
+        @apply bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-300;
+    }
+    
+    .card-header {
+        @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+    }
+    
+    .card-body {
+        @apply px-6 py-4;
+    }
+    
+    .card-footer {
+        @apply px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750;
+    }
+    
+    /* Form styles */
+    .form-input {
+        @apply block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200;
+    }
+    
+    .form-select {
+        @apply block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200;
+    }
+    
+    .form-checkbox {
+        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded transition-colors duration-200;
+    }
+    
+    .form-radio {
+        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 transition-colors duration-200;
+    }
+    
+    /* Status badges */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    
+    .badge-success {
+        @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+    }
+    
+    .badge-warning {
+        @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
+    }
+    
+    .badge-danger {
+        @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300;
+    }
+    
+    .badge-info {
+        @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300;
+    }
+    
+    .badge-secondary {
+        @apply bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300;
+    }
+    
+    /* Loading states */
+    .loading-spinner {
+        @apply animate-spin rounded-full border-2 border-gray-300 border-t-indigo-600;
+    }
+    
+    /* Code highlighting */
+    .code-block {
+        @apply bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 font-mono text-sm overflow-x-auto;
+    }
+    
+    /* Issue severity colors */
+    .severity-critical {
+        @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-900 dark:text-red-200;
+    }
+    
+    .severity-high {
+        @apply bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/50 text-orange-900 dark:text-orange-200;
+    }
+    
+    .severity-medium {
+        @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50 text-yellow-900 dark:text-yellow-200;
+    }
+    
+    .severity-low {
+        @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 text-blue-900 dark:text-blue-200;
+    }
+    
+    .severity-info {
+        @apply bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700/50 text-gray-900 dark:text-gray-200;
+    }
+}
+
+@layer utilities {
+    /* Custom transition utilities */
+    .transition-colors-fast {
+        transition-property: color, background-color, border-color, fill, stroke;
+        transition-duration: 150ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Text truncation with tooltip */
+    .truncate-tooltip {
+        @apply truncate cursor-help;
+    }
+    
+    /* Responsive text */
+    .text-responsive {
+        @apply text-sm md:text-base lg:text-lg;
+    }
+    
+    /* Dark mode helpers */
+    .dark-transition {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+}
+
+/* Scrollbar styling for dark mode */
+@media (prefers-color-scheme: dark) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #374151 #1f2937;
+    }
+    
+    *::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    
+    *::-webkit-scrollbar-track {
+        background: #1f2937;
+    }
+    
+    *::-webkit-scrollbar-thumb {
+        background: #374151;
+        border-radius: 3px;
+    }
+    
+    *::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+    }
+}
+
+/* Light mode scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f9fafb;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #f9fafb;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        @apply bg-white text-black;
+    }
+}

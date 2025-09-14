@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Rafaelogic\CodeSnoutr\Commands\ScanCommand;
 use Rafaelogic\CodeSnoutr\Commands\InstallCommand;
+use Rafaelogic\CodeSnoutr\Commands\AssetStatusCommand;
 
 class CodeSnoutrServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,11 @@ class CodeSnoutrServiceProvider extends ServiceProvider
         $this->app->singleton('codesnoutr.ai', function ($app) {
             return new \Rafaelogic\CodeSnoutr\Services\AiAssistantService();
         });
+
+        // Register Auto-Fix service
+        $this->app->singleton('codesnoutr.autofix', function ($app) {
+            return new \Rafaelogic\CodeSnoutr\Services\AutoFixService($app->make('codesnoutr.ai'));
+        });
     }
 
     /**
@@ -44,12 +50,27 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'codesnoutr-migrations');
 
-        // Publish assets
+        // Publish assets to public directory for direct access
+        $this->publishes([
+            __DIR__.'/../resources/css/codesnoutr.css' => public_path('vendor/codesnoutr/css/codesnoutr.css'),
+            __DIR__.'/../resources/js/codesnoutr.js' => public_path('vendor/codesnoutr/js/codesnoutr.js'),
+            __DIR__.'/../resources/images/codesnoutr-icon.svg' => public_path('vendor/codesnoutr/images/codesnoutr-icon.svg'),
+            __DIR__.'/../public/build' => public_path('vendor/codesnoutr/build'),
+        ], 'codesnoutr-assets');
+
+        // Publish views for customization
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/codesnoutr'),
-            __DIR__.'/../resources/css' => resource_path('css/vendor/codesnoutr'),
-            __DIR__.'/../resources/js' => resource_path('js/vendor/codesnoutr'),
-        ], 'codesnoutr-assets');
+        ], 'codesnoutr-views');
+
+        // Publish all resources in one command
+        $this->publishes([
+            __DIR__.'/../resources/css/codesnoutr.css' => public_path('vendor/codesnoutr/css/codesnoutr.css'),
+            __DIR__.'/../resources/js/codesnoutr.js' => public_path('vendor/codesnoutr/js/codesnoutr.js'),
+            __DIR__.'/../resources/images/codesnoutr-icon.svg' => public_path('vendor/codesnoutr/images/codesnoutr-icon.svg'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/codesnoutr'),
+            __DIR__.'/../public/build' => public_path('vendor/codesnoutr/build'),
+        ], 'codesnoutr-resources');
 
         // Publish routes (optional - for custom integration)
         $this->publishes([
@@ -82,6 +103,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->commands([
                 ScanCommand::class,
                 InstallCommand::class,
+                AssetStatusCommand::class,
             ]);
         }
 
@@ -101,15 +123,25 @@ class CodeSnoutrServiceProvider extends ServiceProvider
     protected function registerLivewireComponents(): void
     {
         if (class_exists(\Livewire\Livewire::class)) {
+            \Illuminate\Support\Facades\Log::info('Registering CodeSnoutr Livewire components');
+            
             \Livewire\Livewire::component('codesnoutr-dashboard', \Rafaelogic\CodeSnoutr\Livewire\Dashboard::class);
             \Livewire\Livewire::component('codesnoutr-scan-form', \Rafaelogic\CodeSnoutr\Livewire\ScanForm::class);
             \Livewire\Livewire::component('codesnoutr-scan-wizard', \Rafaelogic\CodeSnoutr\Livewire\ScanWizard::class);
             \Livewire\Livewire::component('codesnoutr-scan-results', \Rafaelogic\CodeSnoutr\Livewire\ScanResults::class);
+            // Removed ScanResultsView - using only ScanResults with two-column view now
             \Livewire\Livewire::component('codesnoutr-settings', \Rafaelogic\CodeSnoutr\Livewire\Settings::class);
             \Livewire\Livewire::component('codesnoutr-dark-mode-toggle', \Rafaelogic\CodeSnoutr\Livewire\DarkModeToggle::class);
             \Livewire\Livewire::component('codesnoutr-smart-assistant', \Rafaelogic\CodeSnoutr\Livewire\SmartAssistant::class);
             \Livewire\Livewire::component('codesnoutr-ai-fix-suggestions', \Rafaelogic\CodeSnoutr\Livewire\AiFixSuggestions::class);
-            \Livewire\Livewire::component('codesnoutr-group-file-details', \Rafaelogic\CodeSnoutr\Livewire\GroupFileDetails::class);
+            \Livewire\Livewire::component('codesnoutr-ai-auto-fix', \Rafaelogic\CodeSnoutr\Livewire\AiAutoFix::class);
+                        \Livewire\Livewire::component('codesnoutr-group-file-details', \Rafaelogic\CodeSnoutr\Livewire\GroupFileDetails::class);
+            \Livewire\Livewire::component('codesnoutr-queue-status', \Rafaelogic\CodeSnoutr\Livewire\QueueStatus::class);
+            // Removed test components - only needed during development
+            
+            \Illuminate\Support\Facades\Log::info('CodeSnoutr Livewire components registered successfully');
+        } else {
+            \Illuminate\Support\Facades\Log::error('Livewire class not found during CodeSnoutr component registration');
         }
     }
 

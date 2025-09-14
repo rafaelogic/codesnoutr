@@ -42,6 +42,10 @@ Route::middleware(['web'])
         // Scan management
         Route::get('/codesnoutr/scan', [DashboardController::class, 'scan'])->name('scan');
         Route::get('/codesnoutr/scan/{scan}', [DashboardController::class, 'show'])->name('scan.show');
+        Route::get('/codesnoutr/scan/{id}/view', [DashboardController::class, 'viewScan'])->name('scan.view');
+        
+        // Clean scan results view (new dedicated page)
+        Route::get('/scan/{id}', [DashboardController::class, 'viewScan'])->name('scan.clean-view');
         
         // Results
         Route::get('/codesnoutr/results', [DashboardController::class, 'results'])->name('results');
@@ -75,6 +79,11 @@ Route::middleware(['web'])
         
         // Settings
         Route::get('/codesnoutr/settings', [DashboardController::class, 'settings'])->name('settings');
+        
+        // Test Livewire route
+        Route::get('/codesnoutr/test-livewire', function() {
+            return view('codesnoutr::test-livewire');
+        })->name('test-livewire');
         
         // Reports
         Route::get('/codesnoutr/reports', [DashboardController::class, 'reports'])->name('reports');

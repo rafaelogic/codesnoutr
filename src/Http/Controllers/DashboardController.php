@@ -64,6 +64,20 @@ class DashboardController
     }
 
     /**
+     * Display scan results in a clean dedicated view
+     */
+    public function viewScan($id): View
+    {
+        $scan = Scan::with(['issues' => function ($query) {
+            $query->orderBy('severity', 'desc')
+                  ->orderBy('file_path')
+                  ->orderBy('line_number');
+        }])->findOrFail($id);
+
+        return view('codesnoutr::pages.view-scan', compact('scan'));
+    }
+
+    /**
      * Display the results page
      */
     public function results(Request $request): View

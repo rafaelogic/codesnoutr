@@ -15,7 +15,6 @@ Thumbs.db
 # Testing
 /coverage/
 .phpunit.cache/
-build/
 
 # Package specific
 /tests/fixtures/temp/

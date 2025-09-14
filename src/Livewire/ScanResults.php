@@ -7,13 +7,14 @@ use Livewire\WithPagination;
 use Rafaelogic\CodeSnoutr\Models\Scan;
 use Rafaelogic\CodeSnoutr\Models\Issue;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ScanResults extends Component
 {
     use WithPagination;
 
     public $scanId;
-    public $scan;
+    public $scan = null; // Explicitly set to null
     public $selectedSeverity = 'all';
     public $selectedCategory = 'all';
     public $selectedFile = 'all';
@@ -23,17 +24,43 @@ class ScanResults extends Component
     public $showFixSuggestions = true;
     public $selectedIssues = [];
     public $showBulkActions = false;
-    public $viewMode = 'file-grouped'; // 'grouped', 'file-grouped', or 'detailed'
-    public $maxGroupsPerPage = 10; // Limit groups to prevent memory issues
-    public $fileGroupsPerPage = 5; // Files per page in file-grouped view
+    // Removed viewMode - always use two-column view
+    // Temporary property to handle old URLs with viewMode parameter
+    public $viewMode = 'two-column';
+    public $maxGroupsPerPage = 10; // Keep for backward compatibility with existing data processing
     public $issuesPerFile = 10; // Issues per file initially loaded
-    public $currentFileGroupPage = 1; // Current page for file groups
+    // Removed fileGroupsPerPage and currentFileGroupPage - not needed for two-column view
     public $allFileGroups = []; // Store all loaded file groups
     public $loadedFileGroups = []; // Store loaded file group data (for individual file issues)
     public $loadingFiles = []; // Track which files are currently loading
     public $expandedFiles = []; // Track which files are expanded to show all issues
     public $expandedIssues = []; // Track which individual issues are expanded in detailed view
     public $isLoading = false; // Global loading state
+    
+    // Two-column view properties
+    public $selectedFilePath = null; // Currently selected file in two-column view
+    public $directoryTree = []; // Directory structure with files that have issues
+    public $expandedDirectories = []; // Track which directories are expanded
+    public $selectedFileIssues = null; // Issues for the selected file
+    public $selectedFileStats = null; // Stats for the selected file
+    public $directoryStats = []; // Overall directory statistics
+    public $fileLoading = false; // Track if file issues are being loaded
+    public $issuesPerPage = 2; // Very small limit to test Livewire functionality
+    public $currentIssuePage = 1; // Current page for issues
+    public $totalIssuePages = 1; // Total pages for issues
+    public $maxInstancesPerIssue = 3; // Limit instances per issue group
+    
+    // Directory and file pagination properties
+    public $directoriesPerPage = 10; // Number of directories to show per page
+    public $currentDirectoryPage = 1; // Current directory page
+    public $totalDirectoryPages = 1; // Total directory pages
+    public $filesPerDirectoryPage = 20; // Files per page within a directory
+    public $directoryFilePage = []; // Track current page for each directory
+    public $paginatedDirectoryTree = []; // Paginated version of directory tree
+    
+    // Lazy loading flags
+    public $lazyLoadEnabled = true; // Enable lazy loading
+    public $initialLoadComplete = false; // Track if initial directory structure is loaded
 
     protected $queryString = [
         'selectedSeverity' => ['except' => 'all'],
@@ -42,7 +69,7 @@ class ScanResults extends Component
         'searchTerm' => ['except' => ''],
         'sortBy' => ['except' => 'severity'],
         'sortDirection' => ['except' => 'desc'],
-        'viewMode' => ['except' => 'file-grouped'],
+        'selectedFilePath' => ['except' => null],
         'page' => ['except' => 1],
     ];
 
@@ -52,55 +79,199 @@ class ScanResults extends Component
         'bulk-action-completed' => 'refreshResults',
     ];
 
+    protected function getListeners()
+    {
+        return [
+            'scan-completed' => 'refreshResults',
+            'issue-resolved' => 'refreshResults',
+            'bulk-action-completed' => 'refreshResults',
+        ];
+    }
+
+    public function boot()
+    {
+        // Ensure all array properties are properly initialized as arrays
+        $this->allFileGroups = is_array($this->allFileGroups) ? $this->allFileGroups : [];
+        $this->loadedFileGroups = is_array($this->loadedFileGroups) ? $this->loadedFileGroups : [];
+        $this->directoryTree = is_array($this->directoryTree) ? $this->directoryTree : [];
+        $this->expandedDirectories = is_array($this->expandedDirectories) ? $this->expandedDirectories : [];
+        $this->directoryStats = is_array($this->directoryStats) ? $this->directoryStats : [];
+        $this->selectedIssues = is_array($this->selectedIssues) ? $this->selectedIssues : [];
+        $this->loadingFiles = is_array($this->loadingFiles) ? $this->loadingFiles : [];
+        $this->expandedFiles = is_array($this->expandedFiles) ? $this->expandedFiles : [];
+        $this->expandedIssues = is_array($this->expandedIssues) ? $this->expandedIssues : [];
+    }
+
+    public function getName()
+    {
+        return 'codesnoutr-scan-results';
+    }
+
     public function mount($scanId = null)
     {
+        // Initialize all properties with safe defaults
+        $this->scanId = $scanId;
+        $this->scan = null;
+        $this->selectedSeverity = 'all';
+        $this->selectedCategory = 'all';
+        $this->selectedFile = 'all';
+        $this->searchTerm = '';
+        $this->sortBy = 'severity';
+        $this->sortDirection = 'desc';
+        $this->showFixSuggestions = true;
+        $this->selectedIssues = [];
+        $this->showBulkActions = false;
+        $this->maxGroupsPerPage = 10;
+        $this->issuesPerFile = 10;
+        $this->allFileGroups = [];
+        $this->loadedFileGroups = [];
+        $this->loadingFiles = [];
+        $this->expandedFiles = [];
+        $this->expandedIssues = [];
+        $this->isLoading = false;
+        $this->selectedFilePath = null;
+        $this->directoryTree = [];
+        $this->expandedDirectories = [];
+        $this->selectedFileIssues = null;
+        $this->selectedFileStats = null;
+        $this->directoryStats = [];
+        $this->fileLoading = false;
+        
+        // Initialize pagination properties
+        $this->directoriesPerPage = 10;
+        $this->currentDirectoryPage = 1;
+        $this->totalDirectoryPages = 1;
+        $this->filesPerDirectoryPage = 20;
+        $this->directoryFilePage = [];
+        $this->paginatedDirectoryTree = [];
+        $this->lazyLoadEnabled = true;
+        $this->initialLoadComplete = false;
+
+        Log::info('ScanResults component mounting', [
+            'scanId' => $scanId,
+            'component_id' => $this->getId()
+        ]);
+
         if ($scanId) {
-            $this->scanId = $scanId;
             $this->loadScan();
+            
+            // Always initialize two-column view (the only view now)
+            $this->initializeLazyTwoColumnView();
+        } else {
+            Log::warning('ScanResults component mounted without scanId');
         }
     }
 
     public function render()
     {
-        // Clear memory before processing
-        if (function_exists('gc_collect_cycles')) {
-            gc_collect_cycles();
-        }
+        try {
+            // Log that the component is rendering
+            Log::info('ScanResults component rendering', [
+                'scanId' => $this->scanId,
+                'scan_exists' => $this->scan ? 'yes' : 'no',
+                'component_id' => $this->getId(),
+                'view' => 'two-column', // Always two-column view now
+                'selectedFilePath' => $this->selectedFilePath
+            ]);
 
-        if ($this->viewMode === 'grouped') {
-            $groupedIssues = $this->getGroupedIssues();
-            $fileGroupedIssues = null;
-            $issues = null;
-        } elseif ($this->viewMode === 'file-grouped') {
-            // For file-grouped view, only load summary data initially
-            $fileGroupedIssues = $this->getFileGroupSummaries();
-            $groupedIssues = null;
-            $issues = null;
-        } else {
-            $issues = $this->getFilteredIssues();
-            $groupedIssues = null;
-            $fileGroupedIssues = null;
-        }
-        
-        $stats = $this->getIssueStats();
-        $files = $this->getUniqueFiles();
+            // Clear memory before processing
+            if (function_exists('gc_collect_cycles')) {
+                gc_collect_cycles();
+            }
 
-        return view('codesnoutr::livewire.scan-results', [
-            'issues' => $issues,
-            'groupedIssues' => $groupedIssues,
-            'fileGroupedIssues' => $fileGroupedIssues,
-            'stats' => $stats,
-            'files' => $files,
-            'severityOptions' => $this->getSeverityOptions(),
-            'categoryOptions' => $this->getCategoryOptions(),
-        ]);
+            // Ensure we have safe default values
+            $this->directoryTree = $this->directoryTree ?? [];
+            $this->directoryStats = $this->directoryStats ?? [];
+            $this->expandedDirectories = $this->expandedDirectories ?? [];
+            $this->selectedFileIssues = $this->selectedFileIssues ?? collect();
+            $this->selectedFileStats = $this->selectedFileStats ?? null;
+
+            // Always use two-column view - lazy loading approach
+            if (!$this->initialLoadComplete) {
+                // Try the new pagination first, fall back to old method if needed
+                try {
+                    $this->loadPaginatedDirectoryStructure();
+                    $this->initialLoadComplete = true;
+                } catch (\Exception $e) {
+                    Log::warning('Paginated directory loading failed, falling back to old method', [
+                        'error' => $e->getMessage()
+                    ]);
+                    // Fall back to the old directory loading method
+                    $this->loadDirectoryTree();
+                    $this->paginatedDirectoryTree = $this->directoryTree;
+                    $this->initialLoadComplete = true;
+                }
+            }
+            
+            Log::info('Two-column lazy render', [
+                'paginatedDirectories_count' => count($this->paginatedDirectoryTree),
+                'currentDirectoryPage' => $this->currentDirectoryPage,
+                'totalDirectoryPages' => $this->totalDirectoryPages,
+                'selectedFilePath' => $this->selectedFilePath ? basename($this->selectedFilePath) : null,
+                'selectedFileIssues_count' => $this->selectedFileIssues ? $this->selectedFileIssues->count() : 0
+            ]);
+            
+            return view('codesnoutr::livewire.scan-results-two-column', [
+                'scan' => $this->scan,
+                'stats' => $this->getIssueStats(),
+                'directoryTree' => $this->paginatedDirectoryTree,
+                'directoryStats' => $this->directoryStats,
+                'selectedFileIssues' => $this->selectedFileIssues,
+                'selectedFileStats' => $this->selectedFileStats,
+                'severityOptions' => $this->getSeverityOptions(),
+                'categoryOptions' => $this->getCategoryOptions(),
+                'expandedDirectories' => $this->expandedDirectories,
+                'currentDirectoryPage' => $this->currentDirectoryPage,
+                'totalDirectoryPages' => $this->totalDirectoryPages,
+                'directoryFilePage' => $this->directoryFilePage,
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('=== ScanResults RENDER ERROR ===', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'scanId' => $this->scanId,
+                'view' => 'two-column', // Always two-column view now
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Return a safe fallback view with minimal data
+            return view('codesnoutr::livewire.scan-results-two-column', [
+                'scan' => $this->scan,
+                'stats' => ['total' => 0, 'by_severity' => [], 'by_category' => [], 'resolved_count' => 0, 'ignored_count' => 0, 'false_positive_count' => 0],
+                'directoryTree' => [],
+                'directoryStats' => ['affected_files' => 0, 'total_issues' => 0, 'resolved_issues' => 0],
+                'selectedFileIssues' => collect(),
+                'selectedFileStats' => null,
+                'severityOptions' => $this->getSeverityOptions(),
+                'categoryOptions' => $this->getCategoryOptions(),
+                'expandedDirectories' => [],
+            ]);
+        }
     }
 
     protected function loadScan()
     {
-        if ($this->scanId) {
-            // Load scan without eager loading all issues to save memory
-            $this->scan = Scan::find($this->scanId);
+        try {
+            if ($this->scanId) {
+                // Load scan without eager loading all issues to save memory
+                $this->scan = Scan::find($this->scanId);
+                
+                if (!$this->scan) {
+                    Log::warning('Scan not found', ['scanId' => $this->scanId]);
+                    // Don't redirect here, just set scan to null
+                    $this->scan = null;
+                }
+            } else {
+                $this->scan = null;
+            }
+        } catch (\Exception $e) {
+            Log::error('Error loading scan', [
+                'scanId' => $this->scanId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            $this->scan = null;
         }
     }
 
@@ -444,15 +615,6 @@ class ScanResults extends Component
     }
 
     /**
-     * Load next page of file groups
-     */
-    public function loadMoreFileGroups()
-    {
-        $this->currentFileGroupPage++;
-        $this->loadFileGroupPage($this->currentFileGroupPage);
-    }
-
-    /**
      * Get the loaded issue groups for a specific file
      */
     public function getLoadedFileIssueGroups($filePath)
@@ -599,7 +761,53 @@ class ScanResults extends Component
 
     protected function getIssueStats()
     {
-        if (!$this->scan) {
+        try {
+            if (!$this->scan) {
+                return [
+                    'total' => 0,
+                    'by_severity' => [],
+                    'by_category' => [],
+                    'resolved_count' => 0,
+                    'ignored_count' => 0,
+                    'false_positive_count' => 0,
+                ];
+            }
+
+            // Use database aggregation instead of loading all issues
+            $severityStats = $this->scan->issues()
+                ->selectRaw('severity, COUNT(*) as count')
+                ->groupBy('severity')
+                ->pluck('count', 'severity');
+
+            $categoryStats = $this->scan->issues()
+                ->selectRaw('category, COUNT(*) as count')
+                ->groupBy('category')
+                ->pluck('count', 'category');
+
+            $fixStats = $this->scan->issues()
+                ->selectRaw('
+                    COUNT(*) as total,
+                    COUNT(CASE WHEN fix_method = "manual" THEN 1 END) as resolved_count,
+                    COUNT(CASE WHEN fix_method = "ignored" THEN 1 END) as ignored_count,
+                    COUNT(CASE WHEN fix_method = "false_positive" THEN 1 END) as false_positive_count
+                ')
+                ->first();
+
+            return [
+                'total' => $fixStats->total ?? 0,
+                'by_severity' => $severityStats->toArray(),
+                'by_category' => $categoryStats->toArray(),
+                'resolved_count' => $fixStats->resolved_count ?? 0,
+                'ignored_count' => $fixStats->ignored_count ?? 0,
+                'false_positive_count' => $fixStats->false_positive_count ?? 0,
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting issue stats', [
+                'scanId' => $this->scanId,
+                'error' => $e->getMessage()
+            ]);
+            
             return [
                 'total' => 0,
                 'by_severity' => [],
@@ -609,35 +817,6 @@ class ScanResults extends Component
                 'false_positive_count' => 0,
             ];
         }
-
-        // Use database aggregation instead of loading all issues
-        $severityStats = $this->scan->issues()
-            ->selectRaw('severity, COUNT(*) as count')
-            ->groupBy('severity')
-            ->pluck('count', 'severity');
-
-        $categoryStats = $this->scan->issues()
-            ->selectRaw('category, COUNT(*) as count')
-            ->groupBy('category')
-            ->pluck('count', 'category');
-
-        $fixStats = $this->scan->issues()
-            ->selectRaw('
-                COUNT(*) as total,
-                COUNT(CASE WHEN fix_method = "manual" THEN 1 END) as resolved_count,
-                COUNT(CASE WHEN fix_method = "ignored" THEN 1 END) as ignored_count,
-                COUNT(CASE WHEN fix_method = "false_positive" THEN 1 END) as false_positive_count
-            ')
-            ->first();
-
-        return [
-            'total' => $fixStats->total ?? 0,
-            'by_severity' => $severityStats->toArray(),
-            'by_category' => $categoryStats->toArray(),
-            'resolved_count' => $fixStats->resolved_count ?? 0,
-            'ignored_count' => $fixStats->ignored_count ?? 0,
-            'false_positive_count' => $fixStats->false_positive_count ?? 0,
-        ];
     }
 
     protected function getUniqueFiles()
@@ -707,21 +886,33 @@ class ScanResults extends Component
         $this->resetFileGroupData();
     }
 
+    /**
+     * Watch for filter changes and reload directory tree
+     */
+    public function updatedSelectedSeverity()
+    {
+        $this->currentDirectoryPage = 1;
+        $this->selectedFilePath = null;
+        $this->selectedFileIssues = null;
+        $this->loadPaginatedDirectoryStructure();
+    }
+
+    public function updatedSelectedCategory()
+    {
+        $this->currentDirectoryPage = 1;
+        $this->selectedFilePath = null;
+        $this->selectedFileIssues = null;
+        $this->loadPaginatedDirectoryStructure();
+    }
+
     protected function resetFileGroupData()
     {
-        $this->currentFileGroupPage = 1;
+        // Removed currentFileGroupPage - not needed for two-column view
         $this->allFileGroups = [];
         $this->loadedFileGroups = [];
         $this->expandedFiles = [];
         $this->expandedIssues = [];
         $this->loadingFiles = [];
-    }
-
-    public function setViewMode($mode)
-    {
-        $this->viewMode = $mode;
-        $this->resetPage();
-        $this->resetFileGroupData();
     }
 
     public function hasMoreFileGroups()
@@ -842,42 +1033,36 @@ class ScanResults extends Component
 
     public function selectAllIssues()
     {
-        if ($this->viewMode === 'file-grouped') {
-            // For file-grouped view, we need to get all issue IDs from the database
-            // without loading them all into memory
-            if (!$this->scan) {
-                return;
-            }
-
-            $query = $this->scan->issues();
-            
-            // Apply current filters
-            if ($this->selectedSeverity !== 'all') {
-                $query->where('severity', $this->selectedSeverity);
-            }
-
-            if ($this->selectedCategory !== 'all') {
-                $query->where('category', $this->selectedCategory);
-            }
-
-            if ($this->selectedFile !== 'all') {
-                $query->where('file_path', $this->selectedFile);
-            }
-
-            if ($this->searchTerm) {
-                $query->where(function ($q) {
-                    $q->where('title', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
-                });
-            }
-
-            // Get only IDs to avoid memory issues
-            $this->selectedIssues = $query->pluck('id')->toArray();
-        } else {
-            $issues = $this->getFilteredIssues();
-            $this->selectedIssues = $issues->pluck('id')->toArray();
+        // Simplified for two-column view only
+        if (!$this->scan) {
+            return;
         }
+
+        $query = $this->scan->issues();
+        
+        // Apply current filters
+        if ($this->selectedSeverity !== 'all') {
+            $query->where('severity', $this->selectedSeverity);
+        }
+
+        if ($this->selectedCategory !== 'all') {
+            $query->where('category', $this->selectedCategory);
+        }
+
+        if ($this->selectedFile !== 'all') {
+            $query->where('file_path', $this->selectedFile);
+        }
+
+        if ($this->searchTerm) {
+            $query->where(function ($q) {
+                $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                  ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
+            });
+        }
+
+        // Get all filtered issue IDs
+        $this->selectedIssues = $query->pluck('id')->toArray();
         $this->showBulkActions = !empty($this->selectedIssues);
     }
 
@@ -1080,6 +1265,12 @@ class ScanResults extends Component
     {
         $this->resetPage();
         $this->resetFileGroupData();
+        
+        // For two-column view, also reload directory tree with filters
+        $this->currentDirectoryPage = 1;
+        $this->selectedFilePath = null;
+        $this->selectedFileIssues = null;
+        $this->loadPaginatedDirectoryStructure();
     }
 
     public function getSeverityColor($severity)
@@ -1206,5 +1397,933 @@ class ScanResults extends Component
                     'has_files' => false, // No files loaded in simplified mode
                 ];
             });
+    }
+
+    // Two-Column View Methods
+
+    /**
+     * Load directory tree with files that have issues
+     */
+    protected function loadDirectoryTree()
+    {
+        try {
+            Log::info('loadDirectoryTree called', ['scanId' => $this->scanId, 'scan_exists' => $this->scan ? 'yes' : 'no']);
+            
+            if (!$this->scan) {
+                Log::warning('loadDirectoryTree: No scan available');
+                $this->directoryTree = [];
+                $this->directoryStats = ['affected_files' => 0, 'total_issues' => 0, 'resolved_issues' => 0];
+                return;
+            }
+
+            // Get unique file paths with basic stats including highest severity
+            $files = $this->scan->issues()
+                ->select('file_path')
+                ->selectRaw('COUNT(*) as issues_count')
+                ->selectRaw('SUM(CASE WHEN fixed = 1 THEN 1 ELSE 0 END) as resolved_count')
+                ->selectRaw('MAX(CASE 
+                    WHEN severity = "critical" THEN 5
+                    WHEN severity = "high" THEN 4  
+                    WHEN severity = "medium" THEN 3
+                    WHEN severity = "low" THEN 2
+                    ELSE 1
+                END) as severity_priority')
+                ->groupBy('file_path')
+                ->orderBy('file_path')
+                ->get();
+
+            Log::info('loadDirectoryTree: Raw files loaded', ['files_count' => $files->count()]);
+
+            $filesWithStats = $files->map(function ($item) {
+                $severityMap = [5 => 'critical', 4 => 'high', 3 => 'medium', 2 => 'low', 1 => 'info'];
+                return [
+                    'path' => $item->file_path,
+                    'name' => basename($item->file_path),
+                    'issues_count' => $item->issues_count,
+                    'resolved_count' => $item->resolved_count,
+                    'highest_severity' => $severityMap[$item->severity_priority] ?? 'info',
+                ];
+            });
+
+        } catch (\Exception $e) {
+            Log::error('Error loading directory tree', [
+                'scanId' => $this->scanId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Set safe defaults
+            $this->directoryTree = [];
+            $this->directoryStats = ['affected_files' => 0, 'total_issues' => 0, 'resolved_issues' => 0];
+            return;
+        }
+
+        // Group files by directory
+        $tree = [];
+        $totalFiles = 0;
+        $totalIssues = 0;
+        $totalResolved = 0;
+
+        foreach ($filesWithStats as $file) {
+            $directory = dirname($file['path']);
+            if ($directory === '.') {
+                $directory = '';
+            }
+
+            if (!isset($tree[$directory])) {
+                $tree[$directory] = [];
+            }
+
+            $tree[$directory][] = $file;
+            $totalFiles++;
+            $totalIssues += $file['issues_count'];
+            $totalResolved += $file['resolved_count'];
+        }
+
+        // Sort directories: root first, then alphabetically
+        uksort($tree, function ($a, $b) {
+            if ($a === '') return -1;
+            if ($b === '') return 1;
+            return strcmp($a, $b);
+        });
+
+        $this->directoryTree = $tree;
+        $this->directoryStats = [
+            'affected_files' => $totalFiles,
+            'total_issues' => $totalIssues,
+            'resolved_issues' => $totalResolved,
+        ];
+
+        Log::info('loadDirectoryTree completed', [
+            'directoryTree_count' => count($tree),
+            'directoryStats' => $this->directoryStats
+        ]);
+
+        // Only set initial expanded directories if none are set yet (first load)
+        // Don't override user's manual toggles
+        if (empty($this->expandedDirectories)) {
+            Log::info('Initializing expandedDirectories - expanding all directories for better UX');
+            
+            if ($this->selectedFilePath) {
+                // Expand the directory containing the selected file
+                $selectedDirectory = dirname($this->selectedFilePath);
+                if ($selectedDirectory === '.') {
+                    $selectedDirectory = '';
+                }
+                $this->expandedDirectories = [$selectedDirectory];
+            } else {
+                // On first load, expand all directories for better UX
+                $this->expandedDirectories = array_keys($tree);
+            }
+        }
+    }
+
+    /**
+     * Load issues for the selected file
+     */
+    protected function loadSelectedFileIssues()
+    {
+        if (!$this->selectedFilePath || !$this->scan) {
+            Log::info('loadSelectedFileIssues - early return', [
+                'selectedFilePath' => $this->selectedFilePath,
+                'scan_exists' => $this->scan ? 'yes' : 'no'
+            ]);
+            $this->selectedFileIssues = collect();
+            $this->selectedFileStats = null;
+            return;
+        }
+
+        try {
+            Log::info('loadSelectedFileIssues starting', [
+                'selectedFilePath' => $this->selectedFilePath,
+                'scanId' => $this->scanId
+            ]);
+
+            $query = $this->scan->issues()->where('file_path', $this->selectedFilePath);
+
+            // Apply filters
+            if ($this->selectedSeverity !== 'all') {
+                $query->where('severity', $this->selectedSeverity);
+            }
+
+            if ($this->selectedCategory !== 'all') {
+                $query->where('category', $this->selectedCategory);
+            }
+
+            if ($this->searchTerm) {
+                $query->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $this->searchTerm . '%');
+                });
+            }
+
+            $issues = $query->orderByRaw('
+                CASE 
+                    WHEN severity = "critical" THEN 5
+                    WHEN severity = "high" THEN 4
+                    WHEN severity = "medium" THEN 3
+                    WHEN severity = "low" THEN 2
+                    ELSE 1
+                END DESC
+            ')
+            ->orderBy('line_number')
+            ->get();
+
+            Log::info('loadSelectedFileIssues - loaded raw issues', [
+                'count' => $issues->count()
+            ]);
+
+            // Calculate total pages for pagination
+            $totalIssues = $issues->count();
+            $this->totalIssuePages = max(1, ceil($totalIssues / $this->issuesPerPage));
+            
+            // Ensure current page is valid
+            if ($this->currentIssuePage > $this->totalIssuePages) {
+                $this->currentIssuePage = 1;
+            }
+
+            // Group issues first, then paginate the groups
+            $groupedIssues = $issues->groupBy(function ($issue) {
+                return $issue->title . '|' . $issue->category . '|' . $issue->severity;
+            })->map(function ($group) {
+                $first = $group->first();
+                return [
+                    'title' => $first->title,
+                    'description' => $first->description,
+                    'category' => $first->category,
+                    'severity_name' => $first->severity,
+                    'rule_id' => $first->rule_id,
+                    'suggestion' => $first->suggestion,
+                    'total_occurrences' => $group->count(),
+                    'resolved_occurrences' => $group->where('fixed', true)->count(),
+                    'instances' => $group->take($this->maxInstancesPerIssue)->map(function ($issue) {
+                        return [
+                            'id' => $issue->id,
+                            'line_number' => $issue->line_number,
+                            'column_number' => $issue->column_number,
+                            'code_snippet' => $this->extractCodeSnippet($issue),
+                            'fixed' => $issue->fixed,
+                            'fix_method' => $issue->fix_method,
+                            'fixed_at' => $issue->fixed_at,
+                        ];
+                    })->values()->all(),
+                ];
+            })->values();
+
+            Log::info('loadSelectedFileIssues - grouped issues', [
+                'groups_count' => $groupedIssues->count(),
+                'totalIssuePages' => $this->totalIssuePages,
+                'currentIssuePage' => $this->currentIssuePage
+            ]);
+
+            // Apply pagination to groups (limit to issuesPerPage groups)
+            $offset = ($this->currentIssuePage - 1) * $this->issuesPerPage;
+            $paginatedGroups = $groupedIssues->slice($offset, $this->issuesPerPage)->values();
+
+            $this->selectedFileIssues = $paginatedGroups;
+            
+            // Calculate file stats
+            $this->selectedFileStats = [
+                'total_issues' => $issues->count(),
+                'resolved_issues' => $issues->where('fixed', true)->count(),
+                'pending_issues' => $issues->where('fixed', false)->count(),
+                'highest_severity' => $issues->min(function ($issue) {
+                    return match($issue->severity) {
+                        'critical' => 1,
+                        'high' => 2,
+                        'medium' => 3,
+                        'low' => 4,
+                        default => 5
+                    };
+                }),
+            ];
+
+            Log::info('loadSelectedFileIssues completed', [
+                'selectedFileIssues_count' => $this->selectedFileIssues->count(),
+                'selectedFileStats' => $this->selectedFileStats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in loadSelectedFileIssues', [
+                'selectedFilePath' => $this->selectedFilePath,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Set safe defaults
+            $this->selectedFileIssues = collect();
+            $this->selectedFileStats = [
+                'total_issues' => 0,
+                'resolved_issues' => 0,
+                'pending_issues' => 0,
+                'highest_severity' => null,
+            ];
+        }
+    }
+
+    /**
+     * Simple test method to verify Livewire connectivity
+     */
+    public function testConnection()
+    {
+        try {
+            Log::info('testConnection method called - Livewire is working!', [
+                'component_id' => $this->getId(),
+                'scanId' => $this->scanId,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+            // Don't modify any properties that would trigger DOM updates
+            // Just log and return success
+            
+            return 'Test completed successfully';
+        } catch (\Exception $e) {
+            Log::error('testConnection failed', [
+                'error' => $e->getMessage(),
+                'component_id' => $this->getId()
+            ]);
+            return 'Test failed: ' . $e->getMessage();
+        }
+    }
+
+    /**
+     * Safe test method that only logs
+     */
+    public function safeTest()
+    {
+        Log::info('safeTest method called', [
+            'component_id' => $this->getId(),
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
+        return 'Safe test completed';
+    }
+
+    /**
+     * Refresh data method to reload component data after dehydration
+     */
+    public function refreshData()
+    {
+        Log::info('refreshData method called', ['component_id' => $this->getId()]);
+        
+        if ($this->scanId) {
+            // Reload the scan data
+            $this->loadScan($this->scanId);
+            Log::info('Data refreshed successfully');
+        } else {
+            Log::warning('No scanId available for refresh');
+        }
+    }
+
+    /**
+     * Reset component state completely
+     */
+    public function resetComponent()
+    {
+        Log::info('resetComponent method called', ['component_id' => $this->getId()]);
+        
+        // Clear all data structures
+        $this->allFileGroups = [];
+        $this->loadedFileGroups = [];
+        $this->directoryTree = [];
+        $this->expandedDirectories = [];
+        $this->directoryStats = [];
+        $this->selectedIssues = [];
+        $this->loadingFiles = [];
+        $this->expandedFiles = [];
+        $this->expandedIssues = [];
+        $this->selectedFileIssues = null;
+        $this->selectedFileStats = null;
+        $this->selectedFilePath = null;
+        
+        // Reset pagination
+        // Removed currentFileGroupPage - not needed for two-column view
+        $this->currentIssuePage = 1;
+        $this->totalIssuePages = 1;
+        
+        // Reload if scanId is available
+        if ($this->scanId) {
+            $this->loadScan($this->scanId);
+        }
+        
+        Log::info('Component reset completed');
+    }
+
+    /**
+     * Toggle directory expansion by index (alternative method)
+     */
+    public function toggleDirectoryByIndex($index)
+    {
+        try {
+            Log::info('toggleDirectoryByIndex called with index: ' . $index);
+            
+            if (!is_array($this->directoryTree) || empty($this->directoryTree)) {
+                Log::warning('Directory tree is empty or not loaded');
+                return;
+            }
+            
+            $directories = array_keys($this->directoryTree);
+            if (!isset($directories[$index])) {
+                Log::error('Invalid directory index: ' . $index . ', available: ' . count($directories));
+                return;
+            }
+            
+            $directory = $directories[$index];
+            Log::info('Directory resolved to: ' . $directory);
+            
+            // Call the original method
+            $this->toggleDirectory($directory);
+            
+        } catch (\Exception $e) {
+            Log::error('Error in toggleDirectoryByIndex: ' . $e->getMessage(), [
+                'index' => $index,
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    /**
+     * Toggle directory expansion
+     */
+    public function toggleDirectory($directory)
+    {
+        Log::info('toggleDirectory called', ['directory' => basename($directory)]);
+        
+        // Ensure directory is a string
+        if (!is_string($directory)) {
+            Log::warning('toggleDirectory: directory is not a string', ['directory' => $directory, 'type' => gettype($directory)]);
+            return;
+        }
+        
+        // Ensure expandedDirectories is an array
+        if (!is_array($this->expandedDirectories)) {
+            Log::warning('toggleDirectory: expandedDirectories is not an array, resetting', ['type' => gettype($this->expandedDirectories)]);
+            $this->expandedDirectories = [];
+        }
+        
+        $wasExpanded = in_array($directory, $this->expandedDirectories);
+        
+        if ($wasExpanded) {
+            // Remove the directory - use array_filter to remove all instances
+            $this->expandedDirectories = array_values(array_filter($this->expandedDirectories, function ($dir) use ($directory) {
+                return $dir !== $directory;
+            }));
+        } else {
+            // Add the directory - ensure no duplicates
+            if (!in_array($directory, $this->expandedDirectories)) {
+                $this->expandedDirectories[] = $directory;
+            }
+        }
+        
+        Log::info('toggleDirectory completed', [
+            'directory' => basename($directory),
+            'action' => $wasExpanded ? 'collapsed' : 'expanded'
+        ]);
+        
+        // Force Livewire to detect the change by calling a method that triggers reactivity
+        $this->dispatch('directory-toggled', ['directory' => $directory, 'expanded' => !$wasExpanded]);
+    }
+
+    /**
+     * Select a file to view its issues
+     */
+    public function selectFile($filePath)
+    {
+        try {
+            Log::info('selectFile called', [
+                'filePath' => $filePath,
+                'component_id' => $this->getId()
+            ]);
+            
+            $this->fileLoading = true;
+            $this->selectedFilePath = $filePath;
+            $this->currentIssuePage = 1; // Reset to first page when selecting new file
+            
+            // Ensure the directory of the selected file is expanded (but don't collapse others)
+            $selectedDirectory = dirname($filePath);
+            if ($selectedDirectory === '.') {
+                $selectedDirectory = '';
+            }
+            
+            // Only add the directory if it's not already expanded
+            $directoryAlreadyExpanded = in_array($selectedDirectory, $this->expandedDirectories);
+            if (!$directoryAlreadyExpanded) {
+                $this->expandedDirectories[] = $selectedDirectory;
+            }
+            
+            Log::info('selectFile - about to load issues', [
+                'filePath' => $filePath,
+                'selectedDirectory' => $selectedDirectory,
+                'expandedDirectories' => $this->expandedDirectories,
+                'directory_was_added' => !$directoryAlreadyExpanded
+            ]);
+            
+            // Load issues for this specific file
+            $this->loadSelectedFileIssues();
+            
+            $this->fileLoading = false;
+            
+            Log::info('selectFile completed successfully', [
+                'filePath' => $filePath,
+                'issues_count' => $this->selectedFileIssues ? $this->selectedFileIssues->count() : 0,
+                'file_stats' => $this->selectedFileStats
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->fileLoading = false;
+            Log::error('Error in selectFile', [
+                'filePath' => $filePath,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Set some default values to prevent Blade template errors
+            $this->selectedFileIssues = collect();
+            $this->selectedFileStats = ['total_issues' => 0, 'resolved_issues' => 0];
+            
+            // Optionally, dispatch an error event to the frontend
+            $this->dispatch('file-selection-error', ['message' => 'Failed to load file: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Navigate to next page of issues
+     */
+    public function nextIssuePage()
+    {
+        if ($this->currentIssuePage < $this->totalIssuePages) {
+            $this->currentIssuePage++;
+            $this->loadSelectedFileIssues();
+        }
+    }
+
+    /**
+     * Navigate to previous page of issues  
+     */
+    public function previousIssuePage()
+    {
+        if ($this->currentIssuePage > 1) {
+            $this->currentIssuePage--;
+            $this->loadSelectedFileIssues();
+        }
+    }
+
+    /**
+     * Go to specific page of issues
+     */
+    public function goToIssuePage($page)
+    {
+        if ($page >= 1 && $page <= $this->totalIssuePages) {
+            $this->currentIssuePage = $page;
+            $this->loadSelectedFileIssues();
+        }
+    }
+
+    /**
+     * Check if a directory is expanded
+     */
+    public function isDirectoryExpanded($directory)
+    {
+        return in_array($directory, $this->expandedDirectories);
+    }
+
+    /**
+     * Initialize two-column view with directory tree and auto-select first file
+     */
+    protected function initializeTwoColumnView()
+    {
+        if (!$this->scan) {
+            return;
+        }
+
+        $this->loadDirectoryTree();
+        
+        // Auto-select first file if none selected and we have files
+        if (!$this->selectedFilePath && !empty($this->directoryTree)) {
+            foreach ($this->directoryTree as $files) {
+                if (!empty($files)) {
+                    $this->selectFile($files[0]['path']);
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Initialize two-column view with lazy loading approach
+     */
+    protected function initializeLazyTwoColumnView()
+    {
+        if (!$this->scan) {
+            return;
+        }
+
+        // Only load basic directory structure, no file issues
+        $this->initialLoadComplete = false;
+        $this->currentDirectoryPage = 1;
+        $this->directoryFilePage = [];
+        
+        Log::info('Lazy two-column view initialized');
+    }
+
+    /**
+     * Load paginated directory structure without file issues
+     */
+    protected function loadPaginatedDirectoryStructure()
+    {
+        if (!$this->scan) {
+            Log::warning('No scan found in loadPaginatedDirectoryStructure');
+            $this->paginatedDirectoryTree = [];
+            return;
+        }
+
+        try {
+            Log::info('Starting paginated directory structure load', [
+                'scan_id' => $this->scan->id,
+                'current_page' => $this->currentDirectoryPage,
+                'per_page' => $this->directoriesPerPage
+            ]);
+
+            // Get all directories with files that have issues (with filters applied)
+            $issuesQuery = $this->scan->issues()->select('file_path')->distinct();
+            
+            // Apply filters to directory loading
+            if ($this->selectedSeverity !== 'all') {
+                $issuesQuery->where('severity', $this->selectedSeverity);
+            }
+            
+            if ($this->selectedCategory !== 'all') {
+                $issuesQuery->where('category', $this->selectedCategory);
+            }
+            
+            if ($this->searchTerm) {
+                $issuesQuery->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('file_path', 'like', '%' . $this->searchTerm . '%');
+                });
+            }
+            
+            $issuesCount = $issuesQuery->count();
+            
+            Log::info('Issues query result', ['count' => $issuesCount]);
+            
+            if ($issuesCount === 0) {
+                Log::info('No issues found for scan', ['scan_id' => $this->scan->id]);
+                $this->paginatedDirectoryTree = [];
+                $this->totalDirectoryPages = 1;
+                return;
+            }
+
+            $directories = $issuesQuery->get()
+                ->map(function ($issue) {
+                    return dirname($issue->file_path);
+                })
+                ->unique()
+                ->sort()
+                ->values();
+
+            Log::info('Directories found', ['count' => $directories->count()]);
+            Log::info('Sample directories', ['directories' => $directories->take(5)->toArray()]);
+            
+            // Log some sample file paths to understand the structure
+            $sampleFiles = $this->scan->issues()->take(5)->pluck('file_path');
+            Log::info('Sample file paths', ['file_paths' => $sampleFiles->toArray()]);
+
+            // Calculate pagination
+            $this->totalDirectoryPages = max(1, ceil($directories->count() / $this->directoriesPerPage));
+            $offset = ($this->currentDirectoryPage - 1) * $this->directoriesPerPage;
+            
+            $paginatedDirs = $directories->slice($offset, $this->directoriesPerPage);
+            
+            // Build directory tree with file counts (but no actual issues)
+            $this->paginatedDirectoryTree = [];
+            
+            foreach ($paginatedDirs as $directory) {
+                // Get files in this directory with issue counts
+                $files = $this->scan->issues()
+                    ->where('file_path', 'LIKE', $directory . '/%')
+                    ->where('file_path', 'NOT LIKE', $directory . '/%/%') // Only direct children
+                    ->select('file_path')
+                    ->selectRaw('COUNT(*) as issues_count')
+                    ->selectRaw('COUNT(CASE WHEN fixed_at IS NOT NULL THEN 1 END) as resolved_count')
+                    ->selectRaw('MAX(CASE 
+                        WHEN severity = "critical" THEN 1
+                        WHEN severity = "high" THEN 2  
+                        WHEN severity = "medium" THEN 3
+                        WHEN severity = "low" THEN 4
+                        WHEN severity = "info" THEN 5
+                        ELSE 6 
+                    END) as severity_order')
+                    ->groupBy('file_path')
+                    ->orderBy('severity_order')
+                    ->orderBy('file_path')
+                    ->get();
+
+                if ($files->isNotEmpty()) {
+                    // Paginate files within directory
+                    $currentPage = $this->directoryFilePage[$directory] ?? 1;
+                    $offset = ($currentPage - 1) * $this->filesPerDirectoryPage;
+                    $paginatedFiles = $files->slice($offset, $this->filesPerDirectoryPage);
+                    
+                    $this->paginatedDirectoryTree[$directory] = $paginatedFiles->map(function ($file) {
+                        return [
+                            'path' => $file->file_path,
+                            'name' => basename($file->file_path),
+                            'issues_count' => $file->issues_count,
+                            'resolved_count' => $file->resolved_count,
+                            'highest_severity' => $this->mapSeverityOrder($file->severity_order),
+                        ];
+                    })->toArray();
+                }
+            }
+
+            Log::info('Paginated directory structure loaded successfully', [
+                'total_directories' => $directories->count(),
+                'current_page' => $this->currentDirectoryPage,
+                'total_pages' => $this->totalDirectoryPages,
+                'paginated_directories' => count($this->paginatedDirectoryTree),
+            ]);
+
+            // Calculate directory stats for the header
+            $this->calculateDirectoryStats();
+
+        } catch (\Exception $e) {
+            Log::error('Error loading paginated directory structure', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'scan_id' => $this->scan ? $this->scan->id : null
+            ]);
+            $this->paginatedDirectoryTree = [];
+            throw $e; // Re-throw so the fallback mechanism can catch it
+        }
+    }
+
+    /**
+     * Map severity order number back to severity name
+     */
+    private function mapSeverityOrder($order)
+    {
+        switch ($order) {
+            case 1: return 'critical';
+            case 2: return 'high';
+            case 3: return 'medium';
+            case 4: return 'low';
+            case 5: return 'info';
+            default: return 'info';
+        }
+    }
+
+    /**
+     * Navigate to next directory page
+     */
+    public function nextDirectoryPage()
+    {
+        if ($this->currentDirectoryPage < $this->totalDirectoryPages) {
+            $this->currentDirectoryPage++;
+            $this->initialLoadComplete = false; // Force reload
+        }
+    }
+
+    /**
+     * Navigate to previous directory page
+     */
+    public function previousDirectoryPage()
+    {
+        if ($this->currentDirectoryPage > 1) {
+            $this->currentDirectoryPage--;
+            $this->initialLoadComplete = false; // Force reload
+        }
+    }
+
+    /**
+     * Go to specific directory page
+     */
+    public function goToDirectoryPage($page)
+    {
+        if ($page >= 1 && $page <= $this->totalDirectoryPages) {
+            $this->currentDirectoryPage = $page;
+            $this->initialLoadComplete = false; // Force reload
+        }
+    }
+
+    /**
+     * Navigate files within a directory
+     */
+    public function nextDirectoryFilePage($directory)
+    {
+        $this->directoryFilePage[$directory] = ($this->directoryFilePage[$directory] ?? 1) + 1;
+        $this->initialLoadComplete = false; // Force reload
+    }
+
+    /**
+     * Get a user-friendly directory display name
+     */
+    public function getDirectoryDisplayName($directory)
+    {
+        if (empty($directory) || $directory === '.' || $directory === '/') {
+            return 'Root';
+        }
+        
+        // Clean up the directory path
+        $directory = rtrim($directory, '/\\');
+        
+        // Split by both forward and backward slashes to handle different OS paths
+        $segments = array_filter(preg_split('/[\/\\\\]/', $directory), function($segment) {
+            return $segment !== '';
+        });
+        
+        if (empty($segments)) {
+            return 'Root';
+        }
+        
+        // For very long paths, show the last 2-3 directory segments
+        if (count($segments) > 3) {
+            $lastSegments = array_slice($segments, -2);
+            $result = '.../' . implode('/', $lastSegments);
+            return $result;
+        }
+        
+        // Get the last segment (directory name)
+        $result = end($segments);
+        
+        // If result is empty, return a fallback
+        if (empty($result)) {
+            return 'Root';
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Get a display-friendly title for the scan
+     */
+    public function getScanDisplayTitle()
+    {
+        if (!$this->scan) {
+            return 'Scan Results';
+        }
+
+        // If we have specific paths scanned
+        if ($this->scan->paths_scanned && is_array($this->scan->paths_scanned) && count($this->scan->paths_scanned) > 0) {
+            $paths = $this->scan->paths_scanned;
+            
+            // If only one path, use its directory name
+            if (count($paths) === 1) {
+                $path = $paths[0];
+                $dirName = basename(rtrim($path, '/'));
+                return $dirName ? ucfirst($dirName) . ' Scan Results' : 'Codebase Scan Results';
+            }
+            
+            // Multiple paths - use generic title
+            return 'Multi-Directory Scan Results';
+        }
+        
+        // Try to use target field
+        if ($this->scan->target) {
+            $dirName = basename(rtrim($this->scan->target, '/'));
+            return $dirName ? ucfirst($dirName) . ' Scan Results' : 'Codebase Scan Results';
+        }
+        
+        // Fallback
+        return 'Codebase Scan Results';
+    }
+
+    /**
+     * Extract code snippet from issue context
+     */
+    private function extractCodeSnippet($issue)
+    {
+        // Try to get code from context
+        if (is_array($issue->context) && isset($issue->context['code'])) {
+            $code = $issue->context['code'];
+            
+            // If code is an array of lines, convert it to the format expected by template
+            if (is_array($code)) {
+                $result = [];
+                $startLine = max(1, $issue->line_number - floor(count($code) / 2));
+                
+                foreach ($code as $index => $line) {
+                    $lineNumber = $startLine + $index;
+                    $result[] = [
+                        'number' => $lineNumber,
+                        'content' => $line,
+                        'is_target' => $lineNumber === $issue->line_number,
+                    ];
+                }
+                
+                return $result;
+            } else if (is_string($code)) {
+                return $code;
+            }
+        }
+        
+        // Fallback: try to read the actual file
+        if (file_exists($issue->file_path)) {
+            try {
+                $fileLines = file($issue->file_path, FILE_IGNORE_NEW_LINES);
+                $lineNumber = $issue->line_number;
+                $contextLines = 3; // Show 3 lines before and after
+                
+                $start = max(0, $lineNumber - $contextLines - 1);
+                $end = min(count($fileLines), $lineNumber + $contextLines);
+                
+                $result = [];
+                for ($i = $start; $i < $end; $i++) {
+                    $result[] = [
+                        'number' => $i + 1,
+                        'content' => $fileLines[$i] ?? '',
+                        'is_target' => ($i + 1) === $lineNumber,
+                    ];
+                }
+                
+                return $result;
+            } catch (\Exception $e) {
+                Log::warning('Could not read file for code snippet', [
+                    'file_path' => $issue->file_path,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        return "// Code not available - file may have been moved or deleted";
+    }
+
+    /**
+     * Calculate overall directory statistics for the current paginated view
+     */
+    private function calculateDirectoryStats()
+    {
+        if (!$this->scan) {
+            $this->directoryStats = ['affected_files' => 0, 'total_issues' => 0, 'resolved_issues' => 0];
+            return;
+        }
+
+        // Count all unique files that have issues
+        $affectedFiles = $this->scan->issues()->distinct('file_path')->count();
+        
+        // Count total issues
+        $totalIssues = $this->scan->issues()->count();
+        
+        // Count resolved issues
+        $resolvedIssues = $this->scan->issues()->whereNotNull('fixed_at')->count();
+
+        $this->directoryStats = [
+            'affected_files' => $affectedFiles,
+            'total_issues' => $totalIssues,
+            'resolved_issues' => $resolvedIssues,
+        ];
+    }
+
+    /**
+     * Navigate files within a directory (previous)
+     */
+    public function previousDirectoryFilePage($directory)
+    {
+        $currentPage = $this->directoryFilePage[$directory] ?? 1;
+        if ($currentPage > 1) {
+            $this->directoryFilePage[$directory] = $currentPage - 1;
+            $this->initialLoadComplete = false; // Force reload
+        }
     }
 }

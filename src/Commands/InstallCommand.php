@@ -83,13 +83,81 @@ class InstallCommand extends Command
 
         $force = $this->option('force');
 
-        $this->call('vendor:publish', [
-            '--provider' => 'Rafaelogic\CodeSnoutr\CodeSnoutrServiceProvider',
-            '--tag' => 'codesnoutr-assets',
-            '--force' => $force,
-        ]);
+        try {
+            // Try publishing assets first
+            $exitCode = $this->call('vendor:publish', [
+                '--provider' => 'Rafaelogic\CodeSnoutr\CodeSnoutrServiceProvider',
+                '--tag' => 'codesnoutr-assets',
+                '--force' => $force,
+            ]);
 
-        $this->info('✓ Assets published');
+            if ($exitCode !== 0) {
+                $this->warn('Asset publishing via tag failed, trying with provider only...');
+                
+                // Fallback: publish all from provider
+                $this->call('vendor:publish', [
+                    '--provider' => 'Rafaelogic\CodeSnoutr\CodeSnoutrServiceProvider',
+                    '--force' => $force,
+                ]);
+            }
+
+            // Verify assets were published
+            $assetsPublished = File::exists(public_path('vendor/codesnoutr/css/codesnoutr.css'));
+            
+            if (!$assetsPublished) {
+                $this->warn('Assets may not have been published correctly. Trying alternative method...');
+                
+                // Manual asset copying as fallback
+                $this->copyAssetsManually();
+            }
+
+            $this->info('✓ Assets published');
+
+        } catch (\Exception $e) {
+            $this->warn('Asset publishing failed: ' . $e->getMessage());
+            $this->warn('Attempting manual asset copying...');
+            
+            $this->copyAssetsManually();
+        }
+    }
+
+    /**
+     * Manually copy assets if publishing fails
+     */
+    protected function copyAssetsManually(): void
+    {
+        $packagePath = base_path('vendor/rafaelogic/codesnoutr');
+        
+        if (!File::exists($packagePath)) {
+            throw new \Exception('Package not found in vendor directory. Please run "composer install".');
+        }
+
+        // Create target directories
+        $publicDir = public_path('vendor/codesnoutr');
+        File::makeDirectory($publicDir . '/css', 0755, true);
+        File::makeDirectory($publicDir . '/js', 0755, true);
+        File::makeDirectory($publicDir . '/images', 0755, true);
+
+        // Copy asset files
+        $assetFiles = [
+            'resources/css/codesnoutr.css' => 'css/codesnoutr.css',
+            'resources/js/codesnoutr.js' => 'js/codesnoutr.js',
+            'resources/images/codesnoutr-icon.svg' => 'images/codesnoutr-icon.svg',
+        ];
+
+        foreach ($assetFiles as $source => $target) {
+            $sourcePath = $packagePath . '/' . $source;
+            $targetPath = $publicDir . '/' . $target;
+
+            if (File::exists($sourcePath)) {
+                File::copy($sourcePath, $targetPath);
+                $this->info("✓ Copied {$target}");
+            } else {
+                $this->warn("⚠ Source file not found: {$source}");
+            }
+        }
+
+        $this->info('✓ Manual asset copying completed');
     }
 
     /**
