@@ -8,6 +8,21 @@
 
 🚀 **Production Ready** - A comprehensive Laravel code scanner that detects security vulnerabilities, performance issues, and code quality problems with a modern web interface and AI-ready architecture.
 
+## 📚 Table of Contents
+
+- [✨ Features](#-features)
+- [📋 Requirements](#-requirements)
+- [🚀 Installation](#-installation)
+- [⚡ Quick Start](#-quick-start)
+- [⚙️ Configuration](#%EF%B8%8F-configuration)
+- [🔍 Scanning Categories](#-scanning-categories)
+- [🤖 AI Integration](#-ai-integration-ready-for-implementation)
+- [📈 Current Status](#-current-status)
+- [📁 Package Structure](#-package-structure)
+- [🤝 Contributing](#-contributing)
+- [🔒 Security](#-security)
+- [📄 License](#-license)
+
 ## ✨ Features
 
 🔍 **Comprehensive Scanning**
@@ -64,26 +79,344 @@
 
 ## 🚀 Installation
 
-Install the package via Composer:
+### Prerequisites
+
+Before installing CodeSnoutr, ensure your system meets these requirements:
+
+- **PHP**: 8.1 or higher with the following extensions:
+  - `mbstring`, `curl`, `xml`, `zip`, `bcmath`, `tokenizer`
+- **Laravel**: 10.0, 11.0, or 12.0
+- **Database**: MySQL 5.7+, PostgreSQL 10+, or SQLite 3.8+
+- **Composer**: Latest version recommended
+- **Frontend**: Modern browser with JavaScript enabled
+
+### Step 1: Install via Composer
+
+Install the package using Composer:
 
 ```bash
 composer require rafaelogic/codesnoutr
 ```
 
-Run the installation command:
+### Step 2: Run Installation Command
+
+Execute the installation command to set up CodeSnoutr:
 
 ```bash
 php artisan codesnoutr:install
 ```
 
-This will:
-- Publish configuration files to `config/codesnoutr.php`
-- Run database migrations for scans, issues, and settings tables
-- Publish assets (CSS, JS) to your public directory
-- Set up default configuration options
-- Guide you through initial setup
+This interactive installation will:
+
+1. **Publish Configuration**: Creates `config/codesnoutr.php` with default settings
+2. **Run Migrations**: Sets up database tables for scans, issues, and settings
+3. **Publish Assets**: Copies CSS and JavaScript files to `public/vendor/codesnoutr/`
+4. **Create Directories**: Sets up necessary storage directories
+5. **Configure Routes**: Registers web and API routes
+6. **Set Permissions**: Ensures proper file permissions
+
+### Step 3: Configure Environment (Optional)
+
+Add CodeSnoutr-specific environment variables to your `.env` file:
+
+```env
+# Basic Configuration
+CODESNOUTR_ENABLED=true
+
+# Queue Management (Recommended for Better Performance)
+CODESNOUTR_QUEUE_ENABLED=true
+CODESNOUTR_QUEUE_CONNECTION=database
+CODESNOUTR_QUEUE_AUTO_START=true
+
+# AI Integration (Optional)
+CODESNOUTR_AI_ENABLED=false
+OPENAI_API_KEY=your_openai_api_key_here
+CODESNOUTR_AI_MODEL=gpt-4
+
+# Security & Access
+CODESNOUTR_ACCESS_MIDDLEWARE=web
+```
+
+### Step 4: Configure Queue Worker (Recommended)
+
+For optimal performance, set up a queue worker. CodeSnoutr can auto-manage queues, but manual setup provides better control:
+
+```bash
+# Start a dedicated queue worker
+php artisan queue:work --queue=codesnoutr --timeout=300
+
+# Or use Supervisor for production (create /etc/supervisor/conf.d/codesnoutr.conf)
+[program:codesnoutr-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --max-time=3600 --queue=codesnoutr
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/path/to/your/app/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+### Step 5: Access the Dashboard
+
+Navigate to the CodeSnoutr dashboard:
+
+```
+http://your-app.com/codesnoutr
+```
+
+You should see:
+- ✅ Dashboard with welcome message
+- ✅ Navigation menu with all sections
+- ✅ Dark/light mode toggle
+- ✅ Ready-to-use scanning interface
+
+### Troubleshooting Installation
+
+#### Permission Issues
+```bash
+# Fix storage permissions
+chmod -R 755 storage/
+chown -R www-data:www-data storage/
+
+# Fix published assets permissions
+chmod -R 755 public/vendor/codesnoutr/
+```
+
+#### Database Issues
+```bash
+# Re-run migrations if needed
+php artisan migrate:refresh
+
+# Check database connection
+php artisan tinker
+>>> \DB::connection()->getPdo()
+```
+
+#### Asset Publishing Issues
+```bash
+# Force republish assets
+php artisan vendor:publish --tag=codesnoutr-assets --force
+
+# Clear and rebuild cache
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+```
+
+#### Queue Worker Issues
+```bash
+# Check queue status
+php artisan queue:status
+
+# Restart queue workers
+php artisan queue:restart
+
+# Test queue functionality
+php artisan queue:work --once
+```
+
+### Manual Installation (Advanced)
+
+If you prefer manual installation or need custom configuration:
+
+#### 1. Publish Components Individually
+
+```bash
+# Publish configuration only
+php artisan vendor:publish --tag=codesnoutr-config
+
+# Publish assets only
+php artisan vendor:publish --tag=codesnoutr-assets
+
+# Publish migrations only
+php artisan vendor:publish --tag=codesnoutr-migrations
+
+# Publish all at once
+php artisan vendor:publish --provider="Rafaelogic\CodeSnoutr\CodeSnoutrServiceProvider"
+```
+
+#### 2. Run Migrations Manually
+
+```bash
+php artisan migrate
+```
+
+#### 3. Configure Custom Routes (Optional)
+
+If you want to customize routes, add to your `routes/web.php`:
+
+```php
+Route::group(['prefix' => 'code-scanner', 'middleware' => ['web', 'auth']], function () {
+    require base_path('vendor/rafaelogic/codesnoutr/routes/web.php');
+});
+```
+
+### Updating CodeSnoutr
+
+When updating to a new version:
+
+```bash
+# Update the package
+composer update rafaelogic/codesnoutr
+
+# Republish assets and config
+php artisan vendor:publish --tag=codesnoutr-assets --force
+php artisan vendor:publish --tag=codesnoutr-config --force
+
+# Run any new migrations
+php artisan migrate
+
+# Clear caches
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+```
+
+### Uninstallation
+
+To completely remove CodeSnoutr:
+
+```bash
+# Remove the package
+composer remove rafaelogic/codesnoutr
+
+# Remove database tables (optional)
+php artisan migrate:rollback --path=database/migrations/codesnoutr
+
+# Remove published files (optional)
+rm -rf config/codesnoutr.php
+rm -rf public/vendor/codesnoutr/
+
+# Clear caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+### Docker Installation
+
+For Docker environments, add to your `Dockerfile`:
+
+```dockerfile
+# Install CodeSnoutr
+RUN composer require rafaelogic/codesnoutr
+
+# Install and configure
+RUN php artisan codesnoutr:install --no-interaction
+
+# Set up queue worker (add to supervisord.conf)
+COPY docker/supervisord/codesnoutr.conf /etc/supervisor/conf.d/
+```
+
+### Production Deployment
+
+For production environments:
+
+1. **Optimize Performance**:
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+```
+
+2. **Set Up Monitoring**:
+```bash
+# Monitor queue workers
+php artisan horizon  # If using Laravel Horizon
+```
+
+3. **Configure Logging**:
+```php
+// In config/logging.php
+'channels' => [
+    'codesnoutr' => [
+        'driver' => 'daily',
+        'path' => storage_path('logs/codesnoutr.log'),
+        'level' => 'info',
+        'days' => 7,
+    ],
+],
+```
+
+4. **Set Up Scheduled Tasks** (Optional):
+```php
+// In app/Console/Kernel.php
+protected function schedule(Schedule $schedule)
+{
+    // Schedule periodic scans
+    $schedule->command('codesnoutr:scan codebase --save')
+             ->daily()
+             ->withoutOverlapping();
+}
+```
 
 ## ⚡ Quick Start
+
+### 🚀 First Scan in 30 Seconds
+
+After installation, get your first scan results immediately:
+
+```bash
+# Scan a single file for quick testing
+php artisan codesnoutr:scan file app/Models/User.php
+
+# Or scan your entire application
+php artisan codesnoutr:scan codebase --save
+```
+
+### 🌐 Web Interface Walkthrough
+
+1. **Open the Dashboard**: Visit `http://your-app.com/codesnoutr`
+
+2. **Start Your First Scan**:
+   - Click "New Scan" or "Scan Wizard"
+   - Choose scan type: File, Directory, or Full Codebase
+   - Select categories: Security, Performance, Quality, Laravel
+   - Click "Start Scan"
+
+3. **View Results**:
+   - Real-time progress updates during scanning
+   - Automatic redirect to results when complete
+   - Filter by severity: Critical, High, Medium, Low, Info
+   - Expand issue groups for detailed analysis
+
+4. **Explore Features**:
+   - **Dark Mode**: Toggle in the top navigation
+   - **AI Assistant**: Click the floating AI button (with OpenAI configured)
+   - **Export**: Download results as JSON or CSV
+   - **Settings**: Configure scanning preferences
+
+### 🛠️ Common Use Cases
+
+#### Security Audit
+```bash
+# Focus on security issues only
+php artisan codesnoutr:scan codebase --categories=security --format=json
+```
+
+#### Performance Review
+```bash
+# Check for N+1 queries and performance issues
+php artisan codesnoutr:scan codebase --categories=performance
+```
+
+#### Code Quality Check
+```bash
+# Analyze code quality and Laravel best practices
+php artisan codesnoutr:scan directory app --categories=quality,laravel
+```
+
+#### Pre-deployment Scan
+```bash
+# Comprehensive scan before deployment
+php artisan codesnoutr:scan codebase --save --export-path=deployment-report.json
+```
 
 ### Web Dashboard
 
@@ -617,3 +950,88 @@ CodeSnoutr is open-sourced software licensed under the [MIT license](LICENSE.md)
 **Built with ❤️ for the Laravel community**
 
 *CodeSnoutr v1.0.0 - Production ready as of August 2025*
+
+---
+
+## ❓ Frequently Asked Questions
+
+### General Questions
+
+**Q: Is CodeSnoutr ready for production use?**
+A: Yes! CodeSnoutr v1.0.0 is production-ready with comprehensive testing, professional code quality, and full Laravel compatibility.
+
+**Q: What Laravel versions are supported?**
+A: CodeSnoutr supports Laravel 10.0, 11.0, and 12.0 with PHP 8.1+.
+
+**Q: Does CodeSnoutr slow down my application?**
+A: No. CodeSnoutr runs scans in background queues and doesn't affect your application's performance. The web interface is lightweight and optimized.
+
+### Installation & Setup
+
+**Q: Do I need to set up queues?**
+A: While optional, queues are highly recommended for better performance. CodeSnoutr can auto-manage queue workers or you can set up dedicated workers.
+
+**Q: Can I customize which files are scanned?**
+A: Yes! Configure scan paths, exclusions, and file types in `config/codesnoutr.php` or through the web interface.
+
+**Q: How do I update CodeSnoutr?**
+A: Run `composer update rafaelogic/codesnoutr` and republish assets with `php artisan vendor:publish --tag=codesnoutr-assets --force`.
+
+### Features & Functionality
+
+**Q: What types of issues can CodeSnoutr detect?**
+A: CodeSnoutr detects 50+ types of issues including security vulnerabilities, performance problems, code quality issues, and Laravel best practice violations.
+
+**Q: Can I export scan results?**
+A: Yes! Export results as JSON, CSV, or store them in your database. Use the web interface or CLI commands.
+
+**Q: Is AI integration required?**
+A: No. AI features are optional and require an OpenAI API key. All core functionality works without AI integration.
+
+### Technical Questions
+
+**Q: Can I create custom scanning rules?**
+A: Yes! Extend the `AbstractRuleEngine` class to create custom rules. See the source code examples in `src/Scanners/Rules/`.
+
+**Q: Does CodeSnoutr work with Docker?**
+A: Yes! CodeSnoutr is fully compatible with Docker. See the installation guide for Docker-specific instructions.
+
+**Q: Can I integrate CodeSnoutr with CI/CD?**
+A: Absolutely! Use the CLI commands in your CI/CD pipeline to automatically scan code and fail builds on critical issues.
+
+### Troubleshooting
+
+**Q: Scans are not starting or taking too long**
+A: Check your queue configuration. Ensure queue workers are running or enable auto-start in the configuration.
+
+**Q: Getting permission errors**
+A: Make sure your web server has read permissions on your codebase and write permissions on storage directories.
+
+**Q: Web interface not loading properly**
+A: Clear Laravel caches (`php artisan cache:clear`) and ensure assets are published (`php artisan vendor:publish --tag=codesnoutr-assets --force`).
+
+---
+
+## 🆘 Support & Community
+
+### Getting Help
+
+- 📖 **Documentation**: Comprehensive guides in this README
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/rafaelogic/codesnoutr/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/rafaelogic/codesnoutr/discussions)
+- 📧 **Security Issues**: security@rafaelogic.com
+
+### Community
+
+- ⭐ **Star the Project**: [GitHub Repository](https://github.com/rafaelogic/codesnoutr)
+- 🐦 **Follow Updates**: [@rafaelogic](https://twitter.com/rafaelogic)
+- 💼 **Professional Support**: Available for enterprise customers
+
+### Feature Requests
+
+We're always looking to improve! Submit feature requests through:
+- GitHub Issues with the "enhancement" label
+- GitHub Discussions in the "Ideas" category
+- Direct email for enterprise features
+
+---
