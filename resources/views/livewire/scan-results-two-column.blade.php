@@ -545,29 +545,112 @@
                                                 @if($this->isAiConfigured())
                                                     @if(!empty($instance['ai_fix']))
                                                         <!-- AI Fix Generated -->
-                                                        <div class="space-y-3">
-                                                            <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                                                                <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                                </svg>
-                                                                <div class="flex-1 min-w-0">
-                                                                    <p class="text-sm font-medium text-green-800 dark:text-green-200">AI Fix Generated</p>
-                                                                    <p class="text-sm text-green-600 dark:text-green-400 mt-1">AI has analyzed this issue and provided a fix suggestion.</p>
+                                                        <div class="space-y-4" wire:key="ai-fix-{{ $instance['id'] }}">
+                                                            <div class="flex items-start space-x-3 p-4 bg-gradient-to-r from-green-50/10 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 shadow-sm">
+                                                                <div class="flex-shrink-0">
+                                                                    <div class="w-8 h-8 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
+                                                                        <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                        </svg>
+                                                                    </div>
                                                                 </div>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <p class="text-sm font-semibold text-green-800 dark:text-green-200">AI Fix Generated Successfully</p>
+                                                                    <p class="text-sm text-green-600 dark:text-green-400 mt-1">AI has analyzed this issue and provided an intelligent code fix recommendation.</p>
+                                                                </div>
+                                                                @if(!empty($instance['ai_confidence']))
+                                                                <div class="flex-shrink-0">
+                                                                    <div class="flex items-center space-x-2">
+                                                                        <div class="flex items-center">
+                                                                            @php
+                                                                                $confidence = round($instance['ai_confidence'] * 100);
+                                                                            @endphp
+                                                                            @if($confidence >= 80)
+                                                                                <div class="w-3 h-3 rounded-full bg-green-400 mr-1"></div>
+                                                                                <span class="text-xs font-medium text-green-700 dark:text-green-300">
+                                                                                    {{ $confidence }}% confidence
+                                                                                </span>
+                                                                            @elseif($confidence >= 60)
+                                                                                <div class="w-3 h-3 rounded-full bg-yellow-400 mr-1"></div>
+                                                                                <span class="text-xs font-medium text-yellow-700 dark:text-yellow-300">
+                                                                                    {{ $confidence }}% confidence
+                                                                                </span>
+                                                                            @else
+                                                                                <div class="w-3 h-3 rounded-full bg-red-400 mr-1"></div>
+                                                                                <span class="text-xs font-medium text-red-700 dark:text-red-300">
+                                                                                    {{ $confidence }}% confidence
+                                                                                </span>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                @endif
                                                             </div>
                                                             
-                                                            <!-- AI Fix Content -->
-                                                            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                                                <div class="flex items-center justify-between mb-3">
-                                                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">AI-Generated Fix Suggestion</h4>
-                                                                    @if(!empty($instance['ai_confidence']))
-                                                                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                                                                        {{ round($instance['ai_confidence'] * 100) }}% confidence
-                                                                    </span>
-                                                                    @endif
+                                                            <!-- Enhanced AI Fix Content -->
+                                                            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+                                                                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <div class="flex items-center space-x-2">
+                                                                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                                            </svg>
+                                                                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">AI-Generated Fix Recommendation</h4>
+                                                                        </div>
+                                                                        <div class="flex items-center space-x-2">
+                                                                            <button onclick="copyToClipboard('ai-fix-{{ $instance['id'] }}')" class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                                                                </svg>
+                                                                                Copy
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                                <div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                                                                    {!! nl2br(e($instance['ai_fix'])) !!}
+                                                                <div class="p-6">
+                                                                    <div class="prose prose-sm max-w-none text-gray-700 dark:text-gray-300" id="ai-fix-{{ $instance['id'] }}">
+                                                                        @php
+                                                                            // Enhanced formatting for AI fix content
+                                                                            $content = $instance['ai_fix'];
+                                                                            
+                                                                            // Format **bold** text
+                                                                            $content = preg_replace('/\*\*(.*?)\*\*/', '<strong class="font-semibold text-gray-900 dark:text-white">$1</strong>', $content);
+                                                                            
+                                                                            // Format code blocks with ```
+                                                                            $content = preg_replace('/```(\w+)?\s*\n(.*?)\n```/s', '<div class="bg-gray-900 dark:bg-gray-800 text-gray-100 text-sm rounded-lg p-4 my-3 overflow-x-auto"><code class="language-$1">$2</code></div>', $content);
+                                                                            
+                                                                            // Format inline code with `
+                                                                            $content = preg_replace('/`([^`]+)`/', '<code class="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>', $content);
+                                                                            
+                                                                            // Convert line breaks to paragraphs for better spacing
+                                                                            $content = preg_replace('/\n\n+/', '</p><p class="mb-3">', $content);
+                                                                            $content = '<p class="mb-3">' . $content . '</p>';
+                                                                        @endphp
+                                                                        {!! $content !!}
+                                                                    </div>
+                                                                    
+                                                                    <!-- Action buttons -->
+                                                                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                                        <div class="flex items-center justify-between">
+                                                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                Generated by AI • {{ !empty($instance['ai_explanation']) ? $instance['ai_explanation'] : 'AI Auto-Fix' }}
+                                                                            </div>
+                                                                            <div class="flex items-center space-x-2">
+                                                                                <button wire:click="regenerateAutoFix({{ $instance['id'] }})" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors">
+                                                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                                                    </svg>
+                                                                                    Regenerate
+                                                                                </button>
+                                                                                <button onclick="markAiFixUseful({{ $instance['id'] }})" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg transition-colors">
+                                                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
+                                                                                    </svg>
+                                                                                    Helpful
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -580,12 +663,34 @@
                                                             <div>
                                                                 <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Auto-Fix Ready</p>
                                                                 <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">AI-powered code suggestions and automatic fixes are available for this issue.</p>
-                                                                <button wire:click="generateAutoFix({{ $instance['id'] }})" class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors">
-                                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                                    </svg>
-                                                                    Generate Fix
-                                                                </button>
+                                                                <div class="mt-2 flex gap-2">
+                                                                    <button wire:click="generateAutoFix({{ $instance['id'] }})" 
+                                                                            wire:loading.attr="disabled"
+                                                                            wire:target="generateAutoFix({{ $instance['id'] }})"
+                                                                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 border border-transparent rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                                                        <svg wire:loading.remove wire:target="generateAutoFix({{ $instance['id'] }})" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                                        </svg>
+                                                                        <svg wire:loading wire:target="generateAutoFix({{ $instance['id'] }})" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                        </svg>
+                                                                        <span wire:loading.remove wire:target="generateAutoFix({{ $instance['id'] }})">Generate AI Fix</span>
+                                                                        <span wire:loading wire:target="generateAutoFix({{ $instance['id'] }})">Generating...</span>
+                                                                    </button>
+                                                                    <button wire:click="testOpenAiConnection" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 dark:bg-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                                                                        </svg>
+                                                                        Test Connection
+                                                                    </button>
+                                                                    <button wire:click="clearApiKey" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-800 dark:text-red-200 border border-red-300 dark:border-red-600 rounded-md hover:bg-red-200 dark:hover:bg-red-700 transition-colors">
+                                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                                        </svg>
+                                                                        Clear API Key
+                                                                    </button>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     @endif
@@ -669,3 +774,39 @@
 @endif
 </div>
 
+<script>
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+            // Show a brief success message
+            const button = event.target.closest('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!';
+            button.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+            button.classList.remove('bg-gray-50', 'text-gray-600', 'border-gray-200');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-green-100', 'text-green-700', 'border-green-300');
+                button.classList.add('bg-gray-50', 'text-gray-600', 'border-gray-200');
+            }, 2000);
+        }).catch(function() {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+    }
+}
+</script>

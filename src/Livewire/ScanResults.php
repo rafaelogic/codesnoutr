@@ -149,11 +149,6 @@ class ScanResults extends Component
         $this->lazyLoadEnabled = true;
         $this->initialLoadComplete = false;
 
-        Log::info('ScanResults component mounting', [
-            'scanId' => $scanId,
-            'component_id' => $this->getId()
-        ]);
-
         if ($scanId) {
             $this->loadScan();
             
@@ -167,15 +162,6 @@ class ScanResults extends Component
     public function render()
     {
         try {
-            // Log that the component is rendering
-            Log::info('ScanResults component rendering', [
-                'scanId' => $this->scanId,
-                'scan_exists' => $this->scan ? 'yes' : 'no',
-                'component_id' => $this->getId(),
-                'view' => 'two-column', // Always two-column view now
-                'selectedFilePath' => $this->selectedFilePath
-            ]);
-
             // Clear memory before processing
             if (function_exists('gc_collect_cycles')) {
                 gc_collect_cycles();
@@ -486,6 +472,9 @@ class ScanResults extends Component
                             'fix_method' => $issue->fix_method,
                             'fixed_at' => $issue->fixed_at,
                             'created_at' => $issue->created_at,
+                            'ai_fix' => $issue->ai_fix,
+                            'ai_explanation' => $issue->ai_explanation,
+                            'ai_confidence' => $issue->ai_confidence,
                         ];
                     })->sortBy('line_number')->values(),
                 ];
@@ -756,7 +745,7 @@ class ScanResults extends Component
                 'resolved_count' => (int)$group->resolved_count,
                 'issues' => $files, // For backward compatibility with the view
                 'simplified' => false,
-                'has_files' => $files->count() > 0, // Debug flag
+                'has_files' => $files->count() > 0,
             ];
         });
     }
@@ -794,17 +783,6 @@ class ScanResults extends Component
                     COUNT(CASE WHEN fix_method = "false_positive" THEN 1 END) as false_positive_count
                 ')
                 ->first();
-
-            // Add some debug logging to track any discrepancies
-            Log::info('Issue stats calculated', [
-                'scan_id' => $this->scanId,
-                'database_total' => $fixStats->total ?? 0,
-                'scan_issues_found' => $this->scan->issues_found ?? 0,
-                'scan_total_issues' => $this->scan->total_issues ?? 0,
-                'severity_stats' => $severityStats->toArray(),
-                'category_stats' => $categoryStats->toArray(),
-                'resolved_count' => $fixStats->resolved_count ?? 0,
-            ]);
 
             return [
                 'total' => $fixStats->total ?? 0,
@@ -1098,6 +1076,12 @@ class ScanResults extends Component
             
             // Refresh the file group data for this file
             $this->refreshFileGroup($filePath);
+            
+            // If this issue is in the currently selected file, refresh the two-column view
+            if ($this->selectedFilePath && $this->selectedFilePath === $issue->file_path) {
+                $this->loadSelectedFileIssues();
+            }
+            
             $this->dispatch('issue-resolved', issueId: $issueId);
             
             // Redirect to scan results main display after successful resolution
@@ -1117,6 +1101,12 @@ class ScanResults extends Component
             
             // Refresh the file group data for this file
             $this->refreshFileGroup($filePath);
+            
+            // If this issue is in the currently selected file, refresh the two-column view
+            if ($this->selectedFilePath && $this->selectedFilePath === $issue->file_path) {
+                $this->loadSelectedFileIssues();
+            }
+            
             $this->dispatch('issue-ignored', issueId: $issueId);
             
             // Redirect to scan results main display after successful action
@@ -1136,6 +1126,12 @@ class ScanResults extends Component
             
             // Refresh the file group data for this file
             $this->refreshFileGroup($filePath);
+            
+            // If this issue is in the currently selected file, refresh the two-column view
+            if ($this->selectedFilePath && $this->selectedFilePath === $issue->file_path) {
+                $this->loadSelectedFileIssues();
+            }
+            
             $this->dispatch('issue-false-positive', issueId: $issueId);
             
             // Redirect to scan results main display after successful action
@@ -1618,6 +1614,9 @@ class ScanResults extends Component
                             'fixed' => $issue->fixed,
                             'fix_method' => $issue->fix_method,
                             'fixed_at' => $issue->fixed_at,
+                            'ai_fix' => $issue->ai_fix,
+                            'ai_explanation' => $issue->ai_explanation,
+                            'ai_confidence' => $issue->ai_confidence,
                         ];
                     })->values()->all(),
                 ];
@@ -2219,6 +2218,82 @@ class ScanResults extends Component
     }
 
     /**
+     * Validate OpenAI API key format
+     */
+    private function isValidOpenAiApiKey($apiKey): bool
+    {
+        if (empty($apiKey)) {
+            return false;
+        }
+
+        // OpenAI API keys should start with "sk-" and be at least 50 characters
+        return str_starts_with($apiKey, 'sk-') && strlen($apiKey) >= 50;
+    }
+
+    /**
+     * Test OpenAI API connection
+     */
+    public function testOpenAiConnection()
+    {
+        if (!$this->isAiConfigured()) {
+            session()->flash('error', 'AI Auto-Fix is not configured.');
+            return;
+        }
+
+        $apiKey = Setting::getOpenAiApiKey();
+        
+        // Test with a simple prompt
+        $result = $this->callOpenAiApi($apiKey, 'Test connection: What is PHP?');
+        
+        if ($result['success']) {
+            session()->flash('success', 'OpenAI API connection successful!');
+        } else {
+            session()->flash('error', 'OpenAI API test failed: ' . ($result['error'] ?? 'Unknown error'));
+        }
+    }
+
+    /**
+     * Fix encrypted API key issue
+     */
+    public function fixApiKeyStorage()
+    {
+        try {
+            $setting = \Rafaelogic\CodeSnoutr\Models\Setting::where('key', 'openai_api_key')->first();
+            
+            if (!$setting) {
+                session()->flash('error', 'No OpenAI API key found in settings.');
+                return;
+            }
+
+            // The data is corrupted - encrypted data stored as unencrypted
+            // We need to prompt user to re-enter their API key
+            session()->flash('error', 'The API key data is corrupted. Please go to Settings and re-enter your OpenAI API key.');
+            
+            // Alternatively, if they want to try automatic fix, delete the corrupted record
+            // and let them re-enter the key
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to fix API key storage', ['error' => $e->getMessage()]);
+            session()->flash('error', 'Failed to fix API key storage: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear corrupted API key data
+     */
+    public function clearApiKey()
+    {
+        try {
+            \Rafaelogic\CodeSnoutr\Models\Setting::where('key', 'openai_api_key')->delete();
+            session()->flash('success', 'API key cleared. Please go to Settings to re-enter your OpenAI API key.');
+            Log::info('API key cleared successfully');
+        } catch (\Exception $e) {
+            Log::error('Failed to clear API key', ['error' => $e->getMessage()]);
+            session()->flash('error', 'Failed to clear API key: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Generate auto-fix suggestion for an issue using AI
      */
     public function generateAutoFix($issueId)
@@ -2233,6 +2308,14 @@ class ScanResults extends Component
 
             if (!$this->isAiConfigured()) {
                 session()->flash('error', 'AI Auto-Fix is not configured. Please set up OpenAI API key in Settings.');
+                return;
+            }
+
+            // Validate API key format
+            $apiKey = Setting::getOpenAiApiKey();
+            
+            if (!$this->isValidOpenAiApiKey($apiKey)) {
+                session()->flash('error', 'Invalid OpenAI API key format. Please check your API key in Settings.');
                 return;
             }
 
@@ -2254,13 +2337,12 @@ class ScanResults extends Component
             $prompt = $this->buildAutoFixPrompt($issue, $codeSnippet);
             
             // Call OpenAI API
-            $apiKey = Setting::getOpenAiApiKey();
-            $response = $this->callOpenAiApi($apiKey, $prompt);
+            $result = $this->callOpenAiApi($apiKey, $prompt);
             
-            if ($response) {
+            if ($result['success']) {
                 // Save the auto-fix suggestion
                 $issue->update([
-                    'ai_fix' => $response,
+                    'ai_fix' => $result['content'],
                     'ai_explanation' => 'Generated by AI Auto-Fix',
                     'ai_confidence' => 0.75 // Default confidence score
                 ]);
@@ -2268,9 +2350,14 @@ class ScanResults extends Component
                 // Refresh the file group data for this file
                 $this->refreshFileGroup($issue->file_path);
                 
+                // If this issue is in the currently selected file, refresh the two-column view
+                if ($this->selectedFilePath && $this->selectedFilePath === $issue->file_path) {
+                    $this->loadSelectedFileIssues();
+                }
+                
                 session()->flash('success', 'Auto-fix suggestion generated successfully!');
             } else {
-                session()->flash('error', 'Failed to generate auto-fix suggestion. Please try again.');
+                session()->flash('error', $result['error']);
             }
 
         } catch (\Exception $e) {
@@ -2285,29 +2372,40 @@ class ScanResults extends Component
     private function buildAutoFixPrompt($issue, $codeSnippet)
     {
         $codeContext = is_array($codeSnippet) 
-            ? implode("\n", array_map(fn($line) => $line['content'], $codeSnippet))
+            ? implode("\n", array_map(fn($line) => sprintf("%3d: %s", $line['number'], $line['content']), $codeSnippet))
             : $codeSnippet;
 
-        return "You are a code review assistant. Please analyze the following code issue and provide a specific fix suggestion.
+        return "You are an expert PHP code analyzer. Analyze this specific code issue and provide a precise fix.
 
-**Issue Details:**
-- Type: {$issue->type}
+**Issue Information:**
+- Category: {$issue->category}
 - Severity: {$issue->severity}
-- Message: {$issue->message}
-- File: {$issue->file_path}
+- Rule: {$issue->rule_name}
+- Issue: {$issue->description}
+- File: " . basename($issue->file_path) . "
 - Line: {$issue->line_number}
+" . (isset($issue->context['rule_description']) ? "- Rule Details: {$issue->context['rule_description']}" : "") . "
 
-**Code Context:**
+**Code Context (with line numbers):**
 ```php
 {$codeContext}
 ```
 
-Please provide:
-1. A clear explanation of the issue
-2. The specific code change needed to fix it
-3. Why this fix addresses the problem
+**Current Suggestion:**
+{$issue->suggestion}
 
-Keep your response concise and focused on actionable fixes.";
+**Instructions:**
+- Focus on the specific issue: {$issue->description}
+- Consider the severity level: {$issue->severity}
+- Provide a concrete, implementable fix
+- If the issue is performance-related, suggest optimizations
+- If it's security-related, explain the security implications
+- Be specific about which lines need to change
+
+**Response Format:**
+**Issue:** [Brief explanation of what's wrong]
+**Fix:** [Exact code changes needed]  
+**Why:** [Explanation of how this solves the problem]";
     }
 
     /**
@@ -2341,22 +2439,65 @@ Keep your response concise and focused on actionable fixes.";
                 $data = $response->json();
                 
                 if (isset($data['choices'][0]['message']['content'])) {
-                    return $data['choices'][0]['message']['content'];
+                    return [
+                        'success' => true,
+                        'content' => $data['choices'][0]['message']['content']
+                    ];
                 }
 
-                Log::error('OpenAI API response missing content', ['response' => $data]);
+                return [
+                    'success' => false,
+                    'error' => 'Invalid response format from OpenAI API. Please try again.'
+                ];
             } else {
+                $statusCode = $response->status();
+                $responseBody = $response->json();
+                
                 Log::error('OpenAI API request failed', [
-                    'status' => $response->status(),
-                    'response' => $response->body()
+                    'status' => $statusCode,
+                    'response' => $responseBody
                 ]);
-            }
 
-            return null;
+                // Handle specific OpenAI error types
+                if ($statusCode === 401) {
+                    if (isset($responseBody['error']['code']) && $responseBody['error']['code'] === 'invalid_jwt') {
+                        return [
+                            'success' => false,
+                            'error' => 'Invalid OpenAI API key format. Please check your API key in Settings.'
+                        ];
+                    }
+                    return [
+                        'success' => false,
+                        'error' => 'OpenAI API authentication failed. Please verify your API key in Settings.'
+                    ];
+                } elseif ($statusCode === 429) {
+                    return [
+                        'success' => false,
+                        'error' => 'OpenAI API rate limit exceeded. Please try again in a few minutes.'
+                    ];
+                } elseif ($statusCode === 402) {
+                    return [
+                        'success' => false,
+                        'error' => 'OpenAI API quota exceeded. Please check your billing settings.'
+                    ];
+                } else {
+                    $errorMessage = isset($responseBody['error']['message']) 
+                        ? $responseBody['error']['message'] 
+                        : 'Unknown error from OpenAI API';
+                    
+                    return [
+                        'success' => false,
+                        'error' => "OpenAI API error: {$errorMessage}"
+                    ];
+                }
+            }
 
         } catch (\Exception $e) {
             Log::error('OpenAI API call failed: ' . $e->getMessage());
-            return null;
+            return [
+                'success' => false,
+                'error' => 'Network error while contacting OpenAI API. Please check your connection and try again.'
+            ];
         }
     }
 
@@ -2394,7 +2535,7 @@ Keep your response concise and focused on actionable fixes.";
             try {
                 $fileLines = file($issue->file_path, FILE_IGNORE_NEW_LINES);
                 $lineNumber = $issue->line_number;
-                $contextLines = 3; // Show 3 lines before and after
+                $contextLines = 5; // Show 5 lines before and after for better context
                 
                 $start = max(0, $lineNumber - $contextLines - 1);
                 $end = min(count($fileLines), $lineNumber + $contextLines);

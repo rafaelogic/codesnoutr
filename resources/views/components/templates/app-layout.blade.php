@@ -94,11 +94,11 @@
         <!-- Sidebar -->
         <div class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0">
             <!-- Sidebar component -->
-            <div class="flex flex-col flex-grow bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 pt-5 pb-4 overflow-y-auto transition-colors duration-300">
+            <div class="flex flex-col flex-grow bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 pb-4 overflow-y-auto transition-colors duration-300">
                 <!-- Logo -->
                 <div class="flex flex-col items-center justify-center mb-5">
                     <svg xmlns="http://www.w3.org/2000/svg"
-                            width="48" height="48" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+                            width="64" height="64" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
                         <title id="title">Code Snoutr icon</title>
                         <desc id="desc">Stylized pig snout with two code chevrons</desc>
 
@@ -133,12 +133,12 @@
                 </div>
 
                 <!-- Navigation -->
-                <nav class="flex-1 px-3 space-y-1">
+                <nav class="flex-1 pt-2 space-y-1">
                     <!-- Main Navigation Items -->
                     <a href="{{ route('codesnoutr.dashboard') }}" 
                        class="{{ request()->routeIs('codesnoutr.dashboard') 
                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 border-indigo-400' 
-                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md border-l-4 transition-colors duration-200">
+                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200">
                         <svg class="mr-3 h-5 w-5 {{ request()->routeIs('codesnoutr.dashboard') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
@@ -148,7 +148,7 @@
                     <a href="{{ route('codesnoutr.scan') }}" 
                        class="{{ request()->routeIs('codesnoutr.scan') 
                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 border-indigo-400' 
-                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md border-l-4 transition-colors duration-200">
+                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200">
                         <svg class="mr-3 h-5 w-5 {{ request()->routeIs('codesnoutr.scan') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
@@ -158,7 +158,7 @@
                     <a href="{{ route('codesnoutr.results') }}" 
                        class="{{ request()->routeIs('codesnoutr.results*') 
                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 border-indigo-400' 
-                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md border-l-4 transition-colors duration-200">
+                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200">
                         <svg class="mr-3 h-5 w-5 {{ request()->routeIs('codesnoutr.results*') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
@@ -171,7 +171,7 @@
                         <button @click="settingsOpen = !settingsOpen" 
                                 class="{{ request()->routeIs('codesnoutr.settings*') 
                                     ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 border-indigo-400' 
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group w-full flex items-center px-3 py-2 text-sm font-medium rounded-md border-l-4 transition-colors duration-200">
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group w-full flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200">
                             <svg class="mr-3 h-5 w-5 {{ request()->routeIs('codesnoutr.settings*') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -193,7 +193,7 @@
                              class="ml-6 mt-1 space-y-1">
                             @foreach($navigation as $item)
                             <a href="{{ $item['route'] ?? '#' }}" 
-                               class="@if(($item['active'] ?? false) || $activeSection === ($item['section'] ?? '')) bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 @else text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white @endif group flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-200">
+                               class="@if(($item['active'] ?? false) || $activeSection === ($item['section'] ?? '')) bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 @else text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white @endif group flex items-center px-3 py-2 text-sm transition-colors duration-200">
                                 @if(isset($item['icon']))
                                 <svg class="mr-3 h-4 w-4 {{ ($item['active'] ?? false) || $activeSection === ($item['section'] ?? '') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     @if($item['icon'] === 'cog')
@@ -220,7 +220,7 @@
                     <a href="{{ route('codesnoutr.settings') }}" 
                        class="{{ request()->routeIs('codesnoutr.settings*') 
                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-200 border-indigo-400' 
-                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md border-l-4 transition-colors duration-200">
+                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-transparent' }} group flex items-center px-3 py-2 text-sm font-medium border-l-4 transition-colors duration-200">
                         <svg class="mr-3 h-5 w-5 {{ request()->routeIs('codesnoutr.settings*') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
