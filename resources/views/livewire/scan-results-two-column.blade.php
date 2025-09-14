@@ -466,96 +466,119 @@
                                     @foreach($issueGroup['instances'] as $instance)
                                     <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden {{ $instance['fixed'] ? 'bg-green-50 dark:bg-green-900/10' : 'bg-white dark:bg-gray-800' }}">
                                         <!-- Instance Header -->
-                                        <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
-                                            <div class="flex items-center space-x-3">
+                                        <div class="flex flex-col w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                                            <div class="flex w-full items-center">
+                                                <div class="flex items-center space-x-3">
+                                                    <!-- Status -->
+                                                    @if($instance['fixed'])
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
+                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                        {{ $instance['fix_method'] === 'ignored' ? 'Ignored' : 'Fixed' }}
+                                                    </span>
+                                                    @else
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                        </svg>
+                                                        Pending
+                                                    </span>
+                                                    @endif
+                                                </div>
+                                                
+                                                <!-- Issue Actions -->
+                                                @if(!$instance['fixed'])
+                                                <div class="flex items-center space-x-1">
+                                                    <button wire:click="resolveIssue({{ $instance['id'] }})" 
+                                                            class="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                                            title="Mark as Resolved">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button wire:click="markAsIgnored({{ $instance['id'] }})" 
+                                                            class="p-1.5 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
+                                                            title="Mark as Ignored">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
+                                                        </svg>
+                                                    </button>
+                                                    <button wire:click="markAsFalsePositive({{ $instance['id'] }})" 
+                                                            class="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                            title="Mark as False Positive">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                                @endif  
+                                            </div>
 
-                                                <!-- Status -->
-                                                @if($instance['fixed'])
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                    </svg>
-                                                    {{ $instance['fix_method'] === 'ignored' ? 'Ignored' : 'Fixed' }}
-                                                </span>
+                                            <!-- Code Snippet -->
+                                            @if(is_array($instance['code_snippet']))
+                                            <div class="overflow-hidden">
+                                                <div class="bg-gray-900 text-gray-100 text-sm overflow-x-auto max-h-96 border border-gray-700">
+                                                    @foreach($instance['code_snippet'] as $line)
+                                                    <div class="flex hover:bg-gray-800/50 {{ $line['is_target'] ? 'bg-red-900/40 border-l-4 border-red-400' : '' }}">
+                                                        <div class="px-4 py-2 text-gray-400 text-right min-w-[4rem] select-none border-r border-gray-700 bg-gray-800/50 font-mono text-xs leading-5">
+                                                            {{ $line['number'] }}
+                                                        </div>
+                                                        <div class="px-4 py-2 flex-1 font-mono text-sm leading-5">
+                                                            <pre class="whitespace-pre-wrap break-all">{{ $line['content'] }}</pre>
+                                                        </div>
+                                                    </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            @else
+                                            <div class="p-4 bg-gray-50 dark:bg-gray-800">
+                                                <div class="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 border border-gray-700">
+                                                    <pre class="text-gray-100 dark:text-gray-300 font-mono text-sm whitespace-pre-wrap break-all max-h-48 overflow-y-auto">{{ $instance['code_snippet'] }}</pre>
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <!-- AI Auto-Fix Component -->
+                                            @if(!$instance['fixed'])
+                                            <div class="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                                                @if($this->isAiConfigured())
+                                                    <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                        </svg>
+                                                        <div>
+                                                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Auto-Fix Ready</p>
+                                                            <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">AI-powered code suggestions and automatic fixes are available for this issue.</p>
+                                                            <button class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 dark:bg-blue-800 dark:text-blue-200 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                                                </svg>
+                                                                Generate Fix
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 @else
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                    Pending
-                                                </span>
+                                                    <div class="flex items-start space-x-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                        </svg>
+                                                        <div>
+                                                            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">AI Auto-Fix Available</p>
+                                                            <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">Enable AI Auto-Fix in Settings and configure your OpenAI API key to get intelligent code suggestions.</p>
+                                                            <a href="{{ route('codesnoutr.settings') }}" class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 dark:bg-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-600 rounded-md hover:bg-amber-200 dark:hover:bg-amber-700 transition-colors">
+                                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                                </svg>
+                                                                Configure AI Settings
+                                                            </a>
+                                                        </div>
+                                                    </div>
                                                 @endif
                                             </div>
-                                            
-                                            <!-- Issue Actions -->
-                                            @if(!$instance['fixed'])
-                                            <div class="flex items-center space-x-1">
-                                                <button wire:click="resolveIssue({{ $instance['id'] }})" 
-                                                        class="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                                        title="Mark as Resolved">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                    </svg>
-                                                </button>
-                                                <button wire:click="markAsIgnored({{ $instance['id'] }})" 
-                                                        class="p-1.5 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
-                                                        title="Mark as Ignored">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
-                                                    </svg>
-                                                </button>
-                                                <button wire:click="markAsFalsePositive({{ $instance['id'] }})" 
-                                                        class="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                        title="Mark as False Positive">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            @endif                                        <!-- Code Snippet -->
-                                        @if(is_array($instance['code_snippet']))
-                                        <div class="overflow-hidden">
-                                            <div class="bg-gray-900 text-gray-100 text-sm overflow-x-auto max-h-96 border border-gray-700">
-                                                @foreach($instance['code_snippet'] as $line)
-                                                <div class="flex hover:bg-gray-800/50 {{ $line['is_target'] ? 'bg-red-900/40 border-l-4 border-red-400' : '' }}">
-                                                    <div class="px-4 py-2 text-gray-400 text-right min-w-[4rem] select-none border-r border-gray-700 bg-gray-800/50 font-mono text-xs leading-5">
-                                                        {{ $line['number'] }}
-                                                    </div>
-                                                    <div class="px-4 py-2 flex-1 font-mono text-sm leading-5">
-                                                        <pre class="whitespace-pre-wrap break-all">{{ $line['content'] }}</pre>
-                                                    </div>
-                                                </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        @else
-                                        <div class="p-4 bg-gray-50 dark:bg-gray-800">
-                                            <div class="bg-gray-900 dark:bg-gray-800 rounded-lg p-4 border border-gray-700">
-                                                <pre class="text-gray-100 dark:text-gray-300 font-mono text-sm whitespace-pre-wrap break-all max-h-48 overflow-y-auto">{{ $instance['code_snippet'] }}</pre>
-                                            </div>
-                                        </div>
-                                        @endif
-
-                                        <!-- AI Auto-Fix Component -->
-                                        @if(!$instance['fixed'])
-                                        <div class="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                                            @if(config('codesnoutr.ai.enabled'))
-                                                <p class="text-sm text-blue-600 dark:text-blue-400">
-                                                    <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                    </svg>
-                                                    AI Auto-Fix available - Configure OpenAI API key in Settings
-                                                </p>
-                                            @else
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                    <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                                    </svg>
-                                                    Enable AI Auto-Fix in Settings to get intelligent code suggestions
-                                                </p>
                                             @endif
                                         </div>
-                                        @endif
                                     </div>
                                     @endforeach
                                 </div>

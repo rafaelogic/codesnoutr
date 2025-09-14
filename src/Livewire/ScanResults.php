@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Rafaelogic\CodeSnoutr\Models\Scan;
 use Rafaelogic\CodeSnoutr\Models\Issue;
+use Rafaelogic\CodeSnoutr\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -2200,6 +2201,20 @@ class ScanResults extends Component
         
         // Fallback
         return 'Codebase Scan Results';
+    }
+
+    /**
+     * Check if AI is properly configured with API key
+     */
+    public function isAiConfigured()
+    {
+        // Check if AI is enabled in settings
+        $aiEnabled = Setting::get('ai_enabled', false);
+        
+        // Check if API key is configured
+        $apiKey = Setting::getOpenAiApiKey();
+        
+        return $aiEnabled && !empty($apiKey);
     }
 
     /**
