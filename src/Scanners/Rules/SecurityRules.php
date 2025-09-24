@@ -8,6 +8,18 @@ use PhpParser\NodeVisitorAbstract;
 
 class SecurityRules extends AbstractRuleEngine
 {
+    protected string $filePath = '';
+    protected string $content = '';
+    
+    /**
+     * Set file context for node visitor usage
+     */
+    public function setFileContext(string $filePath, string $content): void
+    {
+        $this->filePath = $filePath;
+        $this->content = $content;
+    }
+    
     /**
      * Analyze code for security issues
      */
@@ -397,16 +409,16 @@ class SecurityVisitor extends NodeVisitorAbstract
         if ($node instanceof Node\Expr\StaticCall) {
             if ($this->isMethodCall($node, 'DB', 'raw')) {
                 if ($this->containsVariable($node->args[0] ?? null)) {
-                    $this->rules->addIssue($this->rules->createIssue(
+                    $this->addIssue($this->createIssue(
                         $this->filePath,
-                        $this->rules->getLineNumber($node),
+                        $this->getLineNumber($node),
                         'security',
                         'critical',
                         'security.sql_injection_raw',
                         'SQL Injection Risk in DB::raw()',
                         'Using variables directly in DB::raw() can lead to SQL injection vulnerabilities.',
                         'Use parameter binding or DB::statement() with bindings instead.',
-                        $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                        $this->getCodeContext($this->content, $this->getLineNumber($node))
                     ));
                 }
             }
@@ -416,16 +428,16 @@ class SecurityVisitor extends NodeVisitorAbstract
         if ($node instanceof Node\Expr\BinaryOp\Concat) {
             $nodeString = $this->nodeToString($node);
             if (preg_match('/SELECT|INSERT|UPDATE|DELETE/i', $nodeString)) {
-                $this->rules->addIssue($this->rules->createIssue(
+                $this->addIssue($this->createIssue(
                     $this->filePath,
-                    $this->rules->getLineNumber($node),
+                    $this->getLineNumber($node),
                     'security',
                     'critical',
                     'security.sql_injection_concat',
                     'SQL Injection Risk in String Concatenation',
                     'Building SQL queries with string concatenation can lead to SQL injection.',
                     'Use Eloquent ORM, Query Builder, or prepared statements with parameter binding.',
-                    $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                    $this->getCodeContext($this->content, $this->getLineNumber($node))
                 ));
             }
         }
@@ -442,16 +454,16 @@ class SecurityVisitor extends NodeVisitorAbstract
             
             if (in_array($funcName, ['echo', 'print', 'printf'])) {
                 if ($this->containsUserInput($node)) {
-                    $this->rules->addIssue($this->rules->createIssue(
+                    $this->addIssue($this->createIssue(
                         $this->filePath,
-                        $this->rules->getLineNumber($node),
+                        $this->getLineNumber($node),
                         'security',
                         'critical',
                         'security.xss_unescaped_output',
                         'XSS Risk: Unescaped Output',
                         'Outputting user input without escaping can lead to XSS attacks.',
                         'Use htmlspecialchars() or Laravel\'s e() helper to escape output.',
-                        $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                        $this->getCodeContext($this->content, $this->getLineNumber($node))
                     ));
                 }
             }
@@ -467,16 +479,16 @@ class SecurityVisitor extends NodeVisitorAbstract
         if ($node instanceof Node\Stmt\Class_) {
             if ($this->extendsModel($node)) {
                 if (!$this->hasFillableOrGuarded($node)) {
-                    $this->rules->addIssue($this->rules->createIssue(
+                    $this->addIssue($this->createIssue(
                         $this->filePath,
-                        $this->rules->getLineNumber($node),
+                        $this->getLineNumber($node),
                         'security',
                         'warning',
                         'security.mass_assignment_unprotected',
                         'Mass Assignment Vulnerability',
                         'Model lacks $fillable or $guarded properties for mass assignment protection.',
                         'Add $fillable array with allowed fields or $guarded array with protected fields.',
-                        $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                        $this->getCodeContext($this->content, $this->getLineNumber($node))
                     ));
                 }
             }
@@ -494,16 +506,16 @@ class SecurityVisitor extends NodeVisitorAbstract
             // Check for file operations with user input
             if (in_array($funcName, ['file_get_contents', 'file_put_contents', 'fopen', 'include', 'require'])) {
                 if ($this->containsUserInput($node)) {
-                    $this->rules->addIssue($this->rules->createIssue(
+                    $this->addIssue($this->createIssue(
                         $this->filePath,
-                        $this->rules->getLineNumber($node),
+                        $this->getLineNumber($node),
                         'security',
                         'critical',
                         'security.file_operation_user_input',
                         'Insecure File Operation',
                         'File operations with user input can lead to directory traversal or code injection.',
                         'Validate and sanitize file paths, use basename(), and restrict to allowed directories.',
-                        $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                        $this->getCodeContext($this->content, $this->getLineNumber($node))
                     ));
                 }
             }
@@ -520,16 +532,16 @@ class SecurityVisitor extends NodeVisitorAbstract
             
             // Check for weak hashing algorithms
             if ($funcName === 'md5' || $funcName === 'sha1') {
-                $this->rules->addIssue($this->rules->createIssue(
+                $this->addIssue($this->createIssue(
                     $this->filePath,
-                    $this->rules->getLineNumber($node),
+                    $this->getLineNumber($node),
                     'security',
                     'warning',
                     'security.weak_hashing',
                     'Weak Hashing Algorithm',
                     'MD5 and SHA1 are cryptographically weak and vulnerable to attacks.',
                     'Use password_hash() for passwords or hash() with SHA-256 or better algorithms.',
-                    $this->rules->getCodeContext($this->content, $this->rules->getLineNumber($node))
+                    $this->getCodeContext($this->content, $this->getLineNumber($node))
                 ));
             }
         }

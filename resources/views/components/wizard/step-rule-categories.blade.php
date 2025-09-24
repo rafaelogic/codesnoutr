@@ -33,6 +33,7 @@
                    wire:model.live="ruleCategories" 
                    value="{{ $key }}" 
                    id="category-{{ $key }}" 
+                   @checked(in_array($key, $ruleCategories))
                    class="sr-only peer">
             <label for="category-{{ $key }}" 
                    class="flex flex-col p-6 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-{{ $category['color'] }}-300 dark:hover:border-{{ $category['color'] }}-500 transition-all duration-200 peer-checked:border-{{ $category['color'] }}-600 peer-checked:bg-{{ $category['color'] }}-50 dark:peer-checked:bg-{{ $category['color'] }}-900 peer-checked:ring-2 peer-checked:ring-{{ $category['color'] }}-500 peer-checked:ring-offset-2">

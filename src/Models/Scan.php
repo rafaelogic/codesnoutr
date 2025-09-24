@@ -5,9 +5,12 @@ namespace Rafaelogic\CodeSnoutr\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Scan extends Model
 {
+    use HasFactory;
+    
     protected $table = 'codesnoutr_scans';
 
     protected $fillable = [
@@ -235,5 +238,13 @@ class Scan extends Model
     public function scopeFailed($query)
     {
         return $query->where('status', 'failed');
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Rafaelogic\CodeSnoutr\Database\Factories\ScanFactory::new();
     }
 }

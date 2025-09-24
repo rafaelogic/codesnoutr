@@ -17,6 +17,7 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            \Livewire\LivewireServiceProvider::class,
             CodeSnoutrServiceProvider::class,
         ];
     }
@@ -29,6 +30,11 @@ abstract class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
+
+        // Set app key for encryption
+        config()->set('app.key', 'base64:'.base64_encode(
+            \Illuminate\Encryption\Encrypter::generateKey('AES-256-CBC')
+        ));
 
         // Configure CodeSnoutr for testing
         config()->set('codesnoutr.enabled', true);

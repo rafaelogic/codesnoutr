@@ -31,6 +31,11 @@ class Settings extends Component
         'test-connection' => 'testAiConnection',
     ];
 
+    public function updatedSettings($value, $key)
+    {
+        $this->unsavedChanges = true;
+    }
+
     public function mount($initialTab = 'general')
     {
         $this->activeTab = $initialTab;
@@ -381,34 +386,46 @@ class Settings extends Component
         }
     }
 
+    public function saveSettings()
+    {
+        try {
+            $aiSettingsUpdated = false;
+            
+            foreach ($this->settings as $key => $value) {
+                // Handle special cases for AI settings
+                if ($key === 'openai_api_key') {
+                    Setting::set($key, $value, 'ai', false); // Not encrypted - visible to developers
+                    $aiSettingsUpdated = true;
+                } elseif (str_starts_with($key, 'ai_')) {
+                    Setting::set($key, $value, 'ai', false); // Not encrypted
+                    $aiSettingsUpdated = true;
+                } else {
+                    // Determine type based on setting configuration
+                    $type = $this->getSettingType($key);
+                    Setting::set($key, $value, $type, false);
+                }
+            }
+
+            $this->unsavedChanges = false;
+            $this->dispatch('settings-saved');
+            
+            // Dispatch specific AI settings update event
+            if ($aiSettingsUpdated) {
+                $this->dispatch('ai-settings-updated');
+            }
+            
+            $this->clearCache();
+            
+            session()->flash('success', 'Settings saved successfully!');
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to save settings: ' . $e->getMessage());
+        }
+    }
+
     public function saveAllSettings()
     {
-        $aiSettingsUpdated = false;
-        
-        foreach ($this->settings as $key => $value) {
-            // Handle special cases for AI settings
-            if ($key === 'openai_api_key') {
-                Setting::set($key, $value, 'ai', false); // Not encrypted - visible to developers
-                $aiSettingsUpdated = true;
-            } elseif (str_starts_with($key, 'ai_')) {
-                Setting::set($key, $value, 'ai', false); // Not encrypted
-                $aiSettingsUpdated = true;
-            } else {
-                // Determine type based on setting configuration
-                $type = $this->getSettingType($key);
-                Setting::set($key, $value, $type, false);
-            }
-        }
-
-        $this->unsavedChanges = false;
-        $this->dispatch('settings-saved');
-        
-        // Dispatch specific AI settings update event
-        if ($aiSettingsUpdated) {
-            $this->dispatch('ai-settings-updated');
-        }
-        
-        $this->clearCache();
+        return $this->saveSettings();
     }
     
     // Debug method to check current settings
@@ -454,6 +471,27 @@ class Settings extends Component
         return 'general'; // Default type
     }
 
+    public function resetSettings()
+    {
+        try {
+            // Get default values from the setting groups configuration
+            $settingGroups = $this->getSettingGroups();
+            
+            foreach ($settingGroups as $groupKey => $group) {
+                foreach ($group as $settingKey => $config) {
+                    $this->settings[$settingKey] = $config['default'] ?? null;
+                }
+            }
+
+            $this->unsavedChanges = true;
+            
+            session()->flash('info', 'Settings have been reset to default values. Click "Save Settings" to apply changes.');
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to reset settings: ' . $e->getMessage());
+        }
+    }
+
     public function resetToDefaults($group = null)
     {
         $defaultSettings = config('codesnoutr', []);
@@ -477,7 +515,7 @@ class Settings extends Component
         
         // Check if AI is enabled and API key is provided from current component settings
         if (!$aiEnabled) {
-            $this->connectionStatus = (object) [
+            $this->connectionStatus = [
                 'success' => false,
                 'message' => 'AI integration is disabled. Please enable it first.'
             ];
@@ -485,7 +523,7 @@ class Settings extends Component
         }
 
         if (empty($apiKey)) {
-            $this->connectionStatus = (object) [
+            $this->connectionStatus = [
                 'success' => false,
                 'message' => 'OpenAI API key is required. Please provide your API key.'
             ];
@@ -517,7 +555,7 @@ class Settings extends Component
                 $data = $response->json();
                 $content = $data['choices'][0]['message']['content'] ?? '';
                 
-                $this->connectionStatus = (object) [
+                $this->connectionStatus = [
                     'success' => true,
                     'message' => 'AI connection is working perfectly!',
                     'details' => 'Model: ' . $model . ', Response: ' . trim($content)
@@ -532,7 +570,7 @@ class Settings extends Component
                 $errorMessage = $errorData['error']['message'] ?? 'Unknown API error';
                 $statusCode = $response->status();
                 
-                $this->connectionStatus = (object) [
+                $this->connectionStatus = [
                     'success' => false,
                     'message' => "API Error ({$statusCode}): " . $errorMessage
                 ];
@@ -541,7 +579,7 @@ class Settings extends Component
             }
 
         } catch (\Exception $e) {
-            $this->connectionStatus = (object) [
+            $this->connectionStatus = [
                 'success' => false,
                 'message' => 'Connection failed: ' . $e->getMessage()
             ];

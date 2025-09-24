@@ -4,7 +4,7 @@ namespace Rafaelogic\CodeSnoutr\Livewire;
 
 use Livewire\Component;
 use Rafaelogic\CodeSnoutr\Models\Issue;
-use Rafaelogic\CodeSnoutr\Services\AiAssistantService;
+use Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService;
 use Illuminate\Support\Facades\Log;
 
 class AiFixSuggestions extends Component

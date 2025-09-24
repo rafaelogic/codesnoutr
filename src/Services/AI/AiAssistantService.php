@@ -1,6 +1,6 @@
 <?php
 
-namespace Rafaelogic\CodeSnoutr\Services;
+namespace Rafaelogic\CodeSnoutr\Services\AI;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;

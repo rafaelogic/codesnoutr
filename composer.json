@@ -53,11 +53,11 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
-        "format": "vendor/bin/pint",
-        "format-test": "vendor/bin/pint --test",
-        "analyse": "vendor/bin/phpstan analyse",
+        "test": "vendor/bin/phpunit --configuration=config/quality/phpunit.xml",
+        "test-coverage": "vendor/bin/phpunit --configuration=config/quality/phpunit.xml --coverage-html coverage",
+        "format": "vendor/bin/pint --config=config/quality/pint.json",
+        "format-test": "vendor/bin/pint --config=config/quality/pint.json --test",
+        "analyse": "vendor/bin/phpstan analyse --configuration=config/quality/phpstan.neon",
         "audit": "composer audit",
         "all-checks": [
             "@format-test",

@@ -436,7 +436,197 @@ class InheritanceRules extends AbstractRuleEngine
      */
     protected function checkMissingParentCalls(string $filePath, string $content, int $lineNumber): void
     {
-        // This is handled in validateMethodOverride for specific cases
-        // Could be expanded for more comprehensive checking
+        $lines = explode("\n", $content);
+        $currentLine = $lines[$lineNumber - 1] ?? '';
+        
+        // Skip if not in a class that extends another
+        if (!preg_match('/extends\s+[\w\\\\]+/', $content)) {
+            return;
+        }
+        
+        // Check for methods that commonly need parent calls
+        if (preg_match('/function\s+(\w+)/', $currentLine, $matches)) {
+            $methodName = $matches[1];
+            
+            // Methods that typically require parent calls
+            $methodsNeedingParentCalls = [
+                'boot' => [
+                    'context' => 'Laravel Model boot method',
+                    'severity' => 'warning',
+                    'message' => 'Model boot() method should call parent::boot() to ensure parent initialization',
+                    'fix' => 'Add parent::boot(); at the beginning of the method'
+                ],
+                'register' => [
+                    'context' => 'Laravel ServiceProvider register method',
+                    'severity' => 'warning',
+                    'message' => 'ServiceProvider register() method should call parent::register() to ensure parent initialization',
+                    'fix' => 'Add parent::register(); at the beginning of the method'
+                ],
+                '__construct' => [
+                    'context' => 'Constructor method',
+                    'severity' => 'error',
+                    'message' => 'Constructor should call parent::__construct() to properly initialize parent class',
+                    'fix' => 'Add parent::__construct() with appropriate parameters'
+                ],
+                'setUp' => [
+                    'context' => 'PHPUnit setUp method',
+                    'severity' => 'warning',
+                    'message' => 'PHPUnit setUp() method should call parent::setUp() to ensure proper test initialization',
+                    'fix' => 'Add parent::setUp(); at the beginning of the method'
+                ],
+                'tearDown' => [
+                    'context' => 'PHPUnit tearDown method',
+                    'severity' => 'warning',
+                    'message' => 'PHPUnit tearDown() method should call parent::tearDown() to ensure proper test cleanup',
+                    'fix' => 'Add parent::tearDown(); at the end of the method'
+                ],
+                'render' => [
+                    'context' => 'View component render method',
+                    'severity' => 'info',
+                    'message' => 'Component render() method might need to call parent::render() depending on implementation',
+                    'fix' => 'Consider calling parent::render() if parent behavior is needed'
+                ],
+                'handle' => [
+                    'context' => 'Event/Command handler method',
+                    'severity' => 'info',
+                    'message' => 'Handler methods might need to call parent::handle() depending on inheritance chain',
+                    'fix' => 'Consider calling parent::handle() if parent behavior is needed'
+                ]
+            ];
+            
+            if (isset($methodsNeedingParentCalls[$methodName])) {
+                $config = $methodsNeedingParentCalls[$methodName];
+                
+                // Get method body to check for parent call
+                $methodBody = $this->extractMethodBody($content, $methodName, $lineNumber);
+                
+                // Check if parent call already exists
+                if (!preg_match("/parent::{$methodName}\s*\(/", $methodBody)) {
+                    // Special handling for constructors
+                    if ($methodName === '__construct') {
+                        $this->checkConstructorParentCall($filePath, $content, $methodBody, $lineNumber, $config);
+                    } else {
+                        $this->addMissingParentCallIssue($filePath, $lineNumber, $methodName, $config, $content);
+                    }
+                }
+            }
+            
+            // Check for overridden magic methods that might need parent calls
+            $magicMethods = ['__toString', '__get', '__set', '__call', '__callStatic', '__isset', '__unset'];
+            if (in_array($methodName, $magicMethods)) {
+                $methodBody = $this->extractMethodBody($content, $methodName, $lineNumber);
+                
+                if (!preg_match("/parent::{$methodName}\s*\(/", $methodBody)) {
+                    $this->addIssue($this->createIssue(
+                        $filePath,
+                        $lineNumber,
+                        'inheritance',
+                        'info',
+                        'inheritance.magic_method_parent_call',
+                        'Consider Parent Call for Magic Method',
+                        "Magic method {$methodName} might need to call parent::{$methodName}() to preserve parent behavior.",
+                        "Consider adding parent::{$methodName}() if parent functionality is needed.",
+                        $this->getCodeContext($content, $lineNumber)
+                    ));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Extract method body for analysis
+     */
+    protected function extractMethodBody(string $content, string $methodName, int $lineNumber): string
+    {
+        $lines = explode("\n", $content);
+        $methodStart = $lineNumber - 1;
+        $braceCount = 0;
+        $methodBody = '';
+        $inMethod = false;
+        
+        for ($i = $methodStart; $i < count($lines); $i++) {
+            $line = $lines[$i];
+            
+            if (!$inMethod && preg_match("/function\s+{$methodName}/", $line)) {
+                $inMethod = true;
+            }
+            
+            if ($inMethod) {
+                $methodBody .= $line . "\n";
+                
+                // Count braces to find method end
+                $braceCount += substr_count($line, '{') - substr_count($line, '}');
+                
+                if ($braceCount === 0 && strpos($line, '{') !== false) {
+                    break; // Method ended
+                }
+            }
+        }
+        
+        return $methodBody;
+    }
+    
+    /**
+     * Check constructor parent call specifically
+     */
+    protected function checkConstructorParentCall(string $filePath, string $content, string $methodBody, int $lineNumber, array $config): void
+    {
+        // Check if parent class likely has constructor parameters
+        if (preg_match('/extends\s+([\w\\\\]+)/', $content, $matches)) {
+            $parentClass = $matches[1];
+            
+            // Common Laravel classes that require constructor parameters
+            $classesNeedingConstructorCall = [
+                'Controller', 'Model', 'ServiceProvider', 'FormRequest', 'Command', 'Job', 
+                'Middleware', 'Event', 'Listener', 'Mail', 'Notification'
+            ];
+            
+            $parentName = basename(str_replace('\\', '/', $parentClass));
+            
+            if (in_array($parentName, $classesNeedingConstructorCall)) {
+                $this->addIssue($this->createIssue(
+                    $filePath,
+                    $lineNumber,
+                    'inheritance',
+                    'error',
+                    'inheritance.missing_constructor_parent_call',
+                    'Missing Parent Constructor Call',
+                    "Constructor should call parent::__construct() when extending {$parentClass}.",
+                    'Add parent::__construct() with appropriate parameters to ensure proper parent initialization.',
+                    $this->getCodeContext($content, $lineNumber)
+                ));
+            } else {
+                // Generic parent constructor check
+                $this->addIssue($this->createIssue(
+                    $filePath,
+                    $lineNumber,
+                    'inheritance',
+                    'warning',
+                    'inheritance.consider_constructor_parent_call',
+                    'Consider Parent Constructor Call',
+                    "Constructor might need to call parent::__construct() when extending {$parentClass}.",
+                    'Consider adding parent::__construct() if parent initialization is required.',
+                    $this->getCodeContext($content, $lineNumber)
+                ));
+            }
+        }
+    }
+    
+    /**
+     * Add missing parent call issue
+     */
+    protected function addMissingParentCallIssue(string $filePath, int $lineNumber, string $methodName, array $config, string $content): void
+    {
+        $this->addIssue($this->createIssue(
+            $filePath,
+            $lineNumber,
+            'inheritance',
+            $config['severity'],
+            'inheritance.missing_parent_call',
+            'Missing Parent Method Call',
+            $config['message'],
+            $config['fix'],
+            $this->getCodeContext($content, $lineNumber)
+        ));
     }
 }

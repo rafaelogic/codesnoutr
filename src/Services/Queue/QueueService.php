@@ -1,6 +1,6 @@
 <?php
 
-namespace Rafaelogic\CodeSnoutr\Services;
+namespace Rafaelogic\CodeSnoutr\Services\Queue;
 
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Log;

@@ -4,9 +4,12 @@ namespace Rafaelogic\CodeSnoutr\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Issue extends Model
 {
+    use HasFactory;
+    
     protected $table = 'codesnoutr_issues';
 
     protected $fillable = [
@@ -246,5 +249,13 @@ class Issue extends Model
                 ELSE 4 
             END
         ");
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Rafaelogic\CodeSnoutr\Database\Factories\IssueFactory::new();
     }
 }

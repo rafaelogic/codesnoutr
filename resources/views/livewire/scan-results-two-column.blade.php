@@ -121,7 +121,7 @@
     </div>
 
     <!-- Two-Column Layout -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-scroll">
         <!-- Left Column: File Tree -->
         <div class="w-80 min-h-screen h-full flex-shrink-0 bg-gray-100 dark:bg-gray-600 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
             <!-- File Tree Header -->
@@ -146,6 +146,7 @@
 
                 @if($paginatedDirectoryTree && count($paginatedDirectoryTree) > 0)
                     @foreach($paginatedDirectoryTree as $directory => $files)
+                    @if(is_array($files) && count($files) > 0)
                     @php $isExpanded = $this->isDirectoryExpanded($directory); @endphp
                     <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                         <!-- Directory Header -->
@@ -161,9 +162,20 @@
                                     <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
                                     </svg>
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                        {{ $this->getDirectoryDisplayName($directory) }}
-                                    </span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                            {{ $this->getDirectoryDisplayName($directory) }}
+                                        </div>
+                                        @php $relativePath = $this->getDirectoryRelativePath($directory); @endphp
+                                        @if(!empty($relativePath) && $relativePath !== '/')
+                                        <div class="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-0.5 space-x-1">
+                                            <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                            </svg>
+                                            <span class="truncate font-mono text-indigo-600 dark:text-indigo-400">{{ $relativePath }}</span>
+                                        </div>
+                                        @endif
+                                    </div>
                                 </div>
                                 <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full ml-2">
                                     {{ count($files) }}
@@ -245,6 +257,7 @@
                         </div>
                         @endif
                     </div>
+                    @endif
                     @endforeach
                 @else
                 <div class="p-6 text-center">
@@ -255,27 +268,25 @@
                 </div>
                 @endif
                 
-                <!-- Directory Pagination -->
-                @if($paginatedDirectoryTree && count($paginatedDirectoryTree) > 0 && $totalDirectoryPages > 1)
+                <!-- Directory Load More -->
+                @if($paginatedDirectoryTree && count($paginatedDirectoryTree) > 0 && $currentDirectoryPage < $totalDirectoryPages)
                 <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                            Page {{ $currentDirectoryPage }} of {{ $totalDirectoryPages }}
-                        </div>
-                        <div class="flex space-x-2">
-                            @if($currentDirectoryPage > 1)
-                                <button wire:click="previousDirectoryPage" 
-                                        class="px-3 py-1 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                                    Previous
-                                </button>
-                            @endif
-                            @if($currentDirectoryPage < $totalDirectoryPages)
-                                <button wire:click="nextDirectoryPage" 
-                                        class="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                    Next
-                                </button>
-                            @endif
-                        </div>
+                    <div class="flex items-center justify-center">
+                        <button wire:click="nextDirectoryPage" 
+                                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 flex items-center space-x-2"
+                                wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="nextDirectoryPage">Load More Directories</span>
+                            <span wire:loading wire:target="nextDirectoryPage" class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading...
+                            </span>
+                        </button>
+                    </div>
+                    <div class="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Showing {{ $loadedDirectoryCount }} of {{ $totalDirectoryCount }} directories with files
                     </div>
                 </div>
                 @endif
@@ -490,6 +501,23 @@
                                                 <!-- Issue Actions -->
                                                 @if(!$instance['fixed'])
                                                 <div class="flex items-center space-x-1">
+                                                    <!-- AI Auto-Fix Action Button -->
+                                                    @if($this->isAiConfigured() && !empty($instance['ai_fix']))
+                                                        <button wire:click="applyAutoFix({{ $instance['id'] }})" 
+                                                                wire:loading.attr="disabled"
+                                                                wire:target="applyAutoFix({{ $instance['id'] }})"
+                                                                class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                title="Apply AI Auto-Fix">
+                                                            <svg wire:loading.remove wire:target="applyAutoFix({{ $instance['id'] }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                                            </svg>
+                                                            <svg wire:loading wire:target="applyAutoFix({{ $instance['id'] }})" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                    
                                                     <button wire:click="resolveIssue({{ $instance['id'] }})" 
                                                             class="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                                                             title="Mark as Resolved">

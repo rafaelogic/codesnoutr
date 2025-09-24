@@ -155,7 +155,7 @@ class DashboardController
     /**
      * Export scan results
      */
-    public function export(Scan $scan, string $format = 'json'): Response
+    public function export(Scan $scan, string $format = 'json'): Response|JsonResponse
     {
         $scan->load('issues');
 
@@ -332,7 +332,7 @@ class DashboardController
     /**
      * Export scan as JSON
      */
-    protected function exportJson(Scan $scan): Response
+    protected function exportJson(Scan $scan): JsonResponse
     {
         $data = [
             'scan' => [
@@ -403,16 +403,188 @@ class DashboardController
     }
 
     /**
-     * Export scan as PDF (placeholder for future implementation)
+     * Export scan as PDF
      */
-    protected function exportPdf(Scan $scan): Response
+    protected function exportPdf(Scan $scan): Response|JsonResponse
     {
-        // This would require a PDF library like TCPDF or DOMPDF
-        // For now, return JSON with a message
-        return response()->json([
-            'message' => 'PDF export is not yet implemented. Please use JSON or CSV format.',
-            'available_formats' => ['json', 'csv']
-        ], 501);
+        // Check if PDF library is available
+        if (class_exists('Spatie\\LaravelPdf\\Facades\\Pdf')) {
+            return $this->generatePdfWithSpatie($scan);
+        } elseif (class_exists('TCPDF')) {
+            return $this->generatePdfWithTcpdf($scan);
+        } elseif (class_exists('Dompdf\\Dompdf')) {
+            return $this->generatePdfWithDompdf($scan);
+        } else {
+            // No PDF library available - return informative response
+            return response()->json([
+                'error' => 'PDF export requires a PDF library to be installed.',
+                'message' => 'To enable PDF export, install one of the following packages:',
+                'recommendations' => [
+                    'spatie/laravel-pdf' => 'composer require spatie/laravel-pdf',
+                    'tecnickcom/tcpdf' => 'composer require tecnickcom/tcpdf',
+                    'dompdf/dompdf' => 'composer require dompdf/dompdf'
+                ],
+                'available_formats' => ['json', 'csv'],
+                'alternative_download' => route('codesnoutr.export', [$scan->id, 'json'])
+            ], 501);
+        }
+    }
+
+    /**
+     * Generate PDF using Spatie Laravel PDF
+     */
+    protected function generatePdfWithSpatie(Scan $scan): Response
+    {
+        $data = [
+            'scan' => $scan,
+            'issues' => $scan->issues,
+            'exported_at' => now()->format('Y-m-d H:i:s'),
+            'stats' => [
+                'total_issues' => $scan->issues->count(),
+                'critical_issues' => $scan->issues->where('severity', 'critical')->count(),
+                'high_issues' => $scan->issues->where('severity', 'high')->count(),
+                'medium_issues' => $scan->issues->where('severity', 'medium')->count(),
+                'low_issues' => $scan->issues->where('severity', 'low')->count(),
+            ]
+        ];
+
+        $pdfClass = 'Spatie\\LaravelPdf\\Facades\\Pdf';
+        $pdf = $pdfClass::view('codesnoutr::exports.pdf-report', $data)
+            ->format('A4')
+            ->name("codesnoutr-scan-{$scan->id}-" . now()->format('Y-m-d-H-i-s') . '.pdf');
+
+        return $pdf->download();
+    }
+
+    /**
+     * Generate PDF using TCPDF
+     */
+    protected function generatePdfWithTcpdf(Scan $scan): Response
+    {
+        $tcpdfClass = 'TCPDF';
+        $pdf = new $tcpdfClass('P', 'mm', 'A4', true, 'UTF-8', false);
+        
+        // Set document information
+        $pdf->SetCreator('CodeSnoutr v1.0');
+        $pdf->SetAuthor('CodeSnoutr');
+        $pdf->SetTitle("Scan Report #{$scan->id}");
+        $pdf->SetSubject('Code Quality Report');
+
+        // Set default header data
+        $pdf->SetHeaderData('', 0, "CodeSnoutr Scan Report", "Scan #{$scan->id} - " . now()->format('Y-m-d H:i:s'));
+
+        // Set header and footer fonts
+        $pdf->setHeaderFont(['helvetica', '', 12]);
+        $pdf->setFooterFont(['helvetica', '', 10]);
+
+        // Set margins
+        $pdf->SetMargins(15, 27, 15);
+        $pdf->SetHeaderMargin(5);
+        $pdf->SetFooterMargin(10);
+
+        // Set auto page breaks
+        $pdf->SetAutoPageBreak(true, 25);
+
+        // Add a page
+        $pdf->AddPage();
+
+        // Build HTML content
+        $html = $this->buildPdfContent($scan);
+        
+        // Write HTML content
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        $filename = "codesnoutr-scan-{$scan->id}-" . now()->format('Y-m-d-H-i-s') . '.pdf';
+
+        return response($pdf->Output($filename, 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    /**
+     * Generate PDF using Dompdf
+     */
+    protected function generatePdfWithDompdf(Scan $scan): Response
+    {
+        $dompdfClass = 'Dompdf\\Dompdf';
+        $dompdf = new $dompdfClass();
+        $dompdf->loadHtml($this->buildPdfContent($scan));
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = "codesnoutr-scan-{$scan->id}-" . now()->format('Y-m-d-H-i-s') . '.pdf';
+
+        return response($dompdf->output())
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    /**
+     * Build HTML content for PDF
+     */
+    protected function buildPdfContent(Scan $scan): string
+    {
+        $stats = [
+            'total_issues' => $scan->issues->count(),
+            'critical_issues' => $scan->issues->where('severity', 'critical')->count(),
+            'high_issues' => $scan->issues->where('severity', 'high')->count(),
+            'medium_issues' => $scan->issues->where('severity', 'medium')->count(),
+            'low_issues' => $scan->issues->where('severity', 'low')->count(),
+        ];
+
+        $html = '<html><head><title>CodeSnoutr Scan Report</title></head><body>';
+        $html .= '<h1>CodeSnoutr Scan Report</h1>';
+        $html .= '<h2>Scan Details</h2>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+        $html .= '<tr><td><strong>Scan ID:</strong></td><td>' . htmlspecialchars($scan->id) . '</td></tr>';
+        $html .= '<tr><td><strong>Type:</strong></td><td>' . htmlspecialchars($scan->type) . '</td></tr>';
+        $html .= '<tr><td><strong>Target:</strong></td><td>' . htmlspecialchars($scan->target) . '</td></tr>';
+        $html .= '<tr><td><strong>Status:</strong></td><td>' . htmlspecialchars($scan->status) . '</td></tr>';
+        $html .= '<tr><td><strong>Files Scanned:</strong></td><td>' . htmlspecialchars($scan->files_scanned) . '</td></tr>';
+        $html .= '<tr><td><strong>Issues Found:</strong></td><td>' . htmlspecialchars($scan->issues_found) . '</td></tr>';
+        $html .= '<tr><td><strong>Started At:</strong></td><td>' . htmlspecialchars($scan->started_at) . '</td></tr>';
+        $html .= '<tr><td><strong>Completed At:</strong></td><td>' . htmlspecialchars($scan->completed_at) . '</td></tr>';
+        $html .= '</table>';
+
+        $html .= '<h2>Issue Summary</h2>';
+        $html .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%;">';
+        $html .= '<tr><td><strong>Critical:</strong></td><td>' . $stats['critical_issues'] . '</td></tr>';
+        $html .= '<tr><td><strong>High:</strong></td><td>' . $stats['high_issues'] . '</td></tr>';
+        $html .= '<tr><td><strong>Medium:</strong></td><td>' . $stats['medium_issues'] . '</td></tr>';
+        $html .= '<tr><td><strong>Low:</strong></td><td>' . $stats['low_issues'] . '</td></tr>';
+        $html .= '</table>';
+
+        if ($scan->issues->count() > 0) {
+            $html .= '<h2>Issues Details</h2>';
+            $html .= '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; font-size: 12px;">';
+            $html .= '<tr style="background-color: #f0f0f0;"><th>File</th><th>Line</th><th>Severity</th><th>Category</th><th>Title</th><th>Description</th></tr>';
+
+            foreach ($scan->issues as $issue) {
+                $severityColor = match($issue->severity) {
+                    'critical' => '#dc2626',
+                    'high' => '#ea580c',
+                    'medium' => '#ca8a04',
+                    'low' => '#65a30d',
+                    default => '#6b7280'
+                };
+
+                $html .= '<tr>';
+                $html .= '<td>' . htmlspecialchars($issue->file_path) . '</td>';
+                $html .= '<td>' . htmlspecialchars($issue->line_number) . '</td>';
+                $html .= '<td style="color: ' . $severityColor . '; font-weight: bold;">' . htmlspecialchars(strtoupper($issue->severity)) . '</td>';
+                $html .= '<td>' . htmlspecialchars($issue->category) . '</td>';
+                $html .= '<td>' . htmlspecialchars($issue->title) . '</td>';
+                $html .= '<td>' . htmlspecialchars(substr($issue->description, 0, 100) . (strlen($issue->description) > 100 ? '...' : '')) . '</td>';
+                $html .= '</tr>';
+            }
+
+            $html .= '</table>';
+        }
+
+        $html .= '<hr><p style="font-size: 10px; color: #666;">Generated by CodeSnoutr v1.0 on ' . now()->format('Y-m-d H:i:s') . '</p>';
+        $html .= '</body></html>';
+
+        return $html;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Rafaelogic\CodeSnoutr\Scanners;
 
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Log;
 
 class CodebaseScanHandler extends AbstractScanner
 {
@@ -13,6 +14,12 @@ class CodebaseScanHandler extends AbstractScanner
     {
         // Use configured scan paths if no specific path provided
         $scanPaths = $path ? [$path] : config('codesnoutr.scan.paths', ['app']);
+        
+        Log::info('CodebaseScanHandler: Starting scan', [
+            'input_path' => $path,
+            'scan_paths' => $scanPaths,
+            'categories' => $categories
+        ]);
         
         // Validate and filter categories
         $categories = $this->validateCategories($categories);
@@ -42,17 +49,31 @@ class CodebaseScanHandler extends AbstractScanner
             // First, count total files for progress calculation
             $totalFiles = 0;
             foreach ($scanPaths as $scanPath) {
-                $fullPath = base_path($scanPath);
+                // If path is already absolute (like when scanning full codebase), use it as-is
+                $fullPath = str_starts_with($scanPath, '/') ? $scanPath : base_path($scanPath);
+                Log::info('CodebaseScanHandler: Checking path', [
+                    'scan_path' => $scanPath,
+                    'full_path' => $fullPath,
+                    'is_dir' => is_dir($fullPath)
+                ]);
                 if (is_dir($fullPath)) {
-                    $totalFiles += $this->countPhpFiles($fullPath);
+                    $fileCount = $this->countPhpFiles($fullPath);
+                    $totalFiles += $fileCount;
+                    Log::info('CodebaseScanHandler: File count for path', [
+                        'path' => $scanPath,
+                        'file_count' => $fileCount
+                    ]);
                 }
             }
+            
+            Log::info('CodebaseScanHandler: Total files to scan', ['total_files' => $totalFiles]);
 
             $filesProcessed = 0;
 
             // Process each configured path
             foreach ($scanPaths as $pathIndex => $scanPath) {
-                $fullPath = base_path($scanPath);
+                // If path is already absolute (like when scanning full codebase), use it as-is
+                $fullPath = str_starts_with($scanPath, '/') ? $scanPath : base_path($scanPath);
                 
                 if (!is_dir($fullPath)) {
                     continue; // Skip if path doesn't exist
@@ -90,10 +111,10 @@ class CodebaseScanHandler extends AbstractScanner
                 $allIssues = array_merge($allIssues, $pathResult['issues']);
                 $allPathsScanned = array_merge($allPathsScanned, $pathResult['paths_scanned']);
                 
-                $totalFilesFound += $pathResult['files_found'];
-                $totalFilesScanned += $pathResult['files_scanned'];
-                $totalSize += $pathResult['total_size'];
-                $totalLines += $pathResult['total_lines'];
+                $totalFilesFound += $pathResult['summary']['total_files_found'];
+                $totalFilesScanned += $pathResult['summary']['total_files_scanned'];
+                $totalSize += $pathResult['summary']['total_size_bytes'];
+                $totalLines += $pathResult['summary']['total_lines'];
                 $pathResults[$scanPath] = $pathResult;
             }
 
@@ -168,66 +189,213 @@ class CodebaseScanHandler extends AbstractScanner
     {
         return $this->scanWithProgress($path, $categories, $options);
     }
-                
-                $totalFilesFound += $pathResult['summary']['total_files_found'];
-                $totalFilesScanned += $pathResult['summary']['total_files_scanned'];
-                $totalSize += $pathResult['summary']['total_size_bytes'];
-                $totalLines += $pathResult['summary']['total_lines'];
 
-                $pathResults[$scanPath] = [
-                    'path' => $fullPath,
-                    'files_found' => $pathResult['summary']['total_files_found'],
-                    'files_scanned' => $pathResult['summary']['total_files_scanned'],
-                    'issues_found' => count($pathResult['issues']),
-                    'size_bytes' => $pathResult['summary']['total_size_bytes'],
+    /**
+     * Group issues by file and severity for better organization
+     */
+    protected function groupIssues(array $issues): array
+    {
+        $grouped = [];
+        
+        foreach ($issues as $issue) {
+            $filePath = $issue['file_path'] ?? 'unknown';
+            $severity = $issue['severity'] ?? 'info';
+            
+            if (!isset($grouped[$filePath])) {
+                $grouped[$filePath] = [
+                    'file_path' => $filePath,
+                    'total_issues' => 0,
+                    'issues_by_severity' => [
+                        'critical' => [],
+                        'high' => [],
+                        'medium' => [],
+                        'low' => [],
+                        'info' => []
+                    ]
                 ];
             }
-
-            // Calculate codebase-level metrics
-            $healthScore = $this->calculateHealthScore($allIssues, $totalFilesScanned);
-            $complexityScore = $this->calculateCodebaseComplexity($allPathsScanned);
-
-            // Update final statistics
-            $this->updateStats('total_paths_scanned', count($scanPaths));
-            $this->updateStats('total_files_found', $totalFilesFound);
-            $this->updateStats('files_scanned', $totalFilesScanned);
-            $this->updateStats('total_issues', count($allIssues));
-            $this->updateStats('issues_by_severity', $this->groupIssuesBySeverity($allIssues));
-            $this->updateStats('issues_by_category', $this->groupIssuesByCategory($allIssues));
-            $this->updateStats('total_size_bytes', $totalSize);
-            $this->updateStats('total_lines', $totalLines);
-            $this->updateStats('health_score', $healthScore);
-            $this->updateStats('complexity_score', $complexityScore);
-            $this->updateStats('completed_at', now());
-
-            return [
-                'issues' => $allIssues,
-                'stats' => $this->getStats(),
-                'paths_scanned' => $allPathsScanned,
-                'summary' => [
-                    'scan_type' => 'codebase',
-                    'scan_paths' => $scanPaths,
-                    'categories_scanned' => $categories,
-                    'total_paths_scanned' => count($scanPaths),
-                    'total_files_found' => $totalFilesFound,
-                    'total_files_scanned' => $totalFilesScanned,
-                    'total_issues' => count($allIssues),
-                    'total_size_bytes' => $totalSize,
-                    'total_lines' => $totalLines,
-                    'health_score' => $healthScore,
-                    'complexity_score' => $complexityScore,
-                    'average_issues_per_file' => $totalFilesScanned > 0 ? round(count($allIssues) / $totalFilesScanned, 2) : 0,
-                    'issues_per_1000_lines' => $totalLines > 0 ? round((count($allIssues) / $totalLines) * 1000, 2) : 0,
-                    'path_results' => $pathResults,
-                ],
-            ];
-
-        } catch (\Exception $e) {
-            $this->updateStats('error', $e->getMessage());
-            $this->updateStats('completed_at', now());
             
-            throw new \RuntimeException("Failed to scan codebase: " . $e->getMessage(), 0, $e);
+            $grouped[$filePath]['total_issues']++;
+            $grouped[$filePath]['issues_by_severity'][$severity][] = $issue;
         }
+        
+        // Sort files by total issues count (most problematic first)
+        uasort($grouped, function($a, $b) {
+            return $b['total_issues'] <=> $a['total_issues'];
+        });
+        
+        return $grouped;
+    }
+
+    /**
+     * Generate comprehensive scan summary
+     */
+    protected function generateSummary(array $issues, int $totalFilesScanned): array
+    {
+        $issueCount = count($issues);
+        $severityCounts = [
+            'critical' => 0,
+            'high' => 0,
+            'medium' => 0,
+            'low' => 0,
+            'info' => 0
+        ];
+        
+        $categoryCounts = [];
+        $affectedFiles = [];
+        
+        foreach ($issues as $issue) {
+            $severity = $issue['severity'] ?? 'info';
+            $category = $issue['category'] ?? 'unknown';
+            $filePath = $issue['file_path'] ?? 'unknown';
+            
+            // Count by severity
+            if (isset($severityCounts[$severity])) {
+                $severityCounts[$severity]++;
+            }
+            
+            // Count by category
+            if (!isset($categoryCounts[$category])) {
+                $categoryCounts[$category] = 0;
+            }
+            $categoryCounts[$category]++;
+            
+            // Track affected files
+            if (!in_array($filePath, $affectedFiles)) {
+                $affectedFiles[] = $filePath;
+            }
+        }
+        
+        // Calculate quality score
+        $qualityScore = $this->calculateQualityScore($issueCount, $totalFilesScanned);
+        
+        return [
+            'total_issues' => $issueCount,
+            'files_scanned' => $totalFilesScanned,
+            'affected_files' => count($affectedFiles),
+            'clean_files' => max(0, $totalFilesScanned - count($affectedFiles)),
+            'quality_score' => $qualityScore,
+            'severity_breakdown' => $severityCounts,
+            'category_breakdown' => $categoryCounts,
+            'top_categories' => $this->getTopCategories($categoryCounts, 5),
+            'most_affected_files' => $this->getMostAffectedFiles($issues, 10),
+            'scan_timestamp' => now()->toISOString(),
+            'recommendations' => $this->generateRecommendations($severityCounts, $qualityScore)
+        ];
+    }
+
+    /**
+     * Calculate quality score (0-100) based on issues found
+     */
+    protected function calculateQualityScore(int $issueCount, int $totalFiles): int
+    {
+        if ($totalFiles === 0) {
+            return 100;
+        }
+        
+        // Base score calculation: fewer issues = higher score
+        $issuesPerFile = $issueCount / $totalFiles;
+        
+        // Scoring scale:
+        // 0 issues per file = 100 points
+        // 1 issue per file = 85 points
+        // 2 issues per file = 70 points
+        // 5+ issues per file = 50 points or lower
+        
+        if ($issuesPerFile === 0) {
+            return 100;
+        } elseif ($issuesPerFile <= 0.5) {
+            return max(90, 100 - ($issuesPerFile * 20));
+        } elseif ($issuesPerFile <= 1) {
+            return max(80, 90 - (($issuesPerFile - 0.5) * 20));
+        } elseif ($issuesPerFile <= 2) {
+            return max(60, 80 - (($issuesPerFile - 1) * 20));
+        } elseif ($issuesPerFile <= 5) {
+            return max(30, 60 - (($issuesPerFile - 2) * 10));
+        } else {
+            return max(10, 30 - (($issuesPerFile - 5) * 5));
+        }
+    }
+
+    /**
+     * Get top categories by issue count
+     */
+    protected function getTopCategories(array $categoryCounts, int $limit = 5): array
+    {
+        arsort($categoryCounts);
+        return array_slice($categoryCounts, 0, $limit, true);
+    }
+
+    /**
+     * Get most affected files by issue count
+     */
+    protected function getMostAffectedFiles(array $issues, int $limit = 10): array
+    {
+        $fileCounts = [];
+        
+        foreach ($issues as $issue) {
+            $filePath = $issue['file_path'] ?? 'unknown';
+            if (!isset($fileCounts[$filePath])) {
+                $fileCounts[$filePath] = 0;
+            }
+            $fileCounts[$filePath]++;
+        }
+        
+        arsort($fileCounts);
+        return array_slice($fileCounts, 0, $limit, true);
+    }
+
+    /**
+     * Generate recommendations based on scan results
+     */
+    protected function generateRecommendations(array $severityCounts, int $qualityScore): array
+    {
+        $recommendations = [];
+        
+        if ($severityCounts['critical'] > 0) {
+            $recommendations[] = [
+                'priority' => 'high',
+                'type' => 'security',
+                'message' => "Address {$severityCounts['critical']} critical security issues immediately",
+                'action' => 'Review and fix critical vulnerabilities'
+            ];
+        }
+        
+        if ($severityCounts['high'] > 5) {
+            $recommendations[] = [
+                'priority' => 'medium',
+                'type' => 'quality',
+                'message' => "Consider addressing {$severityCounts['high']} high-priority issues",
+                'action' => 'Plan fixes for high-impact issues'
+            ];
+        }
+        
+        if ($qualityScore < 60) {
+            $recommendations[] = [
+                'priority' => 'medium',
+                'type' => 'process',
+                'message' => "Quality score is {$qualityScore}/100. Consider implementing more rigorous code review",
+                'action' => 'Establish coding standards and review process'
+            ];
+        } elseif ($qualityScore >= 90) {
+            $recommendations[] = [
+                'priority' => 'low',
+                'type' => 'maintenance',
+                'message' => "Excellent code quality! Continue maintaining current standards",
+                'action' => 'Keep up the good work'
+            ];
+        }
+        
+        if (array_sum($severityCounts) === 0) {
+            $recommendations[] = [
+                'priority' => 'low',
+                'type' => 'maintenance',
+                'message' => "No issues found! Consider running more comprehensive scans",
+                'action' => 'Expand scan categories or add custom rules'
+            ];
+        }
+        
+        return $recommendations;
     }
 
     /**

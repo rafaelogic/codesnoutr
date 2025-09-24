@@ -192,8 +192,14 @@
                              x-transition:leave-end="opacity-0 transform scale-95"
                              class="ml-6 mt-1 space-y-1">
                             @foreach($navigation as $item)
+                            @php
+                                $isActive = ($item['active'] ?? false) || $activeSection === ($item['section'] ?? '');
+                                $linkClasses = $isActive 
+                                    ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white';
+                            @endphp
                             <a href="{{ $item['route'] ?? '#' }}" 
-                               class="@if(($item['active'] ?? false) || $activeSection === ($item['section'] ?? '')) bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 @else text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white @endif group flex items-center px-3 py-2 text-sm transition-colors duration-200">
+                               class="{{ $linkClasses }} group flex items-center px-3 py-2 text-sm transition-colors duration-200">
                                 @if(isset($item['icon']))
                                 <svg class="mr-3 h-4 w-4 {{ ($item['active'] ?? false) || $activeSection === ($item['section'] ?? '') ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-300' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     @if($item['icon'] === 'cog')
