@@ -1,6 +1,6 @@
 @props([
     'type' => 'button',
-    'variant' => 'primary', // primary, secondary, danger, success, warning, ghost
+    'variant' => 'primary', // primary, secondary, danger, success, warning, ghost, outline-primary, outline-secondary
     'size' => 'md', // xs, sm, md, lg, xl
     'loading' => false,
     'disabled' => false,
@@ -8,19 +8,69 @@
     'iconPosition' => 'left', // left, right, only
     'href' => null,
     'target' => null,
-    'fullWidth' => false
+    'fullWidth' => false,
+    'rounded' => 'default', // none, sm, default, lg, full
+    'shadow' => true,
+    'pulse' => false // for call-to-action buttons
 ])
 
 @php
-    $baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    $baseClasses = 'btn';
     
     $variantClasses = [
-        'primary' => 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-blue-500 border border-transparent',
-        'secondary' => 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500 border border-gray-300 dark:border-gray-600',
-        'danger' => 'bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600 focus:ring-red-500 border border-transparent',
-        'success' => 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600 focus:ring-green-500 border border-transparent',
-        'warning' => 'bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-500 focus:ring-yellow-500 border border-transparent',
-        'ghost' => 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500 border border-transparent'
+        'primary' => 'btn--primary',
+        'secondary' => 'btn--secondary',
+        'danger' => 'btn--danger',
+        'success' => 'btn--success',
+        'warning' => 'btn--warning',
+        'ghost' => 'btn--ghost',
+        'outline-primary' => 'btn--outline-primary',
+        'outline-secondary' => 'btn--outline-secondary',
+    ];
+    
+    $sizeClasses = [
+        'xs' => 'btn--xs',
+        'sm' => 'btn--sm',
+        'md' => 'btn--md',
+        'lg' => 'btn--lg',
+        'xl' => 'btn--xl'
+    ];
+    
+    $roundedClasses = [
+        'none' => 'rounded-none',
+        'sm' => 'rounded-sm',
+        'default' => 'rounded-md',
+        'lg' => 'rounded-lg',
+        'full' => 'rounded-full'
+    ];
+    
+    $iconAlignment = match($iconPosition) {
+        'left' => 'btn--icon-left',
+        'right' => 'btn--icon-right',
+        'only' => 'btn--icon-only',
+        default => 'btn--icon-left'
+    };
+    
+    $classes = implode(' ', array_filter([
+        $baseClasses,
+        $variantClasses[$variant] ?? $variantClasses['primary'],
+        $sizeClasses[$size] ?? $sizeClasses['md'],
+        $roundedClasses[$rounded] ?? '',
+        $fullWidth ? 'w-full' : '',
+        $loading ? 'btn--loading' : '',
+        $pulse ? 'animate-pulse' : '',
+        !$shadow ? 'shadow-none' : '',
+        $iconPosition === 'only' ? $iconAlignment : ($icon ? $iconAlignment : ''),
+    ]));
+    
+    $iconSizeMap = [
+        'xs' => 'xs',
+        'sm' => 'sm', 
+        'md' => 'sm',
+        'lg' => 'md',
+        'xl' => 'lg'
+    ];
+        @endphp
     ];
     
     $sizeClasses = [
@@ -52,23 +102,28 @@
 
 @if($href)
     <a 
-        href="{{ $href }}"
+        href="{{ $href }}" 
         @if($target) target="{{ $target }}" @endif
         {{ $attributes->merge(['class' => $classes]) }}
         @if($disabled) aria-disabled="true" @endif
+        role="button"
     >
         @if($loading)
-            <x-atoms.spinner :size="$size" class="mr-2" />
-        @elseif($icon && ($iconPosition === 'left' || $iconPosition === 'only'))
-            <x-atoms.icon :name="$icon" :class="$iconSize . ($iconPosition === 'only' ? '' : ' mr-2')" />
+            <x-atoms.icon name="loading" :size="$iconSizeMap[$size]" class="icon--loading mr-2" />
+        @elseif($icon && $iconPosition === 'left')
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" class="mr-2" />
         @endif
         
         @if($iconPosition !== 'only')
-            {{ $slot }}
+            <span>{{ $slot }}</span>
         @endif
         
         @if($icon && $iconPosition === 'right')
-            <x-atoms.icon :name="$icon" :class="$iconSize . ' ml-2'" />
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" class="ml-2" />
+        @endif
+        
+        @if($icon && $iconPosition === 'only')
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" />
         @endif
     </a>
 @else
@@ -76,19 +131,24 @@
         type="{{ $type }}"
         {{ $attributes->merge(['class' => $classes]) }}
         @if($disabled || $loading) disabled @endif
+        @if($loading) aria-busy="true" @endif
     >
         @if($loading)
-            <x-atoms.spinner :size="$size" class="mr-2" />
-        @elseif($icon && ($iconPosition === 'left' || $iconPosition === 'only'))
-            <x-atoms.icon :name="$icon" :class="$iconSize . ($iconPosition === 'only' ? '' : ' mr-2')" />
+            <x-atoms.icon name="loading" :size="$iconSizeMap[$size]" class="icon--loading mr-2" />
+        @elseif($icon && $iconPosition === 'left')
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" class="mr-2" />
         @endif
         
         @if($iconPosition !== 'only')
-            {{ $slot }}
+            <span>{{ $slot }}</span>
         @endif
         
         @if($icon && $iconPosition === 'right')
-            <x-atoms.icon :name="$icon" :class="$iconSize . ' ml-2'" />
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" class="ml-2" />
+        @endif
+        
+        @if($icon && $iconPosition === 'only')
+            <x-atoms.icon :name="$icon" :size="$iconSizeMap[$size]" />
         @endif
     </button>
 @endif

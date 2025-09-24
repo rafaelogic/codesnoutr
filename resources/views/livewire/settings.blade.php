@@ -27,25 +27,6 @@
 
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
             <div class="divide-y divide-gray-200 dark:divide-gray-700 lg:grid lg:grid-cols-12 lg:divide-y-0 lg:divide-x">
-                <!-- Sidebar Navigation -->
-                <aside class="py-6 lg:col-span-3">
-                    <nav class="space-y-1">
-                        @foreach($tabs as $tabKey => $tabLabel)
-                        <button 
-                            wire:click="setActiveTab('{{ $tabKey }}')"
-                            class="w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 
-                                @if($activeTab === $tabKey)
-                                    bg-indigo-50 dark:bg-indigo-900 border-r-2 border-indigo-500 text-indigo-700 dark:text-indigo-300
-                                @else
-                                    text-gray-900 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700
-                                @endif
-                            ">
-                            {{ $tabLabel }}
-                        </button>
-                        @endforeach
-                    </nav>
-                </aside>
-
                 <!-- Main content -->
                 <div class="divide-y divide-gray-200 dark:divide-gray-700 lg:col-span-9">
                     <div class="py-6 px-4 sm:p-6 lg:pb-8">

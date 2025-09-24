@@ -10,19 +10,19 @@
 
 <div 
     x-data="scanResults()"
-    class="bg-white shadow overflow-hidden sm:rounded-md"
+    class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md"
     {{ $attributes }}
 >
     <!-- Header with Filters and Actions -->
-    <div class="border-b border-gray-200 px-4 py-5 sm:px-6">
+    <div class="border-b border-gray-200 dark:border-gray-700 px-4 py-5 sm:px-6">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
             <!-- Scan Info -->
             <div class="flex-1">
                 @if($scan)
-                    <h3 class="text-lg font-medium text-gray-900">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
                         Scan Results: {{ $scan['name'] ?? 'Unknown' }}
                     </h3>
-                    <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                    <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                         <span>Completed {{ $scan['completed_at'] ?? 'Unknown' }}</span>
                         <span>•</span>
                         <span>{{ count($issues) }} issues found</span>
@@ -32,7 +32,7 @@
                         @endif
                     </div>
                 @else
-                    <h3 class="text-lg font-medium text-gray-900">Scan Results</h3>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Scan Results</h3>
                 @endif
             </div>
             
@@ -126,7 +126,7 @@
                 <div class="px-4 py-4">
                     <!-- Group Header -->
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-sm font-medium text-gray-900 flex items-center">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center">
                             <template x-if="groupBy === 'file'">
                                 <x-atoms.icon name="document-text" size="sm" class="mr-2" />
                             </template>
@@ -177,12 +177,12 @@
                                         </div>
                                         
                                         <!-- Issue Title and Description -->
-                                        <h5 class="text-sm font-medium text-gray-900 mb-1" x-text="issue.title"></h5>
-                                        <p class="text-sm text-gray-600 mb-3" x-text="issue.description"></p>
+                                        <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1" x-text="issue.title"></h5>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3" x-text="issue.description"></p>
                                         
                                         <!-- Code Preview -->
                                         <template x-if="issue.code_snippet">
-                                            <div class="bg-gray-50 rounded-md p-3 mb-3">
+                                            <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-3 mb-3">
                                                 <pre class="text-xs text-gray-800 overflow-x-auto"><code x-text="issue.code_snippet"></code></pre>
                                             </div>
                                         </template>

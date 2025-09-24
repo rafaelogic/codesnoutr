@@ -15,6 +15,11 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
         class CodeSnoutrCollector extends \DebugBar\DataCollector\DataCollector implements \DebugBar\DataCollector\Renderable
         {
             /**
+             * Store complex data for panel rendering
+             */
+            protected $panelData = [];
+
+            /**
              * Called by the DebugBar when data needs to be collected
              */
             public function collect()
@@ -29,14 +34,71 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                         ];
                     }
 
+                    // Get raw data
+                    $stats = $this->getStats($settings);
+                    $systemInfo = $this->getSystemInfo();
+                    $recentActivity = $this->getRecentActivity($settings);
+                    $queueStatus = $this->getQueueStatus();
+                    $performanceMetrics = $this->getPerformanceMetrics();
+                    $alerts = $this->getAlerts();
+
+                    // Flatten complex data for debugbar display
                     $data = [
                         'enabled' => true,
-                        'stats' => $this->getStats($settings),
-                        'system_info' => $this->getSystemInfo(),
-                        'recent_activity' => $this->getRecentActivity($settings),
-                        'queue_status' => $this->getQueueStatus(),
-                        'performance_metrics' => $this->getPerformanceMetrics(),
-                        'alerts' => $this->getAlerts(),
+                        // Flatten stats
+                        'total_scans' => $stats['total_scans'] ?? 0,
+                        'scans_today' => $stats['scans_today'] ?? 0,
+                        'total_issues' => $stats['total_issues'] ?? 0,
+                        'unresolved_issues' => $stats['unresolved_issues'] ?? 0,
+                        'critical_issues' => $stats['critical_issues'] ?? 0,
+                        'security_issues' => $stats['security_issues'] ?? 0,
+                        'performance_issues' => $stats['performance_issues'] ?? 0,
+                        'quality_issues' => $stats['quality_issues'] ?? 0,
+                        'resolved_today' => $stats['resolved_today'] ?? 0,
+                        'health_score' => $stats['health_score'] ?? 0,
+                        'last_scan' => $stats['last_scan'] ?? 'Never',
+                        
+                        // Flatten system info
+                        'version' => $systemInfo['version'] ?? 'Unknown',
+                        'memory_usage' => $systemInfo['memory_usage'] ?? 'Unknown',
+                        'memory_usage_percent' => $systemInfo['memory_usage_percent'] ?? 'Unknown',
+                        'cache_enabled' => $systemInfo['cache_enabled'] ? 'Yes' : 'No',
+                        'ai_enabled' => $systemInfo['ai_enabled'] ? 'Yes' : 'No',
+                        'queue_enabled' => $systemInfo['queue_enabled'] ? 'Yes' : 'No',
+                        'environment' => $systemInfo['environment'] ?? 'Unknown',
+                        'debugbar_version' => $systemInfo['debugbar_version'] ?? 'Unknown',
+                        
+                        // Flatten queue status
+                        'queue_connection' => $queueStatus['connection'] ?? 'Unknown',
+                        'pending_jobs' => $queueStatus['pending_jobs'] ?? 0,
+                        'failed_jobs' => $queueStatus['failed_jobs'] ?? 0,
+                        
+                        // Flatten performance metrics
+                        'avg_scan_time' => $performanceMetrics['avg_scan_time'] ?? 'Unknown',
+                        'slowest_scan_time' => $performanceMetrics['slowest_scan_time'] ?? 'Unknown',
+                        'fastest_scan_time' => $performanceMetrics['fastest_scan_time'] ?? 'Unknown',
+                        'most_problematic_file' => is_array($performanceMetrics['most_problematic_file'] ?? null) ? 
+                            ($performanceMetrics['most_problematic_file']['file'] . ' (' . $performanceMetrics['most_problematic_file']['issues'] . ' issues)') : 
+                            'None',
+                        
+                        // Format recent activity as strings
+                        'recent_activity_count' => count($recentActivity),
+                        'latest_activity' => !empty($recentActivity) ? $this->formatActivityForDisplay($recentActivity[0]) : 'None',
+                        
+                        // Format alerts
+                        'alert_count' => count($alerts),
+                        'critical_alerts' => count(array_filter($alerts, function($alert) { return ($alert['type'] ?? '') === 'critical'; })),
+                        'latest_alert' => !empty($alerts) ? $alerts[0]['message'] ?? 'None' : 'None',
+                    ];
+
+                    // Store complex data for panel rendering
+                    $this->panelData = [
+                        'stats' => $stats,
+                        'system_info' => $systemInfo,
+                        'recent_activity' => $recentActivity,
+                        'queue_status' => $queueStatus,
+                        'performance_metrics' => $performanceMetrics,
+                        'alerts' => $alerts,
                     ];
 
                     return $data;
@@ -47,6 +109,25 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                         'trace' => config('app.debug') ? $e->getTraceAsString() : null
                     ];
                 }
+            }
+
+            /**
+             * Format activity item for simple display
+             */
+            protected function formatActivityForDisplay($activity)
+            {
+                if (!is_array($activity)) {
+                    return 'Unknown activity';
+                }
+
+                if ($activity['type'] === 'scan') {
+                    return "Scan #{$activity['id']} - {$activity['issues_count']} issues";
+                } elseif ($activity['type'] === 'issue') {
+                    $severity = strtoupper($activity['severity']);
+                    return "{$severity} {$activity['category']} in " . basename($activity['file_path']);
+                }
+
+                return 'Unknown activity';
             }
 
             /**
@@ -73,7 +154,7 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                         "tooltip" => "CodeSnoutr Code Analysis & Quality Metrics"
                     ],
                     "$name:badge" => [
-                        "map" => "$name.stats.unresolved_issues",
+                        "map" => "$name.unresolved_issues",
                         "default" => "0"
                     ]
                 ];
@@ -89,68 +170,84 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                         'debugbar_enabled' => config('codesnoutr.debugbar.enabled', false),
                         'show_scan_count' => config('codesnoutr.debugbar.show_scan_count', true),
                         'show_issue_count' => config('codesnoutr.debugbar.show_issue_count', true),
-                        'show_last_scan' => config('codesnoutr.debugbar.show_last_scan', true),
-                        'show_performance' => config('codesnoutr.debugbar.show_performance', true),
-                        'show_queue_status' => config('codesnoutr.debugbar.show_queue_status', true),
-                        'show_alerts' => config('codesnoutr.debugbar.show_alerts', true),
+                        'show_health_score' => config('codesnoutr.debugbar.show_health_score', true),
+                        'show_recent_activity' => config('codesnoutr.debugbar.show_recent_activity', true),
                         'max_recent_items' => config('codesnoutr.debugbar.max_recent_items', 5),
+                        'cache_duration' => config('codesnoutr.debugbar.cache_duration', 300),
                     ];
 
+                    // Try to get settings from database
                     try {
-                        $dbSettings = Setting::whereIn('key', array_keys($defaultSettings))
-                            ->pluck('value', 'key')
-                            ->toArray();
-                        return array_merge($defaultSettings, $dbSettings);
+                        if (class_exists('Rafaelogic\CodeSnoutr\Models\Setting')) {
+                            $dbSettings = Setting::pluck('value', 'key')->toArray();
+                            return array_merge($defaultSettings, $dbSettings);
+                        }
                     } catch (\Exception $e) {
-                        return $defaultSettings;
+                        // Fall back to config if database is not available
                     }
+
+                    return $defaultSettings;
                 });
             }
 
             /**
-             * Get comprehensive statistics
+             * Get enhanced statistics
              */
             protected function getStats($settings)
             {
-                $stats = [];
+                return Cache::remember('codesnoutr.debugbar.stats', $settings['cache_duration'] ?? 300, function () {
+                    try {
+                        $stats = [
+                            'total_scans' => 0,
+                            'scans_today' => 0,
+                            'total_issues' => 0,
+                            'unresolved_issues' => 0,
+                            'critical_issues' => 0,
+                            'high_issues' => 0,
+                            'medium_issues' => 0,
+                            'low_issues' => 0,
+                            'security_issues' => 0,
+                            'performance_issues' => 0,
+                            'quality_issues' => 0,
+                            'resolved_today' => 0,
+                            'health_score' => 0,
+                            'last_scan' => 'Never',
+                        ];
 
-                try {
-                    if ($settings['show_scan_count']) {
-                        $stats['total_scans'] = Scan::count();
-                        $stats['scans_today'] = Scan::whereDate('created_at', today())->count();
-                        $stats['scans_this_week'] = Scan::whereBetween('created_at', [now()->startOfWeek(), now()])->count();
-                        
-                        $lastScan = Scan::latest()->first();
-                        $stats['last_scan'] = $lastScan ? $lastScan->created_at->diffForHumans() : 'Never';
+                        if (class_exists('Rafaelogic\CodeSnoutr\Models\Scan')) {
+                            $stats['total_scans'] = Scan::count();
+                            $stats['scans_today'] = Scan::whereDate('created_at', today())->count();
+                            
+                            $latestScan = Scan::latest()->first();
+                            if ($latestScan) {
+                                $stats['last_scan'] = $latestScan->created_at->diffForHumans();
+                            }
+                        }
+
+                        if (class_exists('Rafaelogic\CodeSnoutr\Models\Issue')) {
+                            $stats['total_issues'] = Issue::count();
+                            $stats['unresolved_issues'] = Issue::where('status', '!=', 'resolved')->count();
+                            $stats['critical_issues'] = Issue::where('severity', 'critical')->count();
+                            $stats['high_issues'] = Issue::where('severity', 'high')->count();
+                            $stats['medium_issues'] = Issue::where('severity', 'medium')->count();
+                            $stats['low_issues'] = Issue::where('severity', 'low')->count();
+                            $stats['security_issues'] = Issue::where('category', 'security')->count();
+                            $stats['performance_issues'] = Issue::where('category', 'performance')->count();
+                            $stats['quality_issues'] = Issue::where('category', 'quality')->count();
+                            $stats['resolved_today'] = Issue::where('status', 'resolved')
+                                ->whereDate('updated_at', today())
+                                ->count();
+                        }
+
+                        $stats['health_score'] = $this->calculateHealthScore($stats);
+
+                        return $stats;
+                    } catch (\Exception $e) {
+                        return [
+                            'error' => 'Unable to fetch statistics: ' . $e->getMessage()
+                        ];
                     }
-
-                    if ($settings['show_issue_count']) {
-                        $stats['total_issues'] = Issue::count();
-                        $stats['critical_issues'] = Issue::where('severity', 'critical')->count();
-                        $stats['high_issues'] = Issue::where('severity', 'high')->count();
-                        $stats['medium_issues'] = Issue::where('severity', 'medium')->count();
-                        $stats['low_issues'] = Issue::where('severity', 'low')->count();
-                        $stats['unresolved_issues'] = Issue::where('status', '!=', 'resolved')->count();
-                        $stats['resolved_today'] = Issue::where('status', 'resolved')
-                            ->whereDate('updated_at', today())->count();
-                        
-                        // Issue categories
-                        $stats['security_issues'] = Issue::where('category', 'security')
-                            ->where('status', '!=', 'resolved')->count();
-                        $stats['performance_issues'] = Issue::where('category', 'performance')
-                            ->where('status', '!=', 'resolved')->count();
-                        $stats['quality_issues'] = Issue::where('category', 'quality')
-                            ->where('status', '!=', 'resolved')->count();
-                    }
-                    
-                    // Calculate health score
-                    $stats['health_score'] = $this->calculateHealthScore();
-                    
-                } catch (\Exception $e) {
-                    $stats['error'] = 'Unable to load stats: ' . $e->getMessage();
-                }
-
-                return $stats;
+                });
             }
 
             /**
@@ -158,26 +255,24 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
              */
             protected function getSystemInfo()
             {
+                $memoryLimit = ini_get('memory_limit');
                 $memoryUsage = memory_get_usage(true);
-                $memoryPeak = memory_get_peak_usage(true);
-                $memoryLimit = $this->parseMemoryLimit(ini_get('memory_limit'));
-                
+                $memoryUsageFormatted = $this->formatBytes($memoryUsage);
+                $memoryUsagePercent = $this->parseMemoryLimit($memoryLimit) > 0 ? 
+                    round(($memoryUsage / $this->parseMemoryLimit($memoryLimit)) * 100, 1) : 'Unknown';
+
                 return [
                     'version' => config('codesnoutr.version', '1.0.0'),
-                    'php_version' => PHP_VERSION,
-                    'laravel_version' => app()->version(),
-                    'memory_usage' => $this->formatBytes($memoryUsage),
-                    'memory_peak' => $this->formatBytes($memoryPeak),
-                    'memory_usage_percent' => $memoryLimit > 0 ? round(($memoryUsage / $memoryLimit) * 100, 1) : 0,
-                    'memory_limit' => $this->formatBytes($memoryLimit),
-                    'cache_enabled' => config('codesnoutr.cache.enabled', true),
+                    'memory_usage' => $memoryUsageFormatted,
+                    'memory_usage_percent' => $memoryUsagePercent . '%',
+                    'memory_limit' => $memoryLimit,
+                    'cache_enabled' => config('cache.default') !== 'null',
                     'cache_driver' => config('cache.default'),
                     'ai_enabled' => config('codesnoutr.ai.enabled', false),
                     'ai_provider' => config('codesnoutr.ai.provider', 'none'),
                     'queue_enabled' => config('codesnoutr.queue.enabled', false),
                     'queue_connection' => config('queue.default'),
-                    'debugbar_version' => class_exists('Barryvdh\Debugbar\LaravelDebugbar') ? 
-                        \Barryvdh\Debugbar\LaravelDebugbar::VERSION ?? 'unknown' : 'not installed',
+                    'debugbar_version' => $this->getDebugbarVersion(),
                     'environment' => app()->environment(),
                     'uptime' => $this->getUptime(),
                 ];
@@ -188,9 +283,7 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
              */
             public function formatBytes($bytes, $precision = 2)
             {
-                if ($bytes <= 0) return '0 B';
-                
-                $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                $units = array('B', 'KB', 'MB', 'GB', 'TB');
 
                 for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
                     $bytes /= 1024;
@@ -202,21 +295,27 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
             /**
              * Parse memory limit string to bytes
              */
-            protected function parseMemoryLimit($limit)
+            protected function parseMemoryLimit($memoryLimit)
             {
-                $limit = trim($limit);
-                $last = strtolower($limit[strlen($limit) - 1]);
-                $value = intval($limit);
-                
-                switch ($last) {
+                if ($memoryLimit === '-1') {
+                    return PHP_INT_MAX;
+                }
+
+                $unit = strtolower(substr($memoryLimit, -1));
+                $value = (int) $memoryLimit;
+
+                switch ($unit) {
                     case 'g':
-                        $value *= 1024;
+                        $value *= 1024 * 1024 * 1024;
+                        break;
                     case 'm':
-                        $value *= 1024;
+                        $value *= 1024 * 1024;
+                        break;
                     case 'k':
                         $value *= 1024;
+                        break;
                 }
-                
+
                 return $value;
             }
 
@@ -237,30 +336,71 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
             }
 
             /**
-             * Calculate overall health score based on issues
+             * Get Laravel Debugbar version safely
              */
-            protected function calculateHealthScore()
+            protected function getDebugbarVersion()
             {
-                try {
-                    $totalIssues = Issue::count();
-                    $criticalIssues = Issue::where('severity', 'critical')->count();
-                    $highIssues = Issue::where('severity', 'high')->count();
-                    $resolvedIssues = Issue::where('status', 'resolved')->count();
-                    
-                    if ($totalIssues === 0) {
-                        return 100;
-                    }
-                    
-                    // Calculate weighted score
-                    $score = 100;
-                    $score -= ($criticalIssues * 20); // Critical issues heavily impact score
-                    $score -= ($highIssues * 10);     // High issues moderately impact score
-                    $score -= (($totalIssues - $resolvedIssues) * 2); // Unresolved issues impact score
-                    
-                    return max(0, min(100, $score));
-                } catch (\Exception $e) {
-                    return 0;
+                if (!class_exists('Barryvdh\Debugbar\LaravelDebugbar')) {
+                    return 'not installed';
                 }
+
+                try {
+                    // Try to get version from composer.lock
+                    $composerLock = base_path('composer.lock');
+                    if (file_exists($composerLock)) {
+                        $lockData = json_decode(file_get_contents($composerLock), true);
+                        if (isset($lockData['packages'])) {
+                            foreach ($lockData['packages'] as $package) {
+                                if ($package['name'] === 'barryvdh/laravel-debugbar') {
+                                    return $package['version'] ?? 'unknown';
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback: try to get version from package file
+                    $packagePath = base_path('vendor/barryvdh/laravel-debugbar/composer.json');
+                    if (file_exists($packagePath)) {
+                        $packageData = json_decode(file_get_contents($packagePath), true);
+                        if (isset($packageData['version'])) {
+                            return $packageData['version'];
+                        }
+                    }
+
+                    return 'installed';
+                } catch (\Exception $e) {
+                    return 'unknown';
+                }
+            }
+
+            /**
+             * Calculate health score based on issues
+             */
+            protected function calculateHealthScore($stats)
+            {
+                $totalIssues = $stats['total_issues'] ?? 0;
+                $unresolvedIssues = $stats['unresolved_issues'] ?? 0;
+                $criticalIssues = $stats['critical_issues'] ?? 0;
+                $highIssues = $stats['high_issues'] ?? 0;
+
+                if ($totalIssues === 0) {
+                    return 100;
+                }
+
+                // Start with base score
+                $score = 100;
+
+                // Deduct points for unresolved issues
+                $score -= ($unresolvedIssues / max($totalIssues, 1)) * 40;
+
+                // Heavy penalty for critical issues
+                $score -= $criticalIssues * 10;
+
+                // Moderate penalty for high severity issues
+                $score -= $highIssues * 5;
+
+                // Ensure score is between 0 and 100
+                return max(0, min(100, round($score)));
             }
 
             /**
@@ -268,89 +408,95 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
              */
             protected function getRecentActivity($settings)
             {
-                $activity = [];
                 $maxItems = $settings['max_recent_items'] ?? 5;
-                
+                $activity = [];
+
                 try {
-                    // Recent scans
-                    $recentScans = Scan::with('issues')
-                        ->latest()
-                        ->limit($maxItems)
-                        ->get()
-                        ->map(function ($scan) {
-                            return [
-                                'type' => 'scan',
-                                'id' => $scan->id,
-                                'created_at' => $scan->created_at->diffForHumans(),
-                                'issues_count' => $scan->issues()->count(),
-                                'scan_type' => $scan->scan_type ?? 'unknown',
-                                'status' => $scan->status ?? 'completed'
-                            ];
-                        });
-                    
-                    // Recent issues
-                    $recentIssues = Issue::latest()
-                        ->limit($maxItems)
-                        ->get()
-                        ->map(function ($issue) {
-                            return [
-                                'type' => 'issue',
-                                'id' => $issue->id,
-                                'severity' => $issue->severity,
-                                'category' => $issue->category,
-                                'file_path' => basename($issue->file_path ?? ''),
-                                'created_at' => $issue->created_at->diffForHumans(),
-                                'status' => $issue->status
-                            ];
-                        });
-                    
-                    $activity = collect($recentScans)
-                        ->concat($recentIssues)
-                        ->sortByDesc('created_at')
-                        ->take($maxItems)
-                        ->values()
-                        ->toArray();
+                    // Get recent scans
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Scan')) {
+                        $recentScans = Scan::latest()
+                            ->limit($maxItems)
+                            ->get()
+                            ->map(function ($scan) {
+                                return [
+                                    'type' => 'scan',
+                                    'id' => $scan->id,
+                                    'issues_count' => $scan->issues()->count(),
+                                    'created_at' => $scan->created_at->diffForHumans(),
+                                ];
+                            });
                         
+                        $activity = array_merge($activity, $recentScans->toArray());
+                    }
+
+                    // Get recent critical issues
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Issue')) {
+                        $recentIssues = Issue::where('severity', 'critical')
+                            ->latest()
+                            ->limit($maxItems)
+                            ->get()
+                            ->map(function ($issue) {
+                                return [
+                                    'type' => 'issue',
+                                    'id' => $issue->id,
+                                    'severity' => $issue->severity,
+                                    'category' => $issue->category,
+                                    'file_path' => $issue->file_path,
+                                    'created_at' => $issue->created_at->diffForHumans(),
+                                ];
+                            });
+                        
+                        $activity = array_merge($activity, $recentIssues->toArray());
+                    }
+
+                    // Sort by creation time and limit
+                    usort($activity, function ($a, $b) {
+                        return strcmp($b['created_at'], $a['created_at']);
+                    });
+
+                    return array_slice($activity, 0, $maxItems);
                 } catch (\Exception $e) {
-                    $activity = [['type' => 'error', 'message' => 'Unable to load recent activity']];
+                    return [];
                 }
-                
-                return $activity;
             }
 
             /**
-             * Get queue status information
+             * Get queue status
              */
             protected function getQueueStatus()
             {
                 try {
-                    if (!config('codesnoutr.queue.enabled', false)) {
-                        return ['enabled' => false, 'message' => 'Queue processing disabled'];
+                    $queueEnabled = config('codesnoutr.queue.enabled', false);
+                    
+                    if (!$queueEnabled) {
+                        return [
+                            'enabled' => false,
+                            'connection' => 'disabled',
+                            'pending_jobs' => 0,
+                            'failed_jobs' => 0,
+                        ];
                     }
-                    
-                    $connection = config('codesnoutr.queue.connection', config('queue.default'));
-                    $queueName = config('codesnoutr.queue.name', 'default');
-                    
-                    // Try to get queue size (this varies by queue driver)
-                    $queueSize = 0;
-                    try {
-                        $queueSize = Queue::size($queueName);
-                    } catch (\Exception $e) {
-                        // Some queue drivers don't support size()
+
+                    $connection = config('queue.default');
+                    $pendingJobs = 0;
+                    $failedJobs = 0;
+
+                    // Try to get queue metrics
+                    if ($connection === 'database') {
+                        $pendingJobs = DB::table('jobs')->count();
+                        $failedJobs = DB::table('failed_jobs')->count();
                     }
-                    
+
                     return [
                         'enabled' => true,
                         'connection' => $connection,
-                        'queue_name' => $queueName,
-                        'pending_jobs' => $queueSize,
-                        'failed_jobs' => DB::table('failed_jobs')->count(),
-                        'auto_start' => config('codesnoutr.queue.auto_start', false),
+                        'pending_jobs' => $pendingJobs,
+                        'failed_jobs' => $failedJobs,
                     ];
                 } catch (\Exception $e) {
                     return [
                         'enabled' => false,
-                        'error' => 'Unable to get queue status: ' . $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                 }
             }
@@ -361,112 +507,112 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
             protected function getPerformanceMetrics()
             {
                 try {
-                    $metrics = [];
-                    
-                    // Average scan duration
-                    $avgScanTime = Scan::whereNotNull('completed_at')
-                        ->whereNotNull('started_at')
-                        ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, completed_at)) as avg_duration')
-                        ->value('avg_duration');
-                    
-                    $metrics['avg_scan_duration'] = $avgScanTime ? round($avgScanTime, 2) . 's' : 'N/A';
-                    
-                    // Issues per scan average
-                    $avgIssuesPerScan = Scan::withCount('issues')
-                        ->get()
-                        ->avg('issues_count');
-                    
-                    $metrics['avg_issues_per_scan'] = $avgIssuesPerScan ? round($avgIssuesPerScan, 1) : 0;
-                    
-                    // Most problematic file
-                    $problematicFile = Issue::select('file_path', DB::raw('COUNT(*) as issue_count'))
-                        ->where('status', '!=', 'resolved')
-                        ->groupBy('file_path')
-                        ->orderByDesc('issue_count')
-                        ->first();
-                    
-                    if ($problematicFile) {
-                        $metrics['most_problematic_file'] = [
-                            'file' => basename($problematicFile->file_path),
-                            'issues' => $problematicFile->issue_count
-                        ];
+                    $metrics = [
+                        'avg_scan_time' => 'Unknown',
+                        'slowest_scan_time' => 'Unknown',
+                        'fastest_scan_time' => 'Unknown',
+                        'most_problematic_file' => null,
+                    ];
+
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Scan')) {
+                        // Get scan time metrics
+                        $scanTimes = Scan::whereNotNull('duration')
+                            ->pluck('duration')
+                            ->filter();
+
+                        if ($scanTimes->isNotEmpty()) {
+                            $metrics['avg_scan_time'] = round($scanTimes->avg(), 2) . 's';
+                            $metrics['slowest_scan_time'] = $scanTimes->max() . 's';
+                            $metrics['fastest_scan_time'] = $scanTimes->min() . 's';
+                        }
                     }
-                    
-                    // Scanning efficiency
-                    $totalScans = Scan::count();
-                    $successfulScans = Scan::where('status', 'completed')->count();
-                    $metrics['scan_success_rate'] = $totalScans > 0 ? 
-                        round(($successfulScans / $totalScans) * 100, 1) . '%' : '0%';
-                    
+
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Issue')) {
+                        // Find most problematic file
+                        $fileCounts = Issue::selectRaw('file_path, COUNT(*) as issue_count')
+                            ->groupBy('file_path')
+                            ->orderByDesc('issue_count')
+                            ->first();
+
+                        if ($fileCounts) {
+                            $metrics['most_problematic_file'] = [
+                                'file' => basename($fileCounts->file_path),
+                                'issues' => $fileCounts->issue_count,
+                            ];
+                        }
+                    }
+
                     return $metrics;
                 } catch (\Exception $e) {
-                    return ['error' => 'Unable to calculate performance metrics'];
+                    return [
+                        'error' => $e->getMessage(),
+                    ];
                 }
             }
 
             /**
-             * Get alerts and warnings
+             * Get alerts
              */
             protected function getAlerts()
             {
                 $alerts = [];
-                
+
                 try {
-                    // Critical issues alert
-                    $criticalCount = Issue::where('severity', 'critical')
-                        ->where('status', '!=', 'resolved')
-                        ->count();
-                    
-                    if ($criticalCount > 0) {
-                        $alerts[] = [
-                            'type' => 'critical',
-                            'message' => "{$criticalCount} critical security issues need immediate attention",
-                            'count' => $criticalCount
-                        ];
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Issue')) {
+                        // Check for critical issues
+                        $criticalCount = Issue::where('severity', 'critical')
+                            ->where('status', '!=', 'resolved')
+                            ->count();
+
+                        if ($criticalCount > 0) {
+                            $alerts[] = [
+                                'type' => 'critical',
+                                'message' => "You have {$criticalCount} unresolved critical issues!"
+                            ];
+                        }
+
+                        // Check for stale issues
+                        $staleCount = Issue::where('created_at', '<', Carbon::now()->subDays(30))
+                            ->where('status', '!=', 'resolved')
+                            ->count();
+
+                        if ($staleCount > 0) {
+                            $alerts[] = [
+                                'type' => 'warning',
+                                'message' => "{$staleCount} issues are older than 30 days"
+                            ];
+                        }
                     }
-                    
-                    // Memory usage alert
+
+                    if (class_exists('Rafaelogic\CodeSnoutr\Models\Scan')) {
+                        // Check for stale scans
+                        $lastScan = Scan::latest()->first();
+                        if (!$lastScan || $lastScan->created_at < Carbon::now()->subDays(7)) {
+                            $alerts[] = [
+                                'type' => 'warning',
+                                'message' => 'No scans performed in the last 7 days'
+                            ];
+                        }
+                    }
+
+                    // Check system health
                     $memoryUsage = memory_get_usage(true);
                     $memoryLimit = $this->parseMemoryLimit(ini_get('memory_limit'));
                     
                     if ($memoryLimit > 0 && ($memoryUsage / $memoryLimit) > 0.8) {
                         $alerts[] = [
                             'type' => 'warning',
-                            'message' => 'High memory usage detected (' . 
-                                round(($memoryUsage / $memoryLimit) * 100, 1) . '%)',
-                            'count' => 1
+                            'message' => 'High memory usage detected'
                         ];
                     }
-                    
-                    // Stale scans alert
-                    $lastScan = Scan::latest()->first();
-                    if ($lastScan && $lastScan->created_at->diffInDays() > 7) {
-                        $alerts[] = [
-                            'type' => 'info',
-                            'message' => 'Last scan was ' . $lastScan->created_at->diffForHumans(),
-                            'count' => 1
-                        ];
-                    }
-                    
-                    // Failed jobs alert
-                    $failedJobs = DB::table('failed_jobs')->count();
-                    if ($failedJobs > 0) {
-                        $alerts[] = [
-                            'type' => 'warning',
-                            'message' => "{$failedJobs} failed queue jobs",
-                            'count' => $failedJobs
-                        ];
-                    }
-                    
+
+                    return $alerts;
                 } catch (\Exception $e) {
-                    $alerts[] = [
-                        'type' => 'error',
-                        'message' => 'Unable to load alerts: ' . $e->getMessage(),
-                        'count' => 1
-                    ];
+                    return [[
+                        'type' => 'info',
+                        'message' => 'Unable to check alerts: ' . $e->getMessage()
+                    ]];
                 }
-                
-                return $alerts;
             }
 
             /**
@@ -474,7 +620,10 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
              */
             public function getPanel()
             {
-                $data = $this->collect();
+                // Use stored panel data if available, otherwise collect fresh data
+                $data = !empty($this->panelData) ? 
+                    array_merge(['enabled' => true], $this->panelData) : 
+                    $this->collect();
                 
                 if (!$data['enabled']) {
                     return '<div class="php-debugbar-panel">
@@ -490,39 +639,54 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                 // Add custom CSS
                 $html .= $this->getPanelStyles();
                 
-                // Alerts section
-                if (!empty($data['alerts'])) {
-                    $html .= $this->renderAlertsSection($data['alerts']);
-                }
-                
-                // Health score and key metrics
-                if (!empty($data['stats'])) {
-                    $html .= $this->renderHealthSection($data['stats']);
-                }
-                
-                // Statistics section
-                if (!empty($data['stats'])) {
-                    $html .= $this->renderStatsSection($data['stats']);
-                }
-                
-                // Recent activity
-                if (!empty($data['recent_activity'])) {
-                    $html .= $this->renderRecentActivitySection($data['recent_activity']);
-                }
-                
-                // Queue status
-                if (!empty($data['queue_status'])) {
-                    $html .= $this->renderQueueSection($data['queue_status']);
-                }
-                
-                // Performance metrics
-                if (!empty($data['performance_metrics'])) {
-                    $html .= $this->renderPerformanceSection($data['performance_metrics']);
-                }
+                // Use the complex data if available
+                if (!empty($this->panelData)) {
+                    // Alerts section
+                    if (!empty($this->panelData['alerts'])) {
+                        $html .= $this->renderAlertsSection($this->panelData['alerts']);
+                    }
+                    
+                    // Health score and key metrics
+                    if (!empty($this->panelData['stats'])) {
+                        $html .= $this->renderHealthSection($this->panelData['stats']);
+                    }
+                    
+                    // Statistics section
+                    if (!empty($this->panelData['stats'])) {
+                        $html .= $this->renderStatsSection($this->panelData['stats']);
+                    }
+                    
+                    // Recent activity
+                    if (!empty($this->panelData['recent_activity'])) {
+                        $html .= $this->renderRecentActivitySection($this->panelData['recent_activity']);
+                    }
+                    
+                    // Queue status
+                    if (!empty($this->panelData['queue_status'])) {
+                        $html .= $this->renderQueueSection($this->panelData['queue_status']);
+                    }
+                    
+                    // Performance metrics
+                    if (!empty($this->panelData['performance_metrics'])) {
+                        $html .= $this->renderPerformanceSection($this->panelData['performance_metrics']);
+                    }
 
-                // System info section
-                if (!empty($data['system_info'])) {
-                    $html .= $this->renderSystemInfoSection($data['system_info']);
+                    // System info section
+                    if (!empty($this->panelData['system_info'])) {
+                        $html .= $this->renderSystemInfoSection($this->panelData['system_info']);
+                    }
+                } else {
+                    // Fallback to simple display
+                    $html .= '<div class="codesnoutr-section">';
+                    $html .= '<h4>CodeSnoutr Data</h4>';
+                    $html .= '<table class="php-debugbar-widgets-table">';
+                    foreach ($data as $key => $value) {
+                        if ($key !== 'enabled') {
+                            $label = ucwords(str_replace('_', ' ', $key));
+                            $html .= "<tr><td>{$label}</td><td>{$value}</td></tr>";
+                        }
+                    }
+                    $html .= '</table></div>';
                 }
 
                 $html .= '</div>';
@@ -770,23 +934,6 @@ if (!class_exists('Rafaelogic\CodeSnoutr\Debugbar\CodeSnoutrCollector')) {
                 
                 $html .= '</table></div>';
                 return $html;
-            }
-        }
-    } else {
-        // Fallback class when DebugBar is not available
-        class CodeSnoutrCollector
-        {
-            public function getName()
-            {
-                return 'codesnoutr';
-            }
-
-            public function collect()
-            {
-                return [
-                    'enabled' => false,
-                    'message' => 'Laravel Debugbar not installed'
-                ];
             }
         }
     }

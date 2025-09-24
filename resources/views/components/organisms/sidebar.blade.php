@@ -11,12 +11,12 @@
 <div 
     x-data="{ collapsed: @js($collapsed) }"
     :class="collapsed ? 'w-16' : 'w-64'"
-    class="flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300"
+    class="flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300"
     {{ $attributes }}
 >
     <!-- Brand/Header -->
     @if($brand || $collapsible)
-        <div class="flex items-center justify-between p-4 border-b border-gray-200">
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
             @if($brand)
                 <div :class="collapsed ? 'hidden' : 'block'">
                     {{ $brand }}
@@ -60,7 +60,7 @@
                 <div x-data="{ open: {{ $item['open'] ?? 'false' }} }">
                     <button
                         @click="open = !open"
-                        class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 group focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 group focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <div class="flex items-center">
                             @if(isset($item['icon']))
@@ -90,8 +90,8 @@
                             @php
                                 $isChildActive = $currentRoute === ($child['route'] ?? '');
                                 $childClasses = $isChildActive 
-                                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-600'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100';
+                                    ? 'bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700';
                             @endphp
                             
                             <a 
@@ -125,8 +125,8 @@
                 @php
                     $isActive = $currentRoute === ($item['route'] ?? '');
                     $itemClasses = $isActive 
-                        ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-600'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100';
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-r-2 border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700';
                 @endphp
                 
                 <a 

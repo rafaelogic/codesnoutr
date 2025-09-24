@@ -12,31 +12,28 @@
 ])
 
 @php
-    $baseClasses = 'block w-full border rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0';
+    $baseClasses = 'input';
     
     $stateClasses = [
-        'default' => 'border-gray-300 focus:border-blue-500 focus:ring-blue-500',
-        'error' => 'border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50',
-        'success' => 'border-green-300 focus:border-green-500 focus:ring-green-500 bg-green-50',
-        'warning' => 'border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50'
+        'default' => 'input--default',
+        'error' => 'input--error',
+        'success' => 'input--success',
+        'warning' => 'input--warning'
     ];
     
     $sizeClasses = [
-        'sm' => 'px-3 py-1.5 text-sm',
-        'md' => 'px-3 py-2 text-sm',
-        'lg' => 'px-4 py-3 text-base'
+        'sm' => 'input--sm',
+        'md' => 'input--md',
+        'lg' => 'input--lg'
     ];
     
-    $disabledClasses = $disabled ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900';
-    $readonlyClasses = $readonly ? 'bg-gray-50' : '';
-    
-    $classes = implode(' ', [
+    $classes = implode(' ', array_filter([
         $baseClasses,
         $stateClasses[$state] ?? $stateClasses['default'],
         $sizeClasses[$size] ?? $sizeClasses['md'],
-        $disabledClasses,
-        $readonlyClasses
-    ]);
+        $disabled ? 'input--disabled' : '',
+        $readonly ? 'readonly' : ''
+    ]));
 @endphp
 
 <input 

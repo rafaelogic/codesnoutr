@@ -1,150 +1,381 @@
 /* CodeSnoutr Atomic Design System */
+/* Enhanced atomic-first CSS utilities for maximum reusability and consistency */
 
 /* =================================
-   Atomic Design Utilities
+   ATOMIC FOUNDATION
    ================================= */
 
-/* Button System */
-.btn {
-    @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+/* Base Design Tokens */
+:root {
+    /* Spacing Scale */
+    --space-0: 0;
+    --space-1: 0.25rem;  /* 4px */
+    --space-2: 0.5rem;   /* 8px */
+    --space-3: 0.75rem;  /* 12px */
+    --space-4: 1rem;     /* 16px */
+    --space-5: 1.25rem;  /* 20px */
+    --space-6: 1.5rem;   /* 24px */
+    --space-8: 2rem;     /* 32px */
+    --space-10: 2.5rem;  /* 40px */
+    --space-12: 3rem;    /* 48px */
+    
+    /* Border Radius Scale */
+    --radius-none: 0;
+    --radius-sm: 0.125rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-full: 9999px;
+    
+    /* Typography Scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    
+    /* Shadow Scale */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
+/* =================================
+   ATOMIC COMPONENTS
+   ================================= */
+
+/* Button System - Enhanced with atomic principles */
+.btn {
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    /* Enhanced accessibility */
+    @apply active:scale-95 focus:scale-105;
+    /* Better touch targets */
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Primary color variations with semantic naming */
 .btn--primary {
-    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 border border-transparent;
+    @apply bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-blue-500 border border-transparent shadow-sm hover:shadow-md;
 }
 
 .btn--secondary {
-    @apply bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500 border border-gray-300;
+    @apply bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:ring-gray-500 border border-gray-300 dark:border-gray-600 shadow-sm hover:shadow-md;
 }
 
 .btn--danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-transparent;
+    @apply bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600 focus:ring-red-500 border border-transparent shadow-sm hover:shadow-md;
 }
 
 .btn--success {
-    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 border border-transparent;
+    @apply bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600 focus:ring-green-500 border border-transparent shadow-sm hover:shadow-md;
 }
 
 .btn--warning {
-    @apply bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500 border border-transparent;
+    @apply bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-500 focus:ring-yellow-500 border border-transparent shadow-sm hover:shadow-md;
 }
 
 .btn--ghost {
-    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-50 focus:ring-gray-500 border border-transparent;
+    @apply text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500 border border-transparent;
 }
 
-.btn--xs { @apply px-2.5 py-1.5 text-xs rounded; }
-.btn--sm { @apply px-3 py-2 text-sm rounded-md; }
-.btn--md { @apply px-4 py-2 text-sm rounded-md; }
-.btn--lg { @apply px-4 py-2 text-base rounded-md; }
-.btn--xl { @apply px-6 py-3 text-base rounded-md; }
+/* Enhanced outline variants */
+.btn--outline-primary {
+    @apply border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus:ring-blue-500;
+}
 
-/* Input System */
+.btn--outline-secondary {
+    @apply border-gray-600 dark:border-gray-400 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:ring-gray-500;
+}
+
+/* Button Size System - More granular atomic sizing */
+.btn--xs { @apply px-2.5 py-1.5 text-xs rounded min-h-[32px]; }
+.btn--sm { @apply px-3 py-2 text-sm rounded-md min-h-[36px]; }
+.btn--md { @apply px-4 py-2 text-sm rounded-md min-h-[40px]; }
+.btn--lg { @apply px-4 py-2 text-base rounded-md min-h-[44px]; }
+.btn--xl { @apply px-6 py-3 text-base rounded-md min-h-[48px]; }
+
+/* Button Icon Alignment */
+.btn--icon-left { @apply flex-row; }
+.btn--icon-right { @apply flex-row-reverse; }
+.btn--icon-only { @apply p-2 aspect-square; }
+
+/* Button Loading States */
+.btn--loading {
+    @apply pointer-events-none opacity-75;
+}
+
+.btn--loading::after {
+    content: '';
+    @apply w-4 h-4 border-2 border-current border-r-transparent animate-spin rounded-full ml-2;
+}
+
+/* Enhanced Input System - Atomic-first design */
 .input {
-    @apply block w-full border rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0;
+    @apply block w-full border rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 bg-white dark:bg-gray-800;
+    /* Enhanced accessibility */
+    @apply focus:ring-opacity-50 dark:focus:ring-opacity-50;
+    /* Better mobile experience */
+    @apply text-base sm:text-sm;
 }
 
+/* Input States with enhanced feedback */
 .input--default {
-    @apply border-gray-300 focus:border-blue-500 focus:ring-blue-500 bg-white text-gray-900;
+    @apply border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 text-gray-900 dark:text-gray-100;
 }
 
 .input--error {
-    @apply border-red-300 focus:border-red-500 focus:ring-red-500 bg-red-50;
+    @apply border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-400 focus:ring-red-500 dark:focus:ring-red-400 bg-red-50 dark:bg-red-900/10 text-red-900 dark:text-red-100;
 }
 
 .input--success {
-    @apply border-green-300 focus:border-green-500 focus:ring-green-500 bg-green-50;
+    @apply border-green-300 dark:border-green-600 focus:border-green-500 dark:focus:border-green-400 focus:ring-green-500 dark:focus:ring-green-400 bg-green-50 dark:bg-green-900/10 text-green-900 dark:text-green-100;
 }
 
 .input--warning {
-    @apply border-yellow-300 focus:border-yellow-500 focus:ring-yellow-500 bg-yellow-50;
+    @apply border-yellow-300 dark:border-yellow-600 focus:border-yellow-500 dark:focus:border-yellow-400 focus:ring-yellow-500 dark:focus:ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-900 dark:text-yellow-100;
 }
 
 .input--disabled {
-    @apply bg-gray-50 text-gray-500 cursor-not-allowed;
+    @apply bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed border-gray-200 dark:border-gray-600;
 }
 
-.input--sm { @apply px-3 py-1.5 text-sm; }
-.input--md { @apply px-3 py-2 text-sm; }
-.input--lg { @apply px-4 py-3 text-base; }
+/* Input Size System */
+.input--sm { @apply px-3 py-1.5 text-sm h-8; }
+.input--md { @apply px-3 py-2 text-sm h-10; }
+.input--lg { @apply px-4 py-3 text-base h-12; }
 
-/* Badge System */
+/* Input with Icons */
+.input--with-leading-icon { @apply pl-10; }
+.input--with-trailing-icon { @apply pr-10; }
+
+/* Input Group System */
+.input-group {
+    @apply relative flex items-stretch;
+}
+
+.input-group .input {
+    @apply flex-1 rounded-none;
+}
+
+.input-group .input:first-child { @apply rounded-l-md; }
+.input-group .input:last-child { @apply rounded-r-md; }
+
+.input-addon {
+    @apply inline-flex items-center px-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600;
+}
+
+.input-addon:first-child { @apply rounded-l-md border-r-0; }
+.input-addon:last-child { @apply rounded-r-md border-l-0; }
+
+/* Enhanced Badge System - Atomic-first with better accessibility */
 .badge {
-    @apply inline-flex items-center font-medium rounded-full;
+    @apply inline-flex items-center font-medium rounded-full transition-colors duration-200;
+    /* Better accessibility */
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-1;
+    /* Ensure minimum touch target */
+    min-height: 20px;
 }
 
-.badge--primary { @apply bg-blue-100 text-blue-800; }
-.badge--secondary { @apply bg-gray-100 text-gray-800; }
-.badge--success { @apply bg-green-100 text-green-800; }
-.badge--danger { @apply bg-red-100 text-red-800; }
-.badge--warning { @apply bg-yellow-100 text-yellow-800; }
-.badge--info { @apply bg-cyan-100 text-cyan-800; }
-.badge--gray { @apply bg-gray-100 text-gray-600; }
+/* Badge Color Variants with dark mode support */
+.badge--primary { 
+    @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800 focus:ring-blue-500; 
+}
+.badge--secondary { 
+    @apply bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 focus:ring-gray-500; 
+}
+.badge--success { 
+    @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800 focus:ring-green-500; 
+}
+.badge--danger { 
+    @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800 focus:ring-red-500; 
+}
+.badge--warning { 
+    @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800 focus:ring-yellow-500; 
+}
+.badge--info { 
+    @apply bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-200 border border-cyan-200 dark:border-cyan-800 focus:ring-cyan-500; 
+}
+.badge--gray { 
+    @apply bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:ring-gray-500; 
+}
 
-.badge--sm { @apply px-2 py-0.5 text-xs; }
-.badge--md { @apply px-2.5 py-0.5 text-xs; }
-.badge--lg { @apply px-3 py-1 text-sm; }
+/* Badge Size System */
+.badge--xs { @apply px-1.5 py-0.5 text-xs min-h-[16px]; }
+.badge--sm { @apply px-2 py-0.5 text-xs min-h-[20px]; }
+.badge--md { @apply px-2.5 py-0.5 text-xs min-h-[24px]; }
+.badge--lg { @apply px-3 py-1 text-sm min-h-[28px]; }
 
-/* Icon System */
+/* Badge Dot Variant */
+.badge--dot {
+    @apply p-1.5 rounded-full;
+}
+
+.badge--dot::before {
+    content: '';
+    @apply w-2 h-2 rounded-full bg-current;
+}
+
+/* Badge with Remove Button */
+.badge--removable {
+    @apply pr-1;
+}
+
+.badge__remove {
+    @apply ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors;
+}
+
+/* Enhanced Icon System - More semantic and flexible */
 .icon {
-    @apply inline-block flex-shrink-0;
+    @apply inline-block flex-shrink-0 transition-colors duration-200;
+    /* Better alignment */
+    vertical-align: middle;
 }
 
+/* Icon Size System with more options */
 .icon--xs { @apply w-3 h-3; }
 .icon--sm { @apply w-4 h-4; }
 .icon--md { @apply w-5 h-5; }
 .icon--lg { @apply w-6 h-6; }
 .icon--xl { @apply w-8 h-8; }
 .icon--2xl { @apply w-10 h-10; }
+.icon--3xl { @apply w-12 h-12; }
 
+/* Icon Color System with dark mode support */
 .icon--current { @apply text-current; }
-.icon--primary { @apply text-blue-600; }
-.icon--secondary { @apply text-gray-600; }
-.icon--success { @apply text-green-600; }
-.icon--danger { @apply text-red-600; }
-.icon--warning { @apply text-yellow-600; }
-.icon--muted { @apply text-gray-400; }
+.icon--primary { @apply text-blue-600 dark:text-blue-400; }
+.icon--secondary { @apply text-gray-600 dark:text-gray-400; }
+.icon--success { @apply text-green-600 dark:text-green-400; }
+.icon--danger { @apply text-red-600 dark:text-red-400; }
+.icon--warning { @apply text-yellow-600 dark:text-yellow-400; }
+.icon--info { @apply text-cyan-600 dark:text-cyan-400; }
+.icon--muted { @apply text-gray-400 dark:text-gray-500; }
+.icon--white { @apply text-white; }
+.icon--black { @apply text-black dark:text-white; }
 
-/* Alert System */
-.alert {
-    @apply rounded-md border;
+/* Icon in different contexts */
+.icon--button {
+    @apply hover:scale-110 active:scale-95 transition-transform duration-200;
 }
 
+.icon--loading {
+    @apply animate-spin;
+}
+
+/* Icon with backgrounds (for avatar-like usage) */
+.icon--bg {
+    @apply rounded-full p-2;
+}
+
+.icon--bg-primary { @apply bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400; }
+.icon--bg-secondary { @apply bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400; }
+.icon--bg-success { @apply bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400; }
+.icon--bg-danger { @apply bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400; }
+.icon--bg-warning { @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400; }
+
+/* Enhanced Alert System - Atomic-first with better UX */
+.alert {
+    @apply rounded-md border transition-all duration-200 focus-within:ring-2 focus-within:ring-offset-2;
+    /* Better spacing and layout */
+    @apply flex items-start space-x-3;
+}
+
+/* Alert Variants with improved contrast and dark mode */
 .alert--info {
-    @apply bg-blue-50 border-blue-200 text-blue-800;
+    @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200 focus-within:ring-blue-500;
 }
 
 .alert--success {
-    @apply bg-green-50 border-green-200 text-green-800;
+    @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 focus-within:ring-green-500;
 }
 
 .alert--warning {
-    @apply bg-yellow-50 border-yellow-200 text-yellow-800;
+    @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 focus-within:ring-yellow-500;
 }
 
 .alert--danger {
-    @apply bg-red-50 border-red-200 text-red-800;
+    @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 focus-within:ring-red-500;
 }
 
-.alert--sm { @apply p-3; }
+/* Alert Size System */
+.alert--sm { @apply p-3 text-sm; }
 .alert--md { @apply p-4; }
-.alert--lg { @apply p-6; }
+.alert--lg { @apply p-6 text-lg; }
 
-/* Form Field System */
+/* Alert Components */
+.alert__icon {
+    @apply flex-shrink-0 w-5 h-5 mt-0.5;
+}
+
+.alert__content {
+    @apply flex-1 min-w-0;
+}
+
+.alert__title {
+    @apply font-medium mb-1;
+}
+
+.alert__description {
+    @apply text-sm opacity-90;
+}
+
+.alert__actions {
+    @apply flex space-x-2 mt-3;
+}
+
+.alert__dismiss {
+    @apply ml-auto -mx-1.5 -my-1.5 p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors;
+}
+
+/* Enhanced Form Field System */
 .form-field {
-    @apply space-y-1;
+    @apply space-y-2 mb-4;
 }
 
+.form-field--horizontal {
+    @apply flex items-center space-x-4 space-y-0;
+}
+
+.form-field--horizontal .form-label {
+    @apply flex-shrink-0 w-32;
+}
+
+/* Form Labels with better accessibility */
 .form-label {
-    @apply block text-sm font-medium text-gray-700;
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+    /* Better accessibility */
+    @apply cursor-pointer;
 }
 
+.form-label--required::after {
+    content: '*';
+    @apply text-red-500 ml-1;
+}
+
+.form-label--optional::after {
+    content: '(optional)';
+    @apply text-gray-400 text-xs ml-2 font-normal;
+}
+
+/* Form Error and Help Text */
 .form-error {
-    @apply flex items-center space-x-1 text-red-600 text-sm;
+    @apply text-sm text-red-600 dark:text-red-400 flex items-center space-x-1;
+}
+
+.form-error__icon {
+    @apply w-4 h-4 flex-shrink-0;
 }
 
 .form-help {
-    @apply text-sm text-gray-500;
+    @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.form-success {
+    @apply text-sm text-green-600 dark:text-green-400 flex items-center space-x-1;
 }
 
 /* Dark Mode Variants */
@@ -517,6 +748,249 @@
     @apply border-l-4 border-blue-500;
 }
 
+/* =================================
+   ATOMIC LAYOUT & COMPOSITION
+   ================================= */
+
+/* Atomic Layout Utilities */
+.stack {
+    @apply flex flex-col;
+}
+
+.stack--xs { @apply space-y-1; }
+.stack--sm { @apply space-y-2; }
+.stack--md { @apply space-y-4; }
+.stack--lg { @apply space-y-6; }
+.stack--xl { @apply space-y-8; }
+
+.inline {
+    @apply flex items-center;
+}
+
+.inline--xs { @apply space-x-1; }
+.inline--sm { @apply space-x-2; }
+.inline--md { @apply space-x-4; }
+.inline--lg { @apply space-x-6; }
+.inline--xl { @apply space-x-8; }
+
+/* Atomic Grid System */
+.grid-auto {
+    @apply grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))];
+}
+
+.grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+.grid--gap-xs { @apply gap-2; }
+.grid--gap-sm { @apply gap-4; }
+.grid--gap-md { @apply gap-6; }
+.grid--gap-lg { @apply gap-8; }
+
+/* Atomic Container System */
+.container-xs { @apply max-w-sm mx-auto px-4; }
+.container-sm { @apply max-w-2xl mx-auto px-4; }
+.container-md { @apply max-w-4xl mx-auto px-4; }
+.container-lg { @apply max-w-6xl mx-auto px-4; }
+.container-xl { @apply max-w-7xl mx-auto px-4; }
+.container-full { @apply max-w-full mx-auto px-4; }
+
+/* Atomic Surface System */
+.surface {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg;
+}
+
+.surface--elevated {
+    @apply shadow-lg;
+}
+
+.surface--interactive {
+    @apply hover:shadow-md transition-shadow duration-200 cursor-pointer;
+}
+
+.surface--danger {
+    @apply border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10;
+}
+
+.surface--warning {
+    @apply border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10;
+}
+
+.surface--success {
+    @apply border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10;
+}
+
+/* =================================
+   ATOMIC DATA VISUALIZATION
+   ================================= */
+
+/* Progress Bars */
+.progress {
+    @apply w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
+}
+
+.progress--sm { @apply h-2; }
+.progress--md { @apply h-3; }
+.progress--lg { @apply h-4; }
+
+.progress__bar {
+    @apply h-full bg-blue-600 dark:bg-blue-500 transition-all duration-300 ease-out;
+}
+
+.progress__bar--success { @apply bg-green-600 dark:bg-green-500; }
+.progress__bar--warning { @apply bg-yellow-600 dark:bg-yellow-500; }
+.progress__bar--danger { @apply bg-red-600 dark:bg-red-500; }
+
+/* Skeleton Loading */
+.skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+}
+
+.skeleton--text { @apply h-4 w-full; }
+.skeleton--title { @apply h-6 w-3/4; }
+.skeleton--avatar { @apply h-10 w-10 rounded-full; }
+.skeleton--button { @apply h-10 w-24; }
+.skeleton--card { @apply h-32 w-full; }
+
+/* Dividers */
+.divider {
+    @apply border-t border-gray-200 dark:border-gray-700;
+}
+
+.divider--thick { @apply border-t-2; }
+.divider--dashed { @apply border-dashed; }
+.divider--dotted { @apply border-dotted; }
+
+.divider--vertical {
+    @apply border-l border-t-0 h-full;
+}
+
+/* Status Indicators */
+.status-dot {
+    @apply w-2 h-2 rounded-full;
+}
+
+.status-dot--online { @apply bg-green-500; }
+.status-dot--offline { @apply bg-gray-400; }
+.status-dot--busy { @apply bg-red-500; }
+.status-dot--away { @apply bg-yellow-500; }
+
+.status-indicator {
+    @apply inline-flex items-center space-x-2;
+}
+
+/* =================================
+   ATOMIC ANIMATION UTILITIES
+   ================================= */
+
+/* Entrance Animations */
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Animation Classes */
+.animate-slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+}
+
+.animate-slide-in-down {
+    animation: slideInDown 0.3s ease-out;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+}
+
+/* Hover Effects */
+.hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1;
+}
+
+.hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+}
+
+.hover-glow {
+    @apply transition-shadow duration-200 hover:shadow-lg hover:shadow-blue-500/25;
+}
+
+/* =================================
+   ATOMIC RESPONSIVE UTILITIES
+   ================================= */
+
+/* Mobile-first Atomic Breakpoints */
+@media (max-width: 640px) {
+    .mobile-stack > * + * {
+        @apply mt-4;
+    }
+    
+    .mobile-hidden {
+        @apply hidden;
+    }
+    
+    .mobile-full {
+        @apply w-full;
+    }
+}
+
+@media (min-width: 768px) {
+    .tablet-inline {
+        @apply flex space-x-4;
+    }
+    
+    .tablet-grid {
+        @apply grid grid-cols-2 gap-4;
+    }
+}
+
+@media (min-width: 1024px) {
+    .desktop-grid-3 {
+        @apply grid-cols-3;
+    }
+    
+    .desktop-sidebar {
+        @apply pl-64;
+    }
+}
+
 /* Print styles */
 @media print {
     .no-print {
@@ -529,5 +1003,10 @@
     
     .print-avoid-break {
         page-break-inside: avoid;
+    }
+    
+    /* Optimize for print */
+    .print-optimize {
+        @apply text-black bg-white shadow-none border-black;
     }
 }

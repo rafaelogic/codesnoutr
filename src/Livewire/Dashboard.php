@@ -126,7 +126,7 @@ class Dashboard extends Component
 
     public function loadDarkMode()
     {
-        $setting = Setting::where('key', 'ui.dark_mode')->first();
+        $setting = Setting::where('key', 'dark_mode')->first();
         $this->darkMode = $setting ? (bool) $setting->value : false;
     }
 
@@ -135,11 +135,11 @@ class Dashboard extends Component
         $this->darkMode = !$this->darkMode;
         
         Setting::updateOrCreate(
-            ['key' => 'ui.dark_mode'],
+            ['key' => 'dark_mode'],
             ['value' => $this->darkMode]
         );
 
-        $this->dispatch('dark-mode-toggled', darkMode: $this->darkMode);
+        $this->dispatch('theme-changed', darkMode: $this->darkMode);
     }
 
     public function refreshStats()
@@ -203,6 +203,17 @@ class Dashboard extends Component
             'quality' => 'star',
             'laravel' => 'code-bracket',
             default => 'exclamation-triangle'
+        };
+    }
+
+    public function getCategoryColor($category)
+    {
+        return match($category) {
+            'security' => 'danger',
+            'performance' => 'warning',
+            'quality' => 'success',
+            'laravel' => 'primary',
+            default => 'secondary'
         };
     }
 
