@@ -2,7 +2,8 @@
     <!-- Statistics Overview -->
     <div class="grid-responsive grid--gap-md">
         <!-- Total Scans -->
-        <x-codesnoutr::molecules.metric-card
+                <!-- Total Scans -->
+        <x-molecules.metric-card
             title="Total Scans"
             :value="number_format($stats['total_scans'])"
             :change="$stats['scans_change']"
@@ -13,7 +14,7 @@
         />
 
         <!-- Total Issues -->
-        <x-codesnoutr::molecules.metric-card
+        <x-molecules.metric-card
             title="Issues Found"
             :value="number_format($stats['total_issues'])"
             :change="$stats['issues_change']"
@@ -24,7 +25,7 @@
         />
 
         <!-- Critical Issues -->
-        <x-codesnoutr::molecules.metric-card
+        <x-molecules.metric-card
             title="Critical Issues"
             :value="number_format($stats['critical_issues'])"
             icon="shield-exclamation"
@@ -34,7 +35,7 @@
         />
 
         <!-- Resolution Rate -->
-        <x-codesnoutr::molecules.metric-card
+        <x-molecules.metric-card
             title="Resolution Rate"
             :value="$stats['resolution_rate'] . '%'"
             icon="check-circle"
@@ -47,7 +48,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 grid--gap-lg">
         <!-- Recent Scans -->
         <div class="lg:col-span-2">
-            <x-codesnoutr::molecules.card 
+            <x-molecules.card 
                 title="Recent Scans" 
                 icon="clock"
                 variant="elevated"
@@ -157,13 +158,14 @@
                         @endforeach
                     </div>
                 @endif
-            </x-codesnoutr::molecules.card>
+            </x-molecules.card>
         </div>
 
         <!-- Issues Overview -->
         <div class="stack stack--lg">
             <!-- Issues by Category -->
-            <x-codesnoutr::molecules.card 
+                    <!-- Issues by Category -->
+            <x-molecules.card 
                 title="Issues by Category" 
                 icon="tag"
                 variant="elevated"
@@ -196,10 +198,10 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">No issues found</p>
                     </div>
                 @endif
-            </x-codesnoutr::molecules.card>
+            </x-molecules.card>
 
             <!-- Top Issues -->
-            <x-codesnoutr::molecules.card 
+            <x-molecules.card 
                 title="Most Common Issues" 
                 icon="exclamation-triangle"
                 variant="elevated"
@@ -233,7 +235,7 @@
                         <p class="text-sm text-gray-500 dark:text-gray-400">No issues found</p>
                     </div>
                 @endif
-            </x-codesnoutr::molecules.card>
+            </x-molecules.card>
         </div>
     </div>
 </div>

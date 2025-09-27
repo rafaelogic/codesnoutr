@@ -51,6 +51,14 @@
         default => 'btn--icon-left'
     };
     
+    $iconSizeMap = [
+        'xs' => 'xs',
+        'sm' => 'sm', 
+        'md' => 'sm',
+        'lg' => 'md',
+        'xl' => 'lg'
+    ];
+    
     $classes = implode(' ', array_filter([
         $baseClasses,
         $variantClasses[$variant] ?? $variantClasses['primary'],
@@ -62,42 +70,6 @@
         !$shadow ? 'shadow-none' : '',
         $iconPosition === 'only' ? $iconAlignment : ($icon ? $iconAlignment : ''),
     ]));
-    
-    $iconSizeMap = [
-        'xs' => 'xs',
-        'sm' => 'sm', 
-        'md' => 'sm',
-        'lg' => 'md',
-        'xl' => 'lg'
-    ];
-        @endphp
-    ];
-    
-    $sizeClasses = [
-        'xs' => 'px-2.5 py-1.5 text-xs rounded',
-        'sm' => 'px-3 py-2 text-sm rounded-md',
-        'md' => 'px-4 py-2 text-sm rounded-md',
-        'lg' => 'px-4 py-2 text-base rounded-md',
-        'xl' => 'px-6 py-3 text-base rounded-md'
-    ];
-    
-    $iconSizeClasses = [
-        'xs' => 'w-3 h-3',
-        'sm' => 'w-4 h-4',
-        'md' => 'w-4 h-4',
-        'lg' => 'w-5 h-5',
-        'xl' => 'w-5 h-5'
-    ];
-    
-    $classes = implode(' ', [
-        $baseClasses,
-        $variantClasses[$variant] ?? $variantClasses['primary'],
-        $sizeClasses[$size] ?? $sizeClasses['md'],
-        $fullWidth ? 'w-full' : '',
-        $iconPosition === 'only' ? 'px-2' : ''
-    ]);
-    
-    $iconSize = $iconSizeClasses[$size] ?? $iconSizeClasses['md'];
 @endphp
 
 @if($href)
