@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-09-27
+
+### Fixed
+- **Dashboard Component Rendering** - Fixed critical issue where dashboard was showing raw HTML instead of rendered components
+  - Corrected component references from `x-codesnoutr::` to proper registered names (`x-atoms.`, `x-molecules.`)
+  - Removed duplicate PHP code in button component that was causing syntax errors
+  - Added missing icons (document-magnifying-glass, shield-exclamation, arrow-up, arrow-down, plus, minus, and others)
+  - Dashboard metrics, cards, and interactive elements now render properly
+- **Button Component Syntax** - Fixed malformed PHP arrays and duplicate code blocks
+- **Icon Component** - Added comprehensive icon set to support all dashboard requirements
+
 ### Added
 - **Comprehensive Feature Test Suite** - Complete automated testing framework for all package functionality
   - **DashboardTest.php**: Dashboard component testing with statistics, charts, and real-time updates
