@@ -321,6 +321,11 @@ class AutoFixService
         $affectedIndices = array_map(fn($line) => $line - 1, $affectedLines);
         sort($affectedIndices);
 
+        // If no affected lines, fall back to target line
+        if (empty($affectedIndices)) {
+            $affectedIndices = [$targetLine - 1];
+        }
+
         // Replace the lines
         $modifiedLines = $lines;
         
