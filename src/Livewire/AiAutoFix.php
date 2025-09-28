@@ -99,12 +99,12 @@ class AiAutoFix extends Component
     }
 
     /**
-     * Generate auto-fix code and show preview
+     * Generate AI fix code and show preview
      */
     public function generateAutoFix()
     {
         if (!$this->autoFixEnabled || !$this->autoFixService) {
-            $this->error = 'Auto-fix is not enabled. Please check your AI settings.';
+            $this->error = 'AI fixes are not available. Please check your AI settings.';
             return;
         }
 
@@ -137,12 +137,12 @@ class AiAutoFix extends Component
             $this->showPreview = true;
 
             $this->dispatch('notification', [
-                'message' => 'Auto-fix generated successfully! Review the preview below.',
+                'message' => 'AI fix generated successfully! Review the preview below.',
                 'type' => 'success'
             ]);
 
         } catch (\Exception $e) {
-            $this->error = 'Failed to generate auto-fix: ' . $e->getMessage();
+            $this->error = 'Failed to generate AI fix: ' . $e->getMessage();
             Log::error('Auto-fix generation failed for issue ' . $this->issue->id . ': ' . $e->getMessage());
         } finally {
             $this->isAnalyzing = false;

@@ -32,22 +32,10 @@
     </div>
     
     <!-- Statistics Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Total Scans -->
-                <!-- Total Scans -->
-        <x-molecules.metric-card
-            title="Total Scans"
-            :value="number_format($stats['total_scans'] ?? 0)"
-            :change="$stats['scans_change'] ?? 0"
-            change-label="from last week"
-            icon="document-magnifying-glass"
-            color="blue"
-            class="hover-lift surface--elevated"
-        />
-
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Total Issues -->
         <x-molecules.metric-card
-            title="Issues Found"
+            title="Total Issues"
             :value="number_format($stats['total_issues'] ?? 0)"
             :change="$stats['issues_change'] ?? 0"
             change-label="from last week"
@@ -56,25 +44,69 @@
             class="hover-lift surface--elevated"
         />
 
-        <!-- Critical Issues -->
+        <!-- Resolved Issues -->
         <x-molecules.metric-card
-            title="Critical Issues"
-            :value="number_format($stats['critical_issues'] ?? 0)"
-            icon="shield-exclamation"
-            color="red"
-            :urgent="($stats['critical_issues'] ?? 0) > 0"
-            class="hover-lift surface--elevated {{ ($stats['critical_issues'] ?? 0) > 0 ? 'surface--danger' : '' }}"
+            title="Issues Resolved"
+            :value="number_format($stats['resolved_issues'] ?? 0)"
+            icon="check-circle"
+            color="green"
+            class="hover-lift surface--elevated surface--success"
         />
 
-        <!-- Resolution Rate -->
+        <!-- AI Spending -->
         <x-molecules.metric-card
-            title="Resolution Rate"
-            :value="($stats['resolution_rate'] ?? 0) . '%'"
-            icon="check-circle"
-            :color="($stats['resolution_rate'] ?? 0) > 80 ? 'green' : (($stats['resolution_rate'] ?? 0) > 50 ? 'yellow' : 'red')"
-            class="hover-lift surface--elevated {{ ($stats['resolution_rate'] ?? 0) > 80 ? 'surface--success' : '' }}"
+            title="AI Spending"
+            :value="'$' . number_format($stats['ai_spending'] ?? 0, 2)"
+            :change="$stats['ai_spending_percentage'] ?? 0"
+            change-label="of monthly limit"
+            icon="lightning-bolt"
+            :color="($stats['ai_spending_percentage'] ?? 0) > 80 ? 'red' : (($stats['ai_spending_percentage'] ?? 0) > 50 ? 'yellow' : 'blue')"
+            class="hover-lift surface--elevated {{ ($stats['ai_spending_percentage'] ?? 0) > 80 ? 'surface--warning' : '' }}"
         />
     </div>
+
+    <!-- AI Fix All CTA -->
+    @if(($stats['total_issues'] ?? 0) > ($stats['resolved_issues'] ?? 0))
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                        <x-atoms.icon name="lightning-bolt" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        Fix All Issues with AI
+                    </h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        Let AI automatically fix {{ number_format(($stats['total_issues'] ?? 0) - ($stats['resolved_issues'] ?? 0)) }} remaining issues across your codebase
+                    </p>
+                </div>
+            </div>
+            <div class="flex-shrink-0">
+                <x-atoms.button 
+                    wire:click="fixAllIssues"
+                    wire:loading.attr="disabled"
+                    wire:target="fixAllIssues"
+                    variant="primary"
+                    size="lg"
+                    icon="lightning-bolt"
+                    class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                >
+                    <span wire:loading.remove wire:target="fixAllIssues">Fix All Issues</span>
+                    <span wire:loading wire:target="fixAllIssues" class="flex items-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Fixing Issues...
+                    </span>
+                </x-atoms.button>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

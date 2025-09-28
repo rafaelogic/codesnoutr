@@ -480,6 +480,114 @@ class ScanResults extends Component
         }
     }
 
+    // ===== AI Fix All Actions =====
+
+    public function fixAllIssuesInFile($filePath)
+    {
+        try {
+            $issues = Issue::where('scan_id', $this->scanId)
+                ->where('file_path', $filePath)
+                ->where('fixed', false)
+                ->get();
+
+            $this->executeAiBulkFix($issues, "file: {$filePath}");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to fix issues in file: ' . $e->getMessage());
+        }
+    }
+
+    public function fixAllIssuesInDirectory($directoryPath)
+    {
+        try {
+            $issues = Issue::where('scan_id', $this->scanId)
+                ->where('file_path', 'LIKE', $directoryPath . '%')
+                ->where('fixed', false)
+                ->get();
+
+            $this->executeAiBulkFix($issues, "directory: {$directoryPath}");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to fix issues in directory: ' . $e->getMessage());
+        }
+    }
+
+    public function fixAllIssuesInScan()
+    {
+        try {
+            $issues = Issue::where('scan_id', $this->scanId)
+                ->where('fixed', false)
+                ->get();
+
+            $this->executeAiBulkFix($issues, 'entire scan');
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to fix all issues: ' . $e->getMessage());
+        }
+    }
+
+    protected function executeAiBulkFix($issues, $scope)
+    {
+        if ($issues->isEmpty()) {
+            session()->flash('info', "No unfixed issues found in {$scope}.");
+            return;
+        }
+
+        // Check if AI is available
+        $aiService = new \Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService();
+        if (!$aiService->isAvailable()) {
+            session()->flash('error', 'AI service is not available. Please configure your OpenAI API key in settings.');
+            return;
+        }
+
+        $fixedCount = 0;
+        $failedCount = 0;
+
+        foreach ($issues as $issue) {
+            try {
+                // First, generate AI fix if it doesn't exist
+                if (empty($issue->ai_fix)) {
+                    $generateResult = $this->actionInvoker->executeAction('generate_ai_fix', $issue);
+                    if (!$generateResult['success']) {
+                        $failedCount++;
+                        \Illuminate\Support\Facades\Log::warning('Failed to generate AI fix for issue ' . $issue->id . ': ' . $generateResult['message']);
+                        continue;
+                    }
+                    // Refresh the issue to get the generated ai_fix
+                    $issue->refresh();
+                }
+                
+                // Then, apply the AI fix
+                $applyResult = $this->actionInvoker->executeAction('apply_ai_fix', $issue);
+                
+                if ($applyResult['success']) {
+                    $fixedCount++;
+                    \Illuminate\Support\Facades\Log::info('Successfully fixed issue ' . $issue->id . ' in ' . $scope);
+                } else {
+                    $failedCount++;
+                    \Illuminate\Support\Facades\Log::warning('Failed to apply AI fix for issue ' . $issue->id . ' in ' . $scope . ': ' . $applyResult['message']);
+                }
+            } catch (\Exception $e) {
+                $failedCount++;
+                \Illuminate\Support\Facades\Log::error('Failed to fix issue ' . $issue->id . ': ' . $e->getMessage());
+            }
+        }
+
+        // Refresh data
+        $this->refreshSelectedFileIssues();
+        $this->loadInitialData();
+        
+        $message = "AI Fix completed for {$scope}! Fixed: {$fixedCount} issues";
+        if ($failedCount > 0) {
+            $message .= ", Failed: {$failedCount} issues";
+        }
+        
+        session()->flash($fixedCount > 0 ? 'success' : 'warning', $message);
+        
+        $this->dispatch('ai-bulk-fix-completed', [
+            'scope' => $scope,
+            'fixed' => $fixedCount,
+            'failed' => $failedCount
+        ]);
+    }
+
     // ===== Export Actions =====
 
     public function exportResults($format = 'json')
@@ -578,6 +686,38 @@ class ScanResults extends Component
     public function getCodeSnippet($filePath, $lineNumber, $contextLines = 2)
     {
         return $this->codeDisplayService->getCodeSnippet($filePath, $lineNumber, $contextLines);
+    }
+
+    public function isAiAvailable()
+    {
+        try {
+            $aiService = new \Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService();
+            return $aiService->isAvailable();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('AI availability check failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function debugAiStatus()
+    {
+        try {
+            $aiService = new \Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService();
+            $autoFixService = new \Rafaelogic\CodeSnoutr\Services\AI\AutoFixService($aiService);
+            
+            $status = [
+                'ai_enabled' => \Rafaelogic\CodeSnoutr\Models\Setting::get('ai_enabled', false),
+                'ai_api_key_exists' => !empty(\Rafaelogic\CodeSnoutr\Models\Setting::getOpenAiApiKey()),
+                'ai_service_available' => $aiService->isAvailable(),
+                'auto_fix_enabled' => $autoFixService->isAutoFixEnabled(),
+            ];
+            
+            \Illuminate\Support\Facades\Log::info('AI Debug Status', $status);
+            
+            session()->flash('info', 'AI Status: ' . json_encode($status));
+        } catch (\Exception $e) {
+            session()->flash('error', 'Failed to check AI status: ' . $e->getMessage());
+        }
     }
 
     public function getSeverityColor($severity)

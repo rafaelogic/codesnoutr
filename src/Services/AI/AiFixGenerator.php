@@ -50,7 +50,7 @@ class AiFixGenerator
     }
 
     /**
-     * Build the AI prompt for auto-fix generation
+     * Build the AI prompt for fix generation
      */
     private function buildAutoFixPrompt(Issue $issue, $codeSnippet): string
     {

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Schema;
 
 class Scan extends Model
 {
@@ -24,6 +25,7 @@ class Scan extends Model
         'critical_issues',
         'warning_issues',
         'info_issues',
+        'resolved_issues',
         'started_at',
         'completed_at',
         'duration_seconds',
@@ -79,6 +81,22 @@ class Scan extends Model
     public function issuesByCategory(string $category): HasMany
     {
         return $this->issues()->where('category', $category);
+    }
+
+    /**
+     * Get resolved issues
+     */
+    public function resolvedIssues(): HasMany
+    {
+        return $this->issues()->where('fixed', true);
+    }
+
+    /**
+     * Get resolved issues count
+     */
+    public function getResolvedIssuesCountAttribute(): int
+    {
+        return $this->issues()->where('fixed', true)->count();
     }
 
     /**
@@ -208,12 +226,19 @@ class Scan extends Model
     {
         $issues = $this->issues();
         
-        $this->update([
+        $updateData = [
             'total_issues' => $issues->count(),
             'critical_issues' => $issues->where('severity', 'critical')->count(),
             'warning_issues' => $issues->where('severity', 'warning')->count(),
             'info_issues' => $issues->where('severity', 'info')->count(),
-        ]);
+        ];
+        
+        // Add resolved_issues if the field exists in the database
+        if (Schema::hasColumn('codesnoutr_scans', 'resolved_issues')) {
+            $updateData['resolved_issues'] = $issues->where('fixed', true)->count();
+        }
+        
+        $this->update($updateData);
     }
 
     /**

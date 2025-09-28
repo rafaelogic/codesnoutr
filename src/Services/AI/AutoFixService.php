@@ -40,7 +40,7 @@ class AutoFixService
             return $this->parseFixResponse($response);
 
         } catch (\Exception $e) {
-            Log::error('Auto-fix generation failed for issue ' . $issue->id . ': ' . $e->getMessage());
+            Log::error('AI fix generation failed for issue ' . $issue->id . ': ' . $e->getMessage());
             return null;
         }
     }
@@ -118,7 +118,7 @@ class AutoFixService
             $result['message'] = 'Fix applied successfully';
             $result['preview'] = $this->generatePreview($originalContent, $modifiedContent);
 
-            Log::info('Auto-fix applied successfully', [
+            Log::info('AI fix applied successfully', [
                 'issue_id' => $issue->id,
                 'file_path' => $issue->file_path,
                 'backup_path' => $backupPath
@@ -127,7 +127,7 @@ class AutoFixService
             return $result;
 
         } catch (\Exception $e) {
-            Log::error('Auto-fix application failed', [
+            Log::error('AI fix application failed', [
                 'issue_id' => $issue->id,
                 'error' => $e->getMessage()
             ]);
@@ -211,7 +211,7 @@ class AutoFixService
     }
 
     /**
-     * Build the prompt for auto-fix generation
+     * Build the prompt for AI fix generation
      */
     protected function buildAutoFixPrompt(Issue $issue): string
     {
@@ -495,15 +495,15 @@ class AutoFixService
     }
 
     /**
-     * Check if auto-fix is enabled
+     * Check if AI fixes are available
      */
     public function isAutoFixEnabled(): bool
     {
-        return Setting::getValue('ai_auto_fix_enabled', false) && $this->aiService->isAvailable();
+        return Setting::getValue('ai_enabled', false) && $this->aiService->isAvailable();
     }
 
     /**
-     * Get auto-fix statistics
+     * Get AI fix statistics
      */
     public function getAutoFixStats(): array
     {

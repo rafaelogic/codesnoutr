@@ -7,6 +7,7 @@ use Rafaelogic\CodeSnoutr\ScanManager;
 use Rafaelogic\CodeSnoutr\Commands\ScanCommand;
 use Rafaelogic\CodeSnoutr\Commands\InstallCommand;
 use Rafaelogic\CodeSnoutr\Commands\AssetStatusCommand;
+use Rafaelogic\CodeSnoutr\Commands\UpdateResolvedIssuesCounts;
 
 // New service imports
 use Rafaelogic\CodeSnoutr\Services\AI\{AiFixGenerator, AiAssistantService, AutoFixService};
@@ -56,7 +57,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             return new AiAssistantService();
         });
 
-        // Register Auto-Fix service
+        // Register AI Fix service
         $this->app->singleton('codesnoutr.autofix', function ($app) {
             return new AutoFixService($app->make('codesnoutr.ai'));
         });
@@ -179,6 +180,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
                 ScanCommand::class,
                 InstallCommand::class,
                 AssetStatusCommand::class,
+                UpdateResolvedIssuesCounts::class,
             ]);
         }
 

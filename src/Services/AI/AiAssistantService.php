@@ -191,7 +191,7 @@ class AiAssistantService
                 return $this->applyAutomatedFix($issue, $fixSuggestion);
             }
         } catch (\Exception $e) {
-            Log::error('Auto-fix failed for issue ' . $issue->id . ': ' . $e->getMessage());
+            Log::error('AI fix failed for issue ' . $issue->id . ': ' . $e->getMessage());
         }
         
         return false;

@@ -25,7 +25,7 @@ class ApplyAiFixAction implements IssueActionInterface
     public function canExecute(Issue $issue): bool
     {
         return !empty($issue->ai_fix) && 
-               $issue->status !== 'resolved' && 
+               !$issue->fixed && 
                $this->autoFixService->isAutoFixEnabled();
     }
 

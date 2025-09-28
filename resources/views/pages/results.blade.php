@@ -126,10 +126,19 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm text-gray-900 dark:text-white">
                                             @if($scan->issues_found > 0)
-                                                <span class="font-medium">{{ number_format($scan->issues_found) }}</span> found
-                                                @if($scan->issues->where('fixed', true)->count() > 0)
-                                                    <br><span class="text-green-600 dark:text-green-400">{{ $scan->issues->where('fixed', true)->count() }} resolved</span>
-                                                @endif
+                                                <div>
+                                                    <span class="font-medium">{{ number_format($scan->issues_found) }}</span> found
+                                                </div>
+                                                <div class="text-sm">
+                                                    @php 
+                                                        $resolvedCount = $scan->resolved_issues ?? $scan->resolved_issues_count;
+                                                    @endphp
+                                                    <span class="text-green-600 dark:text-green-400">{{ $resolvedCount }} resolved</span>
+                                                    @php $pending = $scan->issues_found - $resolvedCount; @endphp
+                                                    @if($pending > 0)
+                                                        <span class="text-red-600 dark:text-red-400 ml-2">{{ $pending }} pending</span>
+                                                    @endif
+                                                </div>
                                             @else
                                                 <span class="text-gray-500 dark:text-gray-400">No issues</span>
                                             @endif

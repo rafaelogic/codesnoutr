@@ -125,7 +125,7 @@ class Settings extends Component
                     'label' => 'Enable AI Integration',
                     'type' => 'boolean',
                     'default' => false,
-                    'description' => 'Enable AI-powered fix suggestions and auto-fixes',
+                    'description' => 'Enable AI-powered fix suggestions and bulk fix operations',
                 ],
                 'openai_api_key' => [
                     'label' => 'OpenAI API Key',
@@ -152,43 +152,7 @@ class Settings extends Component
                     'default' => 1000,
                     'description' => 'Maximum tokens per AI request',
                 ],
-                'ai_auto_fix_enabled' => [
-                    'label' => 'Enable AI Auto-Fix',
-                    'type' => 'boolean',
-                    'default' => false,
-                    'description' => 'Enable AI-powered automatic code fixes',
-                ],
-                'ai_auto_fix_backup_disk' => [
-                    'label' => 'Backup Disk',
-                    'type' => 'select',
-                    'options' => [
-                        'local' => 'Local Disk',
-                        'public' => 'Public Disk',
-                        's3' => 'Amazon S3',
-                    ],
-                    'default' => 'local',
-                    'description' => 'Storage disk for backup files before applying fixes',
-                ],
-                'ai_auto_fix_min_confidence' => [
-                    'label' => 'Minimum Confidence (%)',
-                    'type' => 'number',
-                    'min' => 0,
-                    'max' => 100,
-                    'default' => 80,
-                    'description' => 'Minimum confidence threshold for auto-applying fixes',
-                ],
-                'ai_auto_fix_safe_mode' => [
-                    'label' => 'Safe Mode',
-                    'type' => 'boolean',
-                    'default' => true,
-                    'description' => 'Create backups and require confirmation before applying fixes',
-                ],
-                'ai_auto_fix_require_confirmation' => [
-                    'label' => 'Require Confirmation',
-                    'type' => 'boolean',
-                    'default' => true,
-                    'description' => 'Always ask for confirmation before applying fixes',
-                ],
+
             ],
             'ui' => [
                 'dark_mode' => [

@@ -126,7 +126,7 @@
         <div class="w-80 min-h-screen h-full flex-shrink-0 bg-gray-100 dark:bg-gray-600 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
             <!-- File Tree Header -->
             <div class="flex-shrink-0 px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-2">
                     <h3 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center">
                         <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
@@ -137,6 +137,28 @@
                         {{ $directoryStats['affected_files'] ?? 0 }}
                     </span>
                 </div>
+                
+                <!-- Fix All Issues in Scan CTA -->
+                @if($this->isAiAvailable() && ($stats['total'] - $stats['resolved_count']) > 0)
+                <div class="mt-2">
+                    <button wire:click="fixAllIssuesInScan"
+                            wire:loading.attr="disabled"
+                            wire:target="fixAllIssuesInScan"
+                            class="w-full flex items-center justify-center px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        <span wire:loading.remove wire:target="fixAllIssuesInScan">Fix All Issues</span>
+                        <span wire:loading wire:target="fixAllIssuesInScan" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Fixing...
+                        </span>
+                    </button>
+                </div>
+                @endif
             </div>
             
 
@@ -151,10 +173,10 @@
                     <div class="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                         <!-- Directory Header -->
                         <div class="px-4 py-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <button wire:click="toggleDirectory({{ json_encode($directory) }})"
-                                    class="flex items-center justify-between w-full text-left hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-2 py-1 transition-colors"
-                                    data-directory="{{ $directory }}">
-                                <div class="flex items-center space-x-2 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <button wire:click="toggleDirectory({{ json_encode($directory) }})"
+                                        class="flex items-center space-x-2 min-w-0 flex-1 text-left hover:bg-gray-200 dark:hover:bg-gray-700 rounded px-2 py-1 transition-colors"
+                                        data-directory="{{ $directory }}">
                                     <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 transition-transform {{ $isExpanded ? 'rotate-90' : '' }}" 
                                          fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -176,11 +198,27 @@
                                         </div>
                                         @endif
                                     </div>
+                                </button>
+                                
+                                <div class="flex items-center space-x-2 flex-shrink-0">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full">
+                                        {{ count($files) }}
+                                    </span>
+                                    
+                                    <!-- Fix All Issues in Directory -->
+                                    @if($this->isAiAvailable())
+                                    <button wire:click="fixAllIssuesInDirectory({{ json_encode($directory) }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="fixAllIssuesInDirectory"
+                                            title="Fix all issues in this directory with AI"
+                                            class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                    </button>
+                                    @endif
                                 </div>
-                                <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-0.5 rounded-full ml-2">
-                                    {{ count($files) }}
-                                </span>
-                            </button>
+                            </div>
                         </div>
                         
                         <!-- Files in Directory -->
@@ -298,7 +336,7 @@
             @if($selectedFilePath)
                 <!-- File Header -->
                 <div class="flex-shrink-0 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                    <div class="flex items-start justify-between">
+                    <div class="flex items-start justify-between mb-3">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center space-x-3">
                                 <!-- File Icon -->
@@ -350,6 +388,36 @@
                             @endif
                         </div>
                     </div>
+                    
+                    <!-- Fix All Issues in File CTA -->
+                    @if($this->isAiAvailable() && $selectedFileStats && ($selectedFileStats['total_issues'] - $selectedFileStats['resolved_issues']) > 0)
+                    <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">Fix All Issues in File</h4>
+                                <p class="text-xs text-blue-700 dark:text-blue-300">{{ ($selectedFileStats['total_issues'] - $selectedFileStats['resolved_issues']) }} issues need fixing</p>
+                            </div>
+                        </div>
+                        <button wire:click="fixAllIssuesInFile({{ json_encode($selectedFilePath) }})"
+                                wire:loading.attr="disabled"
+                                wire:target="fixAllIssuesInFile"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span wire:loading.remove wire:target="fixAllIssuesInFile">Fix All</span>
+                            <span wire:loading wire:target="fixAllIssuesInFile" class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Fixing...
+                            </span>
+                        </button>
+                    </div>
+                    @endif
                 </div>
                 
                 <!-- Issues List -->
@@ -501,13 +569,13 @@
                                                 <!-- Issue Actions -->
                                                 @if(!$instance['fixed'])
                                                 <div class="flex items-center space-x-1">
-                                                    <!-- AI Auto-Fix Action Button -->
+                                                    <!-- AI Fix Action Button -->
                                                     @if($this->isAiConfigured() && !empty($instance['ai_fix']))
                                                         <button wire:click="applyAutoFix({{ $instance['id'] }})" 
                                                                 wire:loading.attr="disabled"
                                                                 wire:target="applyAutoFix({{ $instance['id'] }})"
                                                                 class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                title="Apply AI Auto-Fix">
+                                                                title="Apply AI Fix">
                                                             <svg wire:loading.remove wire:target="applyAutoFix({{ $instance['id'] }})" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                                             </svg>
@@ -567,7 +635,7 @@
                                             </div>
                                             @endif
 
-                                            <!-- AI Auto-Fix Component -->
+                                            <!-- AI Fix Component -->
                                             @if(!$instance['fixed'])
                                             <div class="p-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
                                                 @if($this->isAiConfigured())
@@ -661,7 +729,7 @@
                                                                     <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                                                                         <div class="flex items-center justify-between">
                                                                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                Generated by AI • {{ !empty($instance['ai_explanation']) ? $instance['ai_explanation'] : 'AI Auto-Fix' }}
+                                                                                Generated by AI • {{ !empty($instance['ai_explanation']) ? $instance['ai_explanation'] : 'AI Fix' }}
                                                                             </div>
                                                                             <div class="flex items-center space-x-2">
                                                                                 <button wire:click="regenerateAutoFix({{ $instance['id'] }})" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg transition-colors">
@@ -689,13 +757,13 @@
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                                             </svg>
                                                             <div>
-                                                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Auto-Fix Ready</p>
+                                                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI Fix Ready</p>
                                                                 <p class="text-sm text-blue-600 dark:text-blue-400 mt-1">AI-powered code suggestions and automatic fixes are available for this issue.</p>
                                                                 <div class="mt-2 flex gap-2">
                                                                     <button wire:click="generateAutoFix({{ $instance['id'] }})" 
                                                                             wire:loading.attr="disabled"
                                                                             wire:target="generateAutoFix({{ $instance['id'] }})"
-                                                                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 border border-transparent rounded-lg shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                                                            class="inline-flex items-center px-4 py-2 text-sm font-bold text-blue-500 dark:text-blue-400 bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-500 dark:to-indigo-500 hover:from-blue-700 hover:to-indigo-700 dark:hover:from-blue-600 dark:hover:to-indigo-600 disabled:from-gray-400 disabled:to-gray-500 disabled:text-gray-400 border border-blue-500 dark:border-blue-400 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                                                                         <svg wire:loading.remove wire:target="generateAutoFix({{ $instance['id'] }})" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                                                         </svg>
@@ -728,8 +796,8 @@
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                                                         </svg>
                                                         <div>
-                                                            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">AI Auto-Fix Available</p>
-                                                            <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">Enable AI Auto-Fix in Settings and configure your OpenAI API key to get intelligent code suggestions.</p>
+                                                            <p class="text-sm font-medium text-amber-800 dark:text-amber-200">AI Fixes Available</p>
+                                                            <p class="text-sm text-amber-600 dark:text-amber-400 mt-1">Enable AI integration in Settings and configure your OpenAI API key to get intelligent code suggestions.</p>
                                                             <a href="{{ route('codesnoutr.settings') }}" class="mt-2 inline-flex items-center px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 dark:bg-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-600 rounded-md hover:bg-amber-200 dark:hover:bg-amber-700 transition-colors">
                                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>

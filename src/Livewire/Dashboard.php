@@ -55,6 +55,10 @@ class Dashboard extends Component
         $resolvedIssues = Issue::where('fixed', true)->count();
         $criticalIssues = Issue::where('severity', 'critical')->count();
         
+        // Calculate AI spending
+        $aiSpending = \Rafaelogic\CodeSnoutr\Models\Setting::get('ai_current_usage', 0.00);
+        $aiMonthlyLimit = \Rafaelogic\CodeSnoutr\Models\Setting::get('ai_monthly_limit', 50.00);
+        
         // Calculate weekly changes
         $weekAgo = now()->subWeek();
         $scansLastWeek = Scan::where('created_at', '>=', $weekAgo)->count();
@@ -78,7 +82,11 @@ class Dashboard extends Component
         $this->stats = [
             'total_scans' => $totalScans,
             'total_issues' => $totalIssues,
+            'resolved_issues' => $resolvedIssues,
             'critical_issues' => $criticalIssues,
+            'ai_spending' => $aiSpending,
+            'ai_monthly_limit' => $aiMonthlyLimit,
+            'ai_spending_percentage' => $aiMonthlyLimit > 0 ? round(($aiSpending / $aiMonthlyLimit) * 100, 1) : 0,
             'resolution_rate' => $totalIssues > 0 ? round(($resolvedIssues / $totalIssues) * 100, 1) : 0,
             'scans_change' => $scansChange,
             'issues_change' => $issuesChange,
@@ -218,5 +226,96 @@ class Dashboard extends Component
             'low' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Low'],
             default => ['class' => 'bg-gray-100 text-gray-800', 'text' => 'Unknown'],
         };
+    }
+
+    public function fixAllIssues()
+    {
+        try {
+            // Get all unfixed issues
+            $unfixedIssues = Issue::where('fixed', false)->get();
+            
+            if ($unfixedIssues->isEmpty()) {
+                $this->dispatch('show-notification', [
+                    'type' => 'info',
+                    'message' => 'No issues found that need fixing.'
+                ]);
+                return;
+            }
+
+            // Check if AI is available
+            $aiService = new \Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService();
+            if (!$aiService->isAvailable()) {
+                $this->dispatch('show-notification', [
+                    'type' => 'error',
+                    'message' => 'AI service is not available. Please configure your OpenAI API key in settings.'
+                ]);
+                return;
+            }
+
+            // Log start of process
+            \Illuminate\Support\Facades\Log::info('Starting AI fix all process', [
+                'total_issues' => $unfixedIssues->count()
+            ]);
+
+            $fixedCount = 0;
+            $failedCount = 0;
+
+            foreach ($unfixedIssues as $issue) {
+                try {
+                    $actionInvoker = app(\Rafaelogic\CodeSnoutr\Services\Issues\IssueActionInvoker::class);
+                    
+                    // First, generate AI fix if it doesn't exist
+                    if (empty($issue->ai_fix)) {
+                        $generateResult = $actionInvoker->executeAction('generate_ai_fix', $issue);
+                        if (!$generateResult['success']) {
+                            $failedCount++;
+                            \Illuminate\Support\Facades\Log::warning('Failed to generate AI fix for issue ' . $issue->id . ': ' . $generateResult['message']);
+                            continue;
+                        }
+                        // Refresh the issue to get the generated ai_fix
+                        $issue->refresh();
+                    }
+                    
+                    // Then, apply the AI fix
+                    $applyResult = $actionInvoker->executeAction('apply_ai_fix', $issue);
+                    
+                    if ($applyResult['success']) {
+                        $fixedCount++;
+                        \Illuminate\Support\Facades\Log::info('Successfully fixed issue ' . $issue->id);
+                    } else {
+                        $failedCount++;
+                        \Illuminate\Support\Facades\Log::warning('Failed to apply AI fix for issue ' . $issue->id . ': ' . $applyResult['message']);
+                    }
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    \Illuminate\Support\Facades\Log::error('Failed to fix issue ' . $issue->id . ': ' . $e->getMessage());
+                }
+            }
+
+            $this->refreshStats();
+            
+            // Log completion
+            \Illuminate\Support\Facades\Log::info('AI fix all process completed', [
+                'fixed_count' => $fixedCount,
+                'failed_count' => $failedCount,
+                'total_processed' => $unfixedIssues->count()
+            ]);
+            
+            $message = "AI Fix completed! Fixed: {$fixedCount} issues";
+            if ($failedCount > 0) {
+                $message .= ", Failed: {$failedCount} issues";
+            }
+            
+            $this->dispatch('show-notification', [
+                'type' => $fixedCount > 0 ? 'success' : 'warning',
+                'message' => $message
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->dispatch('show-notification', [
+                'type' => 'error',
+                'message' => 'Failed to execute AI fix: ' . $e->getMessage()
+            ]);
+        }
     }
 }

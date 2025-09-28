@@ -1,6 +1,6 @@
 {
     "name": "rafaelogic/codesnoutr",
-    "description": "A comprehensive Laravel code scanner that detects security vulnerabilities, performance issues, and code quality problems with AI-powered auto-fixes",
+    "description": "A comprehensive Laravel code scanner that detects security vulnerabilities, performance issues, and code quality problems with AI-powered fixes",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -29,7 +29,7 @@
         "phpstan/phpstan-phpunit": "^1.0"
     },
     "suggest": {
-        "openai-php/client": "For AI-powered auto-fixes",
+        "openai-php/client": "For AI-powered fixes",
         "barryvdh/laravel-debugbar": "For debugbar integration",
         "spatie/laravel-pdf": "For PDF report generation"
     },
