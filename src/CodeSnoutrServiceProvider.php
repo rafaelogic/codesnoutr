@@ -8,6 +8,7 @@ use Rafaelogic\CodeSnoutr\Commands\ScanCommand;
 use Rafaelogic\CodeSnoutr\Commands\InstallCommand;
 use Rafaelogic\CodeSnoutr\Commands\AssetStatusCommand;
 use Rafaelogic\CodeSnoutr\Commands\UpdateResolvedIssuesCounts;
+use Rafaelogic\CodeSnoutr\Commands\DeduplicateIssuesCommand;
 
 // New service imports
 use Rafaelogic\CodeSnoutr\Services\AI\{AiFixGenerator, AiAssistantService, AutoFixService};
@@ -181,6 +182,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
                 InstallCommand::class,
                 AssetStatusCommand::class,
                 UpdateResolvedIssuesCounts::class,
+                DeduplicateIssuesCommand::class,
             ]);
         }
 

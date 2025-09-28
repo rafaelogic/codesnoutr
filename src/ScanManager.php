@@ -169,21 +169,39 @@ class ScanManager
     protected function processResults(Scan $scan, array $results): void
     {
         foreach ($results['issues'] as $issueData) {
-            Issue::create([
-                'scan_id' => $scan->id,
-                'file_path' => $issueData['file_path'],
-                'line_number' => $issueData['line_number'],
-                'column_number' => $issueData['column_number'] ?? null,
-                'category' => $issueData['category'],
-                'severity' => $issueData['severity'],
-                'rule_name' => $issueData['rule_name'],
-                'rule_id' => $issueData['rule_id'],
-                'title' => $issueData['title'],
-                'description' => $issueData['description'],
-                'suggestion' => $issueData['suggestion'],
-                'context' => $issueData['context'] ?? [],
-                'metadata' => $issueData['metadata'] ?? [],
-            ]);
+            // Check if this issue already exists (deduplicate based on file, line, rule, and description)
+            $existingIssue = Issue::where('file_path', $issueData['file_path'])
+                ->where('line_number', $issueData['line_number'])
+                ->where('rule_id', $issueData['rule_id'])
+                ->where('description', $issueData['description'])
+                ->where('fixed', false) // Only check unfixed issues
+                ->first();
+
+            if ($existingIssue) {
+                // Update the existing issue with the new scan_id to show it was found again
+                $existingIssue->update([
+                    'last_seen_scan_id' => $scan->id,
+                    'updated_at' => now()
+                ]);
+            } else {
+                // Create new issue
+                Issue::create([
+                    'scan_id' => $scan->id,
+                    'file_path' => $issueData['file_path'],
+                    'line_number' => $issueData['line_number'],
+                    'column_number' => $issueData['column_number'] ?? null,
+                    'category' => $issueData['category'],
+                    'severity' => $issueData['severity'],
+                    'rule_name' => $issueData['rule_name'],
+                    'rule_id' => $issueData['rule_id'],
+                    'title' => $issueData['title'],
+                    'description' => $issueData['description'],
+                    'suggestion' => $issueData['suggestion'],
+                    'context' => $issueData['context'] ?? [],
+                    'metadata' => $issueData['metadata'] ?? [],
+                    'last_seen_scan_id' => $scan->id,
+                ]);
+            }
         }
 
         // Update scan statistics

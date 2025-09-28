@@ -32,6 +32,7 @@ class Issue extends Model
         'fixed_at',
         'fix_method',
         'metadata',
+        'last_seen_scan_id',
     ];
 
     protected $casts = [
@@ -48,6 +49,14 @@ class Issue extends Model
     public function scan(): BelongsTo
     {
         return $this->belongsTo(Scan::class);
+    }
+
+    /**
+     * Get the last scan where this issue was seen
+     */
+    public function lastSeenScan(): BelongsTo
+    {
+        return $this->belongsTo(Scan::class, 'last_seen_scan_id');
     }
 
     /**
