@@ -1,42 +1,74 @@
-# Issue Deduplication
+# Issue Deduplication in CodeSnoutr
 
-## Overview
-The CodeSnoutr package now includes issue deduplication to prevent the same issues from being displayed multiple times when running subsequent scans.
+CodeSnoutr now includes intelligent issue deduplication to prevent the same issues from appearing multiple times when scans are run repeatedly.
 
 ## How It Works
 
+### Deduplication Logic
+When a new scan is processed, the system checks for existing issues using these criteria:
+- **Same file path** (`file_path`)
+- **Same line number** (`line_number`) 
+- **Same rule ID** (`rule_id`)
+- **Same description** (`description`)
+- **Issue is not yet fixed** (`fixed = false`)
+
+### Behavior
+- **If an existing issue is found**: Updates `last_seen_scan_id` and `updated_at` timestamp
+- **If no existing issue is found**: Creates a new issue record
+
+### Database Schema
+The `codesnoutr_issues` table now includes:
+- `last_seen_scan_id` - Tracks the most recent scan that detected this issue
+- Helps identify which issues are still active vs. resolved
+
+## Usage
+
 ### Automatic Deduplication
-When a new scan is performed, the system:
-1. Checks if an issue already exists based on:
-   - File path
-   - Line number
-   - Rule ID
-   - Description
-   - Not already fixed
-2. If a duplicate is found:
-   - Updates the existing issue's `last_seen_scan_id` to the current scan
-   - Does not create a new issue record
-3. If no duplicate is found:
-   - Creates a new issue record with `last_seen_scan_id` set to the current scan
+Deduplication happens automatically during every scan. No additional configuration needed.
 
 ### Manual Cleanup
-If you have existing duplicate issues from previous scans, you can clean them up using the provided command:
+To clean up existing duplicate issues (from before deduplication was implemented):
 
 ```bash
-# See what duplicates would be removed (dry run)
-php artisan codesnoutr:deduplicate-issues --dry-run
-
-# Actually remove duplicate issues
-php artisan codesnoutr:deduplicate-issues
+php artisan codesnoutr:deduplicate
 ```
 
-## Database Changes
-- Added `last_seen_scan_id` column to `codesnoutr_issues` table
-- Added foreign key constraint to `codesnoutr_scans` table
-- Added composite index for better query performance
+This command will:
+- Find issues with identical file, line, rule, and description
+- Keep the most recent issue
+- Remove older duplicates
+- Preserve any AI fixes, manual resolutions, or other issue data
+
+### Viewing Issue History
+You can track issue persistence across scans:
+- `scan_id` - The scan that first detected the issue
+- `last_seen_scan_id` - The most recent scan that found the issue
+- `updated_at` - When the issue was last seen
 
 ## Benefits
-- Clean, non-cluttered issue lists
-- Accurate issue counts
-- Better performance with fewer duplicate records
-- Historical tracking of when issues were last detected
+
+1. **Cleaner Results**: No more duplicate issues cluttering scan results
+2. **Better Tracking**: See which issues persist across multiple scans
+3. **Preserved Work**: AI fixes and manual resolutions are maintained
+4. **Performance**: Faster scans as duplicate detection is efficient
+
+## Migration
+
+The deduplication feature requires a database migration:
+
+```bash
+php artisan migrate --path=vendor/rafaelogic/codesnoutr/database/migrations
+```
+
+Or if you've published the migrations:
+
+```bash
+php artisan migrate
+```
+
+## Backwards Compatibility
+
+- Existing issues are preserved
+- Old scans continue to work normally
+- The feature is enabled automatically after migration
+- No configuration changes required
