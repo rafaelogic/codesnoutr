@@ -58,9 +58,12 @@ class AutoFixService
         ];
 
         try {
+            // Get fix data - handle both JSON and plain text formats
+            $fixData = $this->parseAiFixData($issue->ai_fix);
+            
             // Validate fix data
             if (!$this->validateFixData($fixData)) {
-                $result['message'] = 'Invalid fix data provided';
+                $result['message'] = 'Invalid fix data';
                 return $result;
             }
 
@@ -272,6 +275,63 @@ class AutoFixService
     }
 
     /**
+     * Parse AI fix data from either JSON format or plain text format
+     */
+    protected function parseAiFixData(string $aiFixData): array
+    {
+        // Try to parse as JSON first (new format)
+        $jsonData = json_decode($aiFixData, true);
+        if ($jsonData !== null && is_array($jsonData)) {
+            return $jsonData;
+        }
+
+        // Parse plain text format (legacy format from AiFixGenerator)
+        return $this->parsePlainTextFix($aiFixData);
+    }
+
+    /**
+     * Parse plain text AI fix format
+     */
+    protected function parsePlainTextFix(string $content): array
+    {
+        // Extract the code from FIX section
+        $code = '';
+        $explanation = '';
+        $confidence = 0.75; // Default confidence
+
+        // Extract explanation
+        if (preg_match('/EXPLANATION:\s*(.*?)(?=FIX:|$)/s', $content, $matches)) {
+            $explanation = trim($matches[1]);
+        }
+
+        // Extract code from FIX section
+        if (preg_match('/FIX:\s*```php\s*(.*?)\s*```/s', $content, $matches)) {
+            $code = trim($matches[1]);
+        } elseif (preg_match('/FIX:\s*(.*?)(?=CONSIDERATIONS:|$)/s', $content, $matches)) {
+            // Fallback: extract everything after FIX: until CONSIDERATIONS:
+            $fixContent = trim($matches[1]);
+            // Remove potential code block markers
+            $code = preg_replace('/```php\s*|\s*```/', '', $fixContent);
+        }
+
+        // Determine fix type based on content
+        $type = 'replace'; // Default type
+        if (strpos(strtolower($explanation), 'add') !== false || strpos(strtolower($explanation), 'insert') !== false) {
+            $type = 'insert';
+        } elseif (strpos(strtolower($explanation), 'remove') !== false || strpos(strtolower($explanation), 'delete') !== false) {
+            $type = 'delete';
+        }
+
+        return [
+            'code' => $code,
+            'type' => $type,
+            'confidence' => $confidence,
+            'explanation' => $explanation,
+            'affected_lines' => [] // Will be determined by the target line
+        ];
+    }
+
+    /**
      * Validate fix data
      */
     protected function validateFixData(array $fixData): bool
@@ -280,7 +340,8 @@ class AutoFixService
                isset($fixData['type']) && 
                isset($fixData['confidence']) &&
                $fixData['confidence'] >= 0.3 && // Minimum confidence threshold
-               in_array($fixData['type'], ['replace', 'insert', 'delete']);
+               in_array($fixData['type'], ['replace', 'insert', 'delete']) &&
+               !empty(trim($fixData['code'])); // Ensure code is not empty
     }
 
     /**
@@ -291,6 +352,16 @@ class AutoFixService
         try {
             $targetLine = $issue->line_number - 1; // Convert to 0-based index
             $affectedLines = $fixData['affected_lines'] ?? [$issue->line_number];
+
+            Log::info('Applying fix to content', [
+                'issue_id' => $issue->id,
+                'file_path' => $issue->file_path,
+                'fix_type' => $fixData['type'] ?? 'unknown',
+                'target_line' => $targetLine + 1,
+                'affected_lines' => $affectedLines,
+                'fix_code_preview' => substr($fixData['code'] ?? '', 0, 200) . (strlen($fixData['code'] ?? '') > 200 ? '...' : ''),
+                'total_file_lines' => count($lines)
+            ]);
 
             switch ($fixData['type']) {
                 case 'replace':
@@ -303,11 +374,17 @@ class AutoFixService
                     return $this->applyDeletion($lines, $affectedLines);
 
                 default:
+                    Log::error('Unknown fix type', ['type' => $fixData['type'] ?? 'null']);
                     return null;
             }
 
         } catch (\Exception $e) {
-            Log::error('Content modification failed', ['error' => $e->getMessage()]);
+            Log::error('Content modification failed', [
+                'issue_id' => $issue->id,
+                'file_path' => $issue->file_path,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
     }
@@ -443,6 +520,17 @@ class AutoFixService
         $output = [];
         $returnCode = 0;
         exec("php -l {$tempFile} 2>&1", $output, $returnCode);
+
+        // Log validation details for debugging
+        if ($returnCode !== 0) {
+            Log::warning('Content validation failed', [
+                'file_path' => $filePath,
+                'return_code' => $returnCode,
+                'php_lint_output' => implode("\n", $output),
+                'content_preview' => substr($content, 0, 500) . (strlen($content) > 500 ? '...' : ''),
+                'content_length' => strlen($content)
+            ]);
+        }
 
         unlink($tempFile);
 
