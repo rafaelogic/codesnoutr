@@ -314,9 +314,18 @@ class AutoFixService
             $code = preg_replace('/```php\s*|\s*```/', '', $fixContent);
         }
 
-        // Determine fix type based on content
+        // Determine fix type based on content and analysis
         $type = 'replace'; // Default type
-        if (strpos(strtolower($explanation), 'add') !== false || strpos(strtolower($explanation), 'insert') !== false) {
+        
+        // Check if this is likely a docblock addition (common case)
+        if (strpos($code, '/**') !== false && strpos($code, 'class') !== false) {
+            // This looks like adding a docblock before a class - use insert
+            $type = 'insert';
+            // Extract just the docblock part
+            if (preg_match('/^(\/\*\*.*?\*\/)\s*class/s', $code, $matches)) {
+                $code = $matches[1];
+            }
+        } elseif (strpos(strtolower($explanation), 'add') !== false || strpos(strtolower($explanation), 'insert') !== false) {
             $type = 'insert';
         } elseif (strpos(strtolower($explanation), 'remove') !== false || strpos(strtolower($explanation), 'delete') !== false) {
             $type = 'delete';
@@ -452,13 +461,26 @@ class AutoFixService
             $originalIndent = $matches[1] ?? '';
         }
 
+        // For docblocks and other code that should go before the target line
+        $insertBefore = false;
+        if (strpos($newCode, '/**') !== false || strpos($newCode, 'docblock') !== false) {
+            $insertBefore = true;
+        }
+
         // Apply indentation to new code
         $indentedCode = $originalIndent . ltrim($newCode);
 
-        $beforeLines = array_slice($lines, 0, $targetLine + 1);
-        $afterLines = array_slice($lines, $targetLine + 1);
-
-        $result = array_merge($beforeLines, [$indentedCode], $afterLines);
+        if ($insertBefore) {
+            // Insert before the target line
+            $beforeLines = array_slice($lines, 0, $targetLine);
+            $afterLines = array_slice($lines, $targetLine);
+            $result = array_merge($beforeLines, [$indentedCode], $afterLines);
+        } else {
+            // Insert after the target line (original behavior)
+            $beforeLines = array_slice($lines, 0, $targetLine + 1);
+            $afterLines = array_slice($lines, $targetLine + 1);
+            $result = array_merge($beforeLines, [$indentedCode], $afterLines);
+        }
         return implode("\n", $result);
     }
 
