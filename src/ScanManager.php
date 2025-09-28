@@ -185,7 +185,7 @@ class ScanManager
                 ]);
             } else {
                 // Create new issue
-                Issue::create([
+                $newIssue = Issue::create([
                     'scan_id' => $scan->id,
                     'file_path' => $issueData['file_path'],
                     'line_number' => $issueData['line_number'],
@@ -199,8 +199,11 @@ class ScanManager
                     'suggestion' => $issueData['suggestion'],
                     'context' => $issueData['context'] ?? [],
                     'metadata' => $issueData['metadata'] ?? [],
-                    'last_seen_scan_id' => $scan->id,
                 ]);
+                
+                // Set the last_seen_scan_id separately since it's not in fillable
+                $newIssue->last_seen_scan_id = $scan->id;
+                $newIssue->save();
             }
         }
 

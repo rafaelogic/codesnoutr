@@ -25,14 +25,17 @@ class Issue extends Model
         'description',
         'suggestion',
         'context',
+        'metadata',
         'ai_fix',
         'ai_explanation',
         'ai_confidence',
         'fixed',
         'fixed_at',
         'fix_method',
-        'metadata',
-        'last_seen_scan_id',
+        'ignored',
+        'ignored_at',
+        'false_positive',
+        'false_positive_at',
     ];
 
     protected $casts = [
