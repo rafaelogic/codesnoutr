@@ -1,18 +1,18 @@
 <!-- Step 2: Target Selection -->
 <div class="space-y-6">
     <div class="text-center mb-8">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        <x-atoms.text as="h3" size="lg" weight="medium" class="mb-2">
             @if($scanType === 'file') Select File to Analyze
             @elseif($scanType === 'directory') Choose Directory to Scan
             @else Codebase Location
             @endif
-        </h3>
-        <p class="text-gray-600 dark:text-gray-400">
+        </x-atoms.text>
+        <x-atoms.text color="muted">
             @if($scanType === 'file') Browse and select a specific PHP file to analyze
             @elseif($scanType === 'directory') Choose the directory containing files you want to scan
             @else Your entire Laravel application will be analyzed
             @endif
-        </p>
+        </x-atoms.text>
     </div>
 
     @if($scanType === 'codebase')
@@ -53,52 +53,45 @@
     @else
     <!-- File/Directory Selection -->
     <div class="space-y-4">
-        <div class="flex flex-col space-y-2">
-            <label for="target-input" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                @if($scanType === 'file') File Path @else Directory Path @endif
-            </label>
+        <x-molecules.form-field 
+            :label="$scanType === 'file' ? 'File Path' : 'Directory Path'"
+            for="target-input"
+        >
             <div class="flex space-x-3">
                 <div class="flex-1">
-                    <input type="text" 
-                           wire:model.live="target" 
-                           id="target-input"
-                           placeholder="@if($scanType === 'file') e.g., app/Http/Controllers/UserController.php @else e.g., app/Http/Controllers @endif"
-                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500">
+                    <x-atoms.input 
+                        wire:model.live="target" 
+                        id="target-input"
+                        name="target"
+                        :placeholder="$scanType === 'file' ? 'e.g., app/Http/Controllers/UserController.php' : 'e.g., app/Http/Controllers'"
+                        size="lg"
+                    />
                 </div>
-                <button type="button" 
-                        wire:click="browseForPath"
-                        class="inline-flex items-center px-4 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                    </svg>
+                <x-atoms.button 
+                    type="button"
+                    wire:click="browseForPath"
+                    variant="primary"
+                    size="lg"
+                    icon="folder"
+                >
                     Browse
-                </button>
+                </x-atoms.button>
             </div>
-        </div>
+        </x-molecules.form-field>
 
         @error('target')
-        <div class="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-800 rounded-lg">
-            <div class="flex">
-                <svg class="h-5 w-5 text-red-400 dark:text-red-300" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                </svg>
-                <p class="ml-3 text-sm text-red-800 dark:text-red-300">{{ $message }}</p>
-            </div>
-        </div>
+        <x-atoms.alert variant="danger" size="md" class="mt-4">
+            <x-slot name="icon">x-circle</x-slot>
+            {{ $message }}
+        </x-atoms.alert>
         @enderror
 
         @if($target && !$errors->has('target'))
-        <div class="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-800 rounded-lg">
-            <div class="flex items-start">
-                <svg class="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                <div class="ml-3">
-                    <h4 class="text-sm font-medium text-green-800 dark:text-green-300">Target Selected</h4>
-                    <p class="text-sm text-green-700 dark:text-green-400 mt-1 font-mono">{{ $target }}</p>
-                </div>
-            </div>
-        </div>
+        <x-atoms.alert variant="success" size="md" class="mt-4">
+            <x-slot name="icon">check-circle</x-slot>
+            <x-slot name="title">Target Selected</x-slot>
+            <x-atoms.text class="font-mono text-sm">{{ $target }}</x-atoms.text>
+        </x-atoms.alert>
         @endif
 
         <!-- Quick Suggestions -->

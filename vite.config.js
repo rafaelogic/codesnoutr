@@ -6,6 +6,7 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
+                'resources/css/codesnoutr.css',
                 'resources/js/app.js',
             ],
             refresh: true,
@@ -31,6 +32,16 @@ export default defineConfig({
         },
     },
     css: {
-        postcss: './config/build/postcss.config.js',
+        postcss: './postcss.config.js',
+    },
+    resolve: {
+        alias: {
+            '@': '/resources',
+        },
+    },
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
     },
 });

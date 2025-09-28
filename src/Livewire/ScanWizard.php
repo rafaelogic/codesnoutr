@@ -51,42 +51,54 @@ class ScanWizard extends Component
     public $showAiSuggestions = false;
     public $aiAvailable = false;
 
-    // Service dependencies
-    protected StepNavigationServiceContract $stepService;
-    protected FileBrowserServiceContract $browserService;
-    protected ScanExecutionServiceContract $executionService;
-    protected ScanConfigurationServiceContract $configService;
-    protected WizardAiServiceContract $aiService;
+    // Service dependencies - lazy loaded
+    protected ?StepNavigationServiceContract $stepService = null;
+    protected ?FileBrowserServiceContract $browserService = null;
+    protected ?ScanExecutionServiceContract $executionService = null;
+    protected ?ScanConfigurationServiceContract $configService = null;
+    protected ?WizardAiServiceContract $aiService = null;
 
     protected $listeners = [
         'apply-scan-suggestion' => 'applyScanSuggestion',
         'get-ai-suggestions' => 'getAiSuggestions',
     ];
 
-    public function boot(
-        StepNavigationServiceContract $stepService,
-        FileBrowserServiceContract $browserService,
-        ScanExecutionServiceContract $executionService,
-        ScanConfigurationServiceContract $configService,
-        WizardAiServiceContract $aiService
-    ) {
-        $this->stepService = $stepService;
-        $this->browserService = $browserService;
-        $this->executionService = $executionService;
-        $this->configService = $configService;
-        $this->aiService = $aiService;
+    // Lazy load services only when needed
+    protected function getStepService(): StepNavigationServiceContract
+    {
+        return $this->stepService ??= app(StepNavigationServiceContract::class);
+    }
+
+    protected function getBrowserService(): FileBrowserServiceContract
+    {
+        return $this->browserService ??= app(FileBrowserServiceContract::class);
+    }
+
+    protected function getExecutionService(): ScanExecutionServiceContract
+    {
+        return $this->executionService ??= app(ScanExecutionServiceContract::class);
+    }
+
+    protected function getConfigService(): ScanConfigurationServiceContract
+    {
+        return $this->configService ??= app(ScanConfigurationServiceContract::class);
+    }
+
+    protected function getAiService(): WizardAiServiceContract
+    {
+        return $this->aiService ??= app(WizardAiServiceContract::class);
     }
 
     // Computed properties using services
     public function getAllCategoriesProperty()
     {
-        return $this->configService->getAllCategories();
+        return $this->getConfigService()->getAllCategories();
     }
 
     // Method version for view compatibility
     public function getAllCategories()
     {
-        return $this->configService->getAllCategories();
+        return $this->getConfigService()->getAllCategories();
     }
 
     public function getBrowserItemsProperty()
@@ -95,7 +107,7 @@ class ScanWizard extends Component
             return [];
         }
         
-        return $this->browserService->loadDirectoryItems($this->browserCurrentPath);
+        return $this->getBrowserService()->loadDirectoryItems($this->browserCurrentPath);
     }
 
     public function getActivityLogProperty()
@@ -105,24 +117,20 @@ class ScanWizard extends Component
 
     public function mount()
     {
-        $this->ruleCategories = $this->configService->getDefaultCategories($this->scanType);
-        $this->updateRulesApplied();
+        // Only do essential initialization
+        $this->ruleCategories = ['security', 'performance', 'quality', 'laravel']; // Default categories
+        $this->rulesApplied = count($this->ruleCategories) * 10; // Rough estimate
         $this->browserCurrentPath = base_path();
         $this->activityLog = [];
         
-        // Initialize AI availability
-        $this->aiAvailable = $this->aiService->isAvailable();
-        
-        // Load AI suggestions if available
-        if ($this->aiAvailable) {
-            $this->loadAiSuggestions();
-        }
+        // Defer AI initialization to avoid blocking
+        $this->aiAvailable = false; // Will be checked when needed
     }
 
     // Step Navigation Methods (delegated to StepNavigationService)
     public function goToStep($step)
     {
-        if ($this->stepService->goToStep($step, $this->totalSteps)) {
+        if ($this->getStepService()->goToStep($step, $this->totalSteps)) {
             $this->currentStep = $step;
         }
     }
@@ -135,14 +143,14 @@ class ScanWizard extends Component
             'ruleCategories' => $this->ruleCategories
         ];
         
-        if ($this->stepService->validateStep($this->currentStep, $data, [])) {
-            $this->currentStep = $this->stepService->nextStep($this->currentStep, $this->totalSteps);
+        if ($this->getStepService()->validateStep($this->currentStep, $data, [])) {
+            $this->currentStep = $this->getStepService()->nextStep($this->currentStep, $this->totalSteps);
         }
     }
 
     public function previousStep()
     {
-        $this->currentStep = $this->stepService->previousStep($this->currentStep);
+        $this->currentStep = $this->getStepService()->previousStep($this->currentStep);
     }
 
     // File Browser Methods (delegated to FileBrowserService)
@@ -160,14 +168,14 @@ class ScanWizard extends Component
 
     public function navigateTo($path)
     {
-        if ($this->browserService->navigateTo($path)) {
+        if ($this->getBrowserService()->navigateTo($path)) {
             $this->browserCurrentPath = $path;
         }
     }
 
     public function navigateUp()
     {
-        $this->browserCurrentPath = $this->browserService->navigateUp($this->browserCurrentPath);
+        $this->browserCurrentPath = $this->getBrowserService()->navigateUp($this->browserCurrentPath);
     }
 
     public function selectPath($path)
@@ -186,7 +194,7 @@ class ScanWizard extends Component
     public function selectScanType($type)
     {
         $this->scanType = $type;
-        $this->ruleCategories = $this->configService->getDefaultCategories($type);
+        $this->ruleCategories = $this->getConfigService()->getDefaultCategories($type);
         $this->updateRulesApplied();
     }
 
@@ -202,19 +210,19 @@ class ScanWizard extends Component
 
     public function selectAllCategories()
     {
-        $this->ruleCategories = $this->configService->selectAllCategories();
+        $this->ruleCategories = $this->getConfigService()->selectAllCategories();
         $this->updateRulesApplied();
     }
 
     public function deselectAllCategories()
     {
-        $this->ruleCategories = $this->configService->deselectAllCategories();
+        $this->ruleCategories = $this->getConfigService()->deselectAllCategories();
         $this->updateRulesApplied();
     }
 
     public function updateRulesApplied()
     {
-        $this->rulesApplied = $this->configService->getRulesCount($this->ruleCategories);
+        $this->rulesApplied = $this->getConfigService()->getRulesCount($this->ruleCategories);
     }
 
     public function updatedRuleCategories()
@@ -235,7 +243,7 @@ class ScanWizard extends Component
 
     public function getScanTypeDescription($type)
     {
-        return $this->configService->getScanTypeDescription($type);
+        return $this->getConfigService()->getScanTypeDescription($type);
     }
 
     // Scan Execution Methods (delegated to ScanExecutionService)
@@ -247,7 +255,7 @@ class ScanWizard extends Component
             'ruleCategories' => $this->ruleCategories
         ];
 
-        $result = $this->executionService->startScan($config);
+        $result = $this->getExecutionService()->startScan($config);
         
         if ($result['success']) {
             $this->scanId = $result['scanId'];
@@ -271,7 +279,7 @@ class ScanWizard extends Component
         }
 
         // Check scan status from database
-        $scanStatus = $this->executionService->checkScanStatus($this->scanId);
+        $scanStatus = $this->getExecutionService()->checkScanStatus($this->scanId);
         
         if ($scanStatus['found']) {
             $this->scanStatus = $scanStatus['status'];
@@ -297,7 +305,7 @@ class ScanWizard extends Component
         }
 
         // Check progress from cache
-        $progress = $this->executionService->getScanProgress($this->scanId);
+        $progress = $this->getExecutionService()->getScanProgress($this->scanId);
         $this->scanProgress = $progress['percentage'];
         $this->currentActivity = $progress['message'];
         $this->currentFile = $progress['current_file'];
@@ -311,7 +319,7 @@ class ScanWizard extends Component
 
     public function pauseScan()
     {
-        if ($this->scanId && $this->executionService->pauseScan($this->scanId)) {
+        if ($this->scanId && $this->getExecutionService()->pauseScan($this->scanId)) {
             $this->scanStatus = 'paused';
             $this->addToActivityLog('warning', 'Scan paused by user');
         }
@@ -319,7 +327,7 @@ class ScanWizard extends Component
 
     public function resumeScan()
     {
-        if ($this->scanId && $this->executionService->resumeScan($this->scanId)) {
+        if ($this->scanId && $this->getExecutionService()->resumeScan($this->scanId)) {
             $this->scanStatus = 'running';
             $this->addToActivityLog('info', 'Scan resumed by user');
         }
@@ -327,7 +335,7 @@ class ScanWizard extends Component
 
     public function cancelScan()
     {
-        if ($this->scanId && $this->executionService->cancelScan($this->scanId)) {
+        if ($this->scanId && $this->getExecutionService()->cancelScan($this->scanId)) {
             $this->scanStatus = 'cancelled';
             $this->addToActivityLog('error', 'Scan cancelled by user');
         }
@@ -345,7 +353,7 @@ class ScanWizard extends Component
         $id = $scanId ?: $this->scanId;
         if (!$id) return;
 
-        $scanStatus = $this->executionService->checkScanStatus($id);
+        $scanStatus = $this->getExecutionService()->checkScanStatus($id);
         
         if ($scanStatus['found']) {
             $this->scanId = $id;
@@ -364,8 +372,11 @@ class ScanWizard extends Component
     // AI Methods (delegated to WizardAiService)
     public function loadAiSuggestions()
     {
+        // Check AI availability on demand
+        $this->aiAvailable = $this->getAiService()->isAvailable();
+        
         if ($this->aiAvailable) {
-            $this->aiSuggestions = $this->aiService->loadScanSuggestions($this->target ?: base_path());
+            $this->aiSuggestions = $this->getAiService()->loadScanSuggestions($this->target ?: base_path());
         }
     }
 
@@ -389,7 +400,7 @@ class ScanWizard extends Component
                 'ruleCategories' => $this->ruleCategories
             ];
 
-            $updatedConfig = $this->aiService->applySuggestion($suggestion, $currentConfig);
+            $updatedConfig = $this->getAiService()->applySuggestion($suggestion, $currentConfig);
             
             // Apply the updated configuration
             $this->scanType = $updatedConfig['scanType'] ?? $this->scanType;
@@ -429,7 +440,7 @@ class ScanWizard extends Component
             'current_step' => $this->currentStep,
         ];
 
-        return $this->aiService->getSmartRecommendations($context);
+        return $this->getAiService()->getSmartRecommendations($context);
     }
 
     public function getAiInsights()
@@ -444,7 +455,7 @@ class ScanWizard extends Component
             'ruleCategories' => $this->ruleCategories
         ];
 
-        return $this->aiService->getAiInsights($config);
+        return $this->getAiService()->getAiInsights($config);
     }
 
     // Helper Methods

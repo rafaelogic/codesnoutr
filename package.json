@@ -1,6 +1,7 @@
 {
   "name": "codesnoutr",
-  "version": "1.0.0",
+  "version": "1.0.0",  
+  "type": "module",
   "description": "CodeSnoutr Laravel Package - Build assets",
   "main": "index.js",
   "scripts": {

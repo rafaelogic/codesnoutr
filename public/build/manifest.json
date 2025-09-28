@@ -1,11 +1,16 @@
 {
   "resources/css/app.css": {
-    "file": "css/app-88985332.css",
+    "file": "css/app-d8999145.css",
     "isEntry": true,
     "src": "resources/css/app.css"
   },
+  "resources/css/codesnoutr.css": {
+    "file": "css/codesnoutr-db301a63.css",
+    "isEntry": true,
+    "src": "resources/css/codesnoutr.css"
+  },
   "resources/js/app.js": {
-    "file": "js/app-e5d0b2f5.js",
+    "file": "js/app-70c6caff.js",
     "isEntry": true,
     "src": "resources/js/app.js"
   }

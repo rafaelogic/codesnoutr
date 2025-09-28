@@ -1,9 +1,12 @@
 @props([
     'spacing' => 'default', // sm, default, lg
-    'maxWidth' => '7xl' // sm, md, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl, full
+    'maxWidth' => '7xl', // sm, md, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl, full
+    'size' => null // alias for maxWidth
 ])
 
 @php
+    $actualMaxWidth = $size ?? $maxWidth ?? '7xl';
+    
     $spacingClasses = [
         'sm' => 'py-4',
         'default' => 'py-6 sm:py-8',
@@ -26,7 +29,7 @@
     
     $classes = implode(' ', [
         $spacingClasses[$spacing] ?? $spacingClasses['default'],
-        $maxWidthClasses[$maxWidth] ?? $maxWidthClasses['7xl'],
+        $maxWidthClasses[$actualMaxWidth] ?? $maxWidthClasses['7xl'],
         'mx-auto px-4 sm:px-6 lg:px-8'
     ]);
 @endphp

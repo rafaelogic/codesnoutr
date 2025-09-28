@@ -171,13 +171,16 @@
                         @if($aiAvailable)
                         <div class="flex space-x-2">
                             <div class="flex-1 relative">
-                                <input type="text" 
-                                       wire:model="userQuestion"
-                                       wire:keydown.enter="askAI"
-                                       wire:loading.attr="disabled"
-                                       wire:loading.class="opacity-75"
-                                       placeholder="Ask about code scanning..."
-                                       class="pl-2 py-2 pr-8 w-full text-sm border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-75">
+                                <x-atoms.input 
+                                    wire:model="userQuestion"
+                                    wire:keydown.enter="askAI"
+                                    wire:loading.attr="disabled"
+                                    wire:loading.class="opacity-75"
+                                    placeholder="Ask about code scanning..."
+                                    size="md"
+                                    name="user_question"
+                                    class="pr-8"
+                                />
                                 <!-- Small loading indicator in input field -->
                                 <div wire:loading wire:target="askAI" class="absolute right-2 top-1/2 transform -translate-y-1/2">
                                     <svg class="animate-spin h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24">

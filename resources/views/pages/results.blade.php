@@ -97,7 +97,11 @@
                                                     {{ $scanTitle }}
                                                 </div>
                                                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                    {{ ucfirst($scan->type) }} - {{ Str::limit($scan->target ?? 'Full codebase', 40) }}
+                                                    @if($scan->type === 'file' && $scan->target)
+                                                        File: {{ $scan->target }}
+                                                    @else
+                                                        {{ ucfirst($scan->type) }} - {{ Str::limit($scan->target ?? 'Full codebase', 40) }}
+                                                    @endif
                                                 </div>
                                                 <div class="text-xs text-gray-400 dark:text-gray-500">
                                                     {{ $scan->created_at->format('M d, Y H:i') }}

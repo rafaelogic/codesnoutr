@@ -80,29 +80,66 @@ class DashboardController
     /**
      * Display the results page
      */
-    public function results(Request $request): View
+    public function results(Request $request): View|JsonResponse
     {
+        // Debug: Check if we can get any scans at all
+        $totalScans = Scan::count();
+        \Log::info('Results page - Total scans in database: ' . $totalScans);
+        
         $query = Scan::with(['issues'])
             ->orderBy('created_at', 'desc');
 
         // Apply filters
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+            \Log::info('Results page - Filtering by status: ' . $request->status);
         }
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);
+            \Log::info('Results page - Filtering by type: ' . $request->type);
         }
 
         if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
+            \Log::info('Results page - Filtering by date_from: ' . $request->date_from);
         }
 
         if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
+            \Log::info('Results page - Filtering by date_to: ' . $request->date_to);
         }
 
+        // Debug: Get the SQL query being executed
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+        \Log::info('Results page - SQL: ' . $sql, $bindings);
+
         $scans = $query->paginate(15);
+        
+        \Log::info('Results page - Paginated scans count: ' . $scans->count());
+        \Log::info('Results page - Paginated scans total: ' . $scans->total());
+
+        // Debug: Add debug info to help troubleshoot
+        if ($request->has('debug')) {
+            return response()->json([
+                'total_scans_in_db' => $totalScans,
+                'paginated_count' => $scans->count(),
+                'paginated_total' => $scans->total(),
+                'current_page' => $scans->currentPage(),
+                'per_page' => $scans->perPage(),
+                'last_page' => $scans->lastPage(),
+                'sql' => $sql,
+                'bindings' => $bindings,
+                'filters' => [
+                    'status' => $request->get('status'),
+                    'type' => $request->get('type'),
+                    'date_from' => $request->get('date_from'),
+                    'date_to' => $request->get('date_to'),
+                ],
+                'scans_data' => $scans->items(),
+            ]);
+        }
 
         return view('codesnoutr::pages.results', compact('scans'));
     }

@@ -232,11 +232,16 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.icon', 'atoms.icon');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.button', 'atoms.button');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.input', 'atoms.input');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.select', 'atoms.select');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.badge', 'atoms.badge');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.spinner', 'atoms.spinner');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.progress-bar', 'atoms.progress-bar');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.alert', 'atoms.alert');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.tooltip', 'atoms.tooltip');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.avatar', 'atoms.avatar');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.label', 'atoms.label');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.toggle', 'atoms.toggle');
+            $this->app['blade.compiler']->component('codesnoutr::components.atoms.notification', 'atoms.notification');
             
             // Register new utility atoms
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.surface', 'atoms.surface');
@@ -252,6 +257,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.card-header', 'molecules.card-header');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.card-body', 'molecules.card-body');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.card-footer', 'molecules.card-footer');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.form-field', 'molecules.form-field');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.page-header', 'molecules.page-header');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.metric-card', 'molecules.metric-card');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.recent-scans-list', 'molecules.recent-scans-list');

@@ -1,13 +1,13 @@
 @props([
-    'header',
-    'sortable' => true,
+    'header' => null,
+    'sortable' => false,
     'index' => 0
 ])
 
 @php
     $headerKey = $header['key'] ?? $index;
-    $headerLabel = $header['label'] ?? $header;
-    $isSortable = $sortable && ($header['sortable'] ?? true);
+    $headerLabel = $header['label'] ?? $header ?? $slot;
+    $isSortable = $sortable && ($header['sortable'] ?? false);
 @endphp
 
 <th 
@@ -17,7 +17,11 @@
 >
     <div class="flex items-center space-x-1">
         <x-atoms.text size="xs" weight="medium" color="muted" class="uppercase tracking-wider">
-            {{ $headerLabel }}
+            @if($header)
+                {{ $headerLabel }}
+            @else
+                {{ $slot }}
+            @endif
         </x-atoms.text>
         
         @if($isSortable)

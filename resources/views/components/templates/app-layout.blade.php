@@ -122,10 +122,10 @@
     <!-- Additional Styles -->
     @stack('styles')
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 h-screen overflow-hidden font-sans antialiased"
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen font-sans antialiased"
       x-bind:class="{ 'dark': darkMode }">
     
-    <div class="flex h-screen">
+    <div class="flex min-h-screen">
         @if($showSidebar)
         <!-- Sidebar -->
         <div class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0">
@@ -474,7 +474,7 @@
         @endif
 
         <!-- Main content area -->
-        <div class="flex-1 flex flex-col {{ $showSidebar ? 'lg:ml-64' : '' }} min-h-0">
+        <div class="flex flex-col w-full {{ $showSidebar ? 'lg:ml-64' : '' }} min-h-0">
             <!-- Top bar with mobile menu button and page header -->
             <div class="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
                 <div class="flex items-center justify-between px-4 py-4">
@@ -548,21 +548,23 @@
             </div>
             @endif
 
-            <!-- Main content -->
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {{ $slot }}
-                </div>
-            </main>
-
-            <!-- Footer -->
-            <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300 mt-auto">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div class="text-center text-sm text-gray-500 dark:text-gray-400">
-                        <p>&copy; {{ date('Y') }} CodeSnoutr. All rights reserved.</p>
+            <div class="flex flex-col w-full">
+                <!-- Main content -->
+                <main class="flex-1 overflow-y-auto">
+                    <div class="px-4 sm:px-6 lg:px-8 py-6">
+                        {{ $slot }}
                     </div>
-                </div>
-            </footer>
+                </main>
+
+                <!-- Footer -->
+                <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300 mt-auto">
+                    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <div class="flex flex-col items-center text-center text-sm text-gray-500 dark:text-gray-400">
+                            <p>&copy; {{ date('Y') }} CodeSnoutr. All rights reserved.</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
         </div>
     </div>
 

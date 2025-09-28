@@ -101,20 +101,16 @@
             <!-- Navigation -->
             @if($currentStep < 5)
             <div class="bg-gray-50 dark:bg-gray-700 px-8 py-4 flex justify-between items-center">
-                <button wire:click="previousStep" 
-                        @if($currentStep == 1) disabled @endif
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border 
-                               @if($currentStep == 1) 
-                                   bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed
-                               @else 
-                                   bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-200 dark:border-gray-500 dark:hover:bg-gray-500
-                               @endif
-                               transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
+                <x-atoms.button 
+                    wire:click="previousStep"
+                    :disabled="$currentStep == 1"
+                    variant="secondary"
+                    size="md"
+                    icon="chevron-left"
+                    class="{{ $currentStep == 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                >
                     Previous
-                </button>
+                </x-atoms.button>
 
                 <div class="flex space-x-2">
                     @for($i = 1; $i <= $totalSteps; $i++)
@@ -128,13 +124,15 @@
                 </div>
 
                 @if($currentStep < 4)
-                <button wire:click="nextStep" 
-                        class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                <x-atoms.button 
+                    wire:click="nextStep"
+                    variant="primary"
+                    size="md"
+                    icon="chevron-right"
+                    icon-position="right"
+                >
                     Next
-                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </button>
+                </x-atoms.button>
                 @endif
             </div>
             @endif

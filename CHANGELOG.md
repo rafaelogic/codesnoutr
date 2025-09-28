@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2025-09-28
+
+### Enhanced
+- **Scan Results Page** - Complete overhaul with professional UI/UX improvements
+  - Fixed critical layout rendering issue by updating from `@extends` to component-based layout syntax
+  - Enhanced filter system with advanced status, type, and date filtering capabilities
+  - Improved dark mode support with better contrast ratios for inputs and selects
+  - Added comprehensive hover effects and smooth transitions throughout the interface
+  - Enhanced button styling with shadows, gradients, and professional appearance
+  - Better row alignment with proper `items-center` classes on all horizontal elements
+  - File scan display now shows "File: /path/to/filename" instead of generic "File" label
+
+### Fixed
+- **Layout Component Integration** - Resolved `View [templates.app-layout] not found` error
+  - Updated results page to use proper `<x-templates.app-layout>` component syntax
+  - Fixed Blade template structure from legacy `@extends/@section` to modern component approach
+  - Ensured consistent layout usage across all pages in the application
+
+### Improved
+- **User Interface Polish** - Professional-grade visual enhancements
+  - Enhanced all form inputs with better dark mode contrast and accessibility
+  - Added hover states for better user feedback on interactive elements
+  - Improved button contrast and clickability indicators across all themes
+  - Professional table design with enhanced hover effects and visual hierarchy
+  - Better spacing and alignment throughout the results interface
+
+### Removed
+- **Cleanup** - Removed development and test artifacts
+  - Removed unused test files: `dark-mode-test.blade.php`, `input-dark-mode-test.blade.php`
+  - Cleaned up development artifacts and debugging components
+  - Streamlined codebase for production deployment
+
+### Technical
+- **Frontend Architecture** - Continued refinement of build system
+  - Updated Vite and PostCSS configurations for optimal asset compilation
+  - Enhanced Tailwind CSS integration with component-specific styling
+  - Improved JavaScript bundling with better performance optimization
+
 ## [1.0.1] - 2025-09-27
 
 ### Fixed
