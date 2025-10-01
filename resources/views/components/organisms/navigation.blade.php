@@ -18,9 +18,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <!-- Brand -->
-            <div class="flex items-center">
+            <div class="flex items-center pt-4">
                 <a href="{{ $brandHref }}" class="flex items-center space-x-2">
-                    <x-atoms.icon name="clipboard" size="lg" :color="$dark ? 'primary' : 'primary'" />
+                    <x-atoms.icon name="clipboard" size="lg" :color="$dark ? 'secondary' : 'primary'" />
                     <span class="text-xl font-bold {{ $textClass }}">{{ $brandName }}</span>
                 </a>
             </div>

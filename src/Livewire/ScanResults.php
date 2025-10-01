@@ -513,13 +513,39 @@ class ScanResults extends Component
     public function fixAllIssuesInScan()
     {
         try {
-            $issues = Issue::where('scan_id', $this->scanId)
-                ->where('fixed', false)
-                ->get();
+            // Initial notification
+            $this->dispatch('showNotification', [
+                'type' => 'info',
+                'message' => 'Starting AI fix process for all issues in scan...'
+            ]);
 
+            // Check if AI is available first
+            $aiService = new \Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService();
+            if (!$aiService->isAvailable()) {
+                session()->flash('error', 'AI service is not available. Please configure your OpenAI API key in settings.');
+                return;
+            }
+
+            $issues = Issue::where('scan_id', $this->scanId)
+                          ->where('fixed', false)
+                          ->get();
+
+            if ($issues->isEmpty()) {
+                session()->flash('info', 'No unfixed issues found in scan.');
+                return;
+            }
+
+            \Illuminate\Support\Facades\Log::info("Starting fixAllIssuesInScan for {$issues->count()} issues");
+            
+            // Add some debug info about the issues
+            foreach ($issues->take(3) as $issue) {
+                \Illuminate\Support\Facades\Log::info("Issue to fix: ID={$issue->id}, File={$issue->file_path}, Line={$issue->line_number}, Has AI Fix=" . (!empty($issue->ai_fix) ? 'Yes' : 'No'));
+            }
+            
             $this->executeAiBulkFix($issues, 'entire scan');
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to fix all issues: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error in fixAllIssuesInScan: ' . $e->getMessage());
+            session()->flash('error', 'An error occurred while fixing issues: ' . $e->getMessage());
         }
     }
 
@@ -539,52 +565,74 @@ class ScanResults extends Component
 
         $fixedCount = 0;
         $failedCount = 0;
+        $generatedCount = 0;
+
+        \Illuminate\Support\Facades\Log::info("Starting AI bulk fix for {$issues->count()} issues in {$scope}");
 
         foreach ($issues as $issue) {
             try {
+                \Illuminate\Support\Facades\Log::info("Processing issue {$issue->id}: {$issue->title}");
+                
                 // First, generate AI fix if it doesn't exist
                 if (empty($issue->ai_fix)) {
+                    \Illuminate\Support\Facades\Log::info("Generating AI fix for issue {$issue->id}");
                     $generateResult = $this->actionInvoker->executeAction('generate_ai_fix', $issue);
                     if (!$generateResult['success']) {
                         $failedCount++;
                         \Illuminate\Support\Facades\Log::warning('Failed to generate AI fix for issue ' . $issue->id . ': ' . $generateResult['message']);
                         continue;
                     }
+                    $generatedCount++;
                     // Refresh the issue to get the generated ai_fix
                     $issue->refresh();
+                    \Illuminate\Support\Facades\Log::info("AI fix generated for issue {$issue->id}");
                 }
                 
                 // Then, apply the AI fix
+                \Illuminate\Support\Facades\Log::info("Applying AI fix for issue {$issue->id}");
                 $applyResult = $this->actionInvoker->executeAction('apply_ai_fix', $issue);
                 
                 if ($applyResult['success']) {
                     $fixedCount++;
-                    \Illuminate\Support\Facades\Log::info('Successfully fixed issue ' . $issue->id . ' in ' . $scope);
+                    \Illuminate\Support\Facades\Log::info("Successfully fixed issue {$issue->id} in {$scope}");
+                    
+                    // Ensure issue is marked as fixed in database
+                    $issue->update([
+                        'fixed' => true,
+                        'fixed_at' => now(),
+                        'fix_method' => 'ai_auto'
+                    ]);
                 } else {
                     $failedCount++;
-                    \Illuminate\Support\Facades\Log::warning('Failed to apply AI fix for issue ' . $issue->id . ' in ' . $scope . ': ' . $applyResult['message']);
+                    \Illuminate\Support\Facades\Log::warning("Failed to apply AI fix for issue {$issue->id} in {$scope}: " . $applyResult['message']);
                 }
             } catch (\Exception $e) {
                 $failedCount++;
-                \Illuminate\Support\Facades\Log::error('Failed to fix issue ' . $issue->id . ': ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error("Failed to fix issue {$issue->id}: " . $e->getMessage());
             }
         }
 
-        // Refresh data
-        $this->refreshSelectedFileIssues();
+        // Force refresh all data
         $this->loadInitialData();
+        $this->refreshSelectedFileIssues();
         
-        $message = "AI Fix completed for {$scope}! Fixed: {$fixedCount} issues";
+        // Force component refresh  
+        $this->dispatch('$refresh');
+        
+        $detailMessage = "Generated: {$generatedCount}, ";
+        $message = "AI Fix completed for {$scope}! {$detailMessage}Fixed: {$fixedCount} issues";
         if ($failedCount > 0) {
             $message .= ", Failed: {$failedCount} issues";
         }
         
+        \Illuminate\Support\Facades\Log::info($message);
         session()->flash($fixedCount > 0 ? 'success' : 'warning', $message);
         
         $this->dispatch('ai-bulk-fix-completed', [
             'scope' => $scope,
             'fixed' => $fixedCount,
-            'failed' => $failedCount
+            'failed' => $failedCount,
+            'generated' => $generatedCount
         ]);
     }
 

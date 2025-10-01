@@ -50,6 +50,7 @@ Route::middleware(['web'])
         // Results
         Route::get('/codesnoutr/results', [DashboardController::class, 'results'])->name('results');
         Route::get('/codesnoutr/results/{scan}', [DashboardController::class, 'scanResults'])->name('results.scan');
+        Route::get('/codesnoutr/results/{scan}/by-issues', [DashboardController::class, 'scanResultsByIssues'])->name('results.scan.by-issues');
         
         // Debug route
         Route::get('/codesnoutr/results-debug', function() {

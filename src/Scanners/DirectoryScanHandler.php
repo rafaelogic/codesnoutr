@@ -96,7 +96,7 @@ class DirectoryScanHandler extends AbstractScanner
             }
 
             $this->updateStats('files_scanned', $filesScanned);
-            $this->updateStats('issues_found', count($allIssues));
+            $this->updateStats('total_issues', count($allIssues));
             $this->updateStats('completed_at', now());
 
             if ($progressCallback) {

@@ -35,12 +35,17 @@ class ApplyAiFixAction implements IssueActionInterface
     public function execute(Issue $issue): array
     {
         try {
+            // Auto-generate fix if it doesn't exist
             if (empty($issue->ai_fix)) {
-                return [
-                    'success' => false,
-                    'message' => 'No AI fix available for this issue. Please generate a fix first.',
-                    'data' => null
-                ];
+                Log::info("No AI fix found for issue {$issue->id}, auto-generating...");
+                
+                $generateResult = $this->autoGenerateFix($issue);
+                if (!$generateResult['success']) {
+                    return $generateResult;
+                }
+                
+                // Refresh the issue to get the newly generated fix
+                $issue->refresh();
             }
 
             // Parse the AI fix data
@@ -48,7 +53,7 @@ class ApplyAiFixAction implements IssueActionInterface
             if (!$fixData) {
                 return [
                     'success' => false,
-                    'message' => 'Could not parse AI fix data.',
+                    'message' => 'Could not parse AI fix data. Please try again.',
                     'data' => null
                 ];
             }
@@ -124,24 +129,110 @@ class ApplyAiFixAction implements IssueActionInterface
      */
     protected function extractCodeFromText(string $text): ?string
     {
+        // Remove leading markdown formatting (**, *, etc.)
+        $text = preg_replace('/^\*+\s*/', '', $text);
+        
         // Try to extract code between ```php and ``` or ``` and ```
         if (preg_match('/```(?:php)?\s*\n(.*?)\n```/s', $text, $matches)) {
             return trim($matches[1]);
         }
+        
+        // Look for code blocks without language specifier
+        if (preg_match('/```\s*(.*?)\s*```/s', $text, $matches)) {
+            $code = trim($matches[1]);
+            // Check if it looks like PHP code
+            if (str_starts_with($code, '<?php') || str_contains($code, 'Route::') || str_contains($code, '->')) {
+                return $code;
+            }
+        }
+        
+        // Look for inline code after "php" keyword
+        if (preg_match('/\bphp\s*(.*?)(?:\n|$)/s', $text, $matches)) {
+            $code = trim($matches[1]);
+            // Clean up common markdown artifacts
+            $code = preg_replace('/^[\*\-\s]*/', '', $code);
+            if (!empty($code)) {
+                return $code;
+            }
+        }
 
-        // If no code blocks found, assume the entire response is code
+        // If no code blocks found, try to extract PHP-looking content
         $lines = explode("\n", $text);
         $codeLines = [];
         
         foreach ($lines as $line) {
-            // Skip explanation lines that start with common prefixes
-            if (preg_match('/^(Here|The|This|To fix|You should|I suggest)/i', trim($line))) {
+            $trimmed = trim($line);
+            
+            // Skip empty lines and markdown formatting
+            if (empty($trimmed) || str_starts_with($trimmed, '#') || str_starts_with($trimmed, '**') || str_starts_with($trimmed, '*')) {
                 continue;
             }
-            $codeLines[] = $line;
+            
+            // Skip explanation lines that start with common prefixes
+            if (preg_match('/^(Here|The|This|To fix|You should|I suggest|To address)/i', $trimmed)) {
+                continue;
+            }
+            
+            // Look for PHP-like patterns
+            if (str_contains($trimmed, '<?php') || 
+                str_contains($trimmed, 'Route::') || 
+                str_contains($trimmed, '->') ||
+                str_contains($trimmed, 'function') ||
+                str_contains($trimmed, 'class ') ||
+                str_contains($trimmed, 'public ') ||
+                str_contains($trimmed, 'private ') ||
+                str_contains($trimmed, 'protected ')) {
+                $codeLines[] = $trimmed;
+            }
         }
 
         $code = implode("\n", $codeLines);
         return !empty(trim($code)) ? $code : null;
+    }
+
+    /**
+     * Auto-generate AI fix for the issue
+     */
+    protected function autoGenerateFix(Issue $issue): array
+    {
+        try {
+            // Use the same service that GenerateAiFixAction uses
+            $aiFixGenerator = app(\Rafaelogic\CodeSnoutr\Services\AI\AiFixGenerator::class);
+            
+            $result = $aiFixGenerator->generateFix($issue);
+            
+            if ($result['success']) {
+                // Update the issue with the generated fix
+                $issue->update([
+                    'ai_fix' => $result['data']['ai_fix'],
+                    'ai_confidence' => $result['data']['confidence'] ?? null
+                ]);
+                
+                Log::info("Successfully auto-generated AI fix for issue {$issue->id}");
+                
+                return [
+                    'success' => true,
+                    'message' => 'AI fix generated and ready to apply',
+                    'data' => $result['data']
+                ];
+            } else {
+                Log::warning("Failed to auto-generate AI fix for issue {$issue->id}: {$result['message']}");
+                
+                return [
+                    'success' => false,
+                    'message' => 'Failed to generate AI fix: ' . $result['message'],
+                    'data' => null
+                ];
+            }
+            
+        } catch (\Exception $e) {
+            Log::error("Exception during auto-generation for issue {$issue->id}: " . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to auto-generate AI fix: ' . $e->getMessage(),
+                'data' => null
+            ];
+        }
     }
 }

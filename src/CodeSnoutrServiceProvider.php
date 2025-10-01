@@ -212,6 +212,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             \Livewire\Livewire::component('codesnoutr-scan-results', \Rafaelogic\CodeSnoutr\Livewire\ScanResults::class);
             \Livewire\Livewire::component('scan-results', \Rafaelogic\CodeSnoutr\Livewire\ScanResults::class);
             \Livewire\Livewire::component('codesnoutr-scan-results-view', \Rafaelogic\CodeSnoutr\Livewire\ScanResultsView::class);
+            \Livewire\Livewire::component('codesnoutr-scan-results-by-issues', \Rafaelogic\CodeSnoutr\Livewire\ScanResultsByIssues::class);
             \Livewire\Livewire::component('codesnoutr-simple-scan-results', \Rafaelogic\CodeSnoutr\Livewire\SimpleScanResults::class);
             \Livewire\Livewire::component('codesnoutr-settings', \Rafaelogic\CodeSnoutr\Livewire\Settings::class);
             \Livewire\Livewire::component('codesnoutr-dark-mode-toggle', \Rafaelogic\CodeSnoutr\Livewire\DarkModeToggle::class);

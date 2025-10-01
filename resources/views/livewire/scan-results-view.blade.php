@@ -62,16 +62,6 @@
             </x-atoms.stack>
         </x-molecules.card>
     @else
-        <x-molecules.card variant="elevated" class="p-12">
-            <div class="text-center">
-                <div class="mx-auto w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-6">
-                    <x-atoms.icon name="check-circle" size="xl" class="text-green-600 dark:text-green-400" />
-                </div>
-                <x-atoms.text as="h3" size="xl" weight="semibold" class="mb-3">Great job! No issues found</x-atoms.text>
-                <x-atoms.text color="muted" class="max-w-sm mx-auto">
-                    Your code is clean and follows best practices. No security vulnerabilities, performance issues, or code quality problems were detected.
-                </x-atoms.text>
-            </div>
-        </x-molecules.card>
+        @include('codesnoutr::components.celebration-success', ['scan' => $scan])
     @endif
 </div>

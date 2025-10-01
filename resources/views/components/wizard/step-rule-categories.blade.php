@@ -60,15 +60,16 @@
                     </div>
                     
                     <!-- Checkbox Indicator -->
-                    <div class="hidden peer-checked:block">
-                        <div class="h-6 w-6 bg-{{ $category['color'] }}-600 rounded-full flex items-center justify-center">
-                            <svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="relative">
+                        <div class="h-6 w-6 border-2 border-gray-300 dark:border-gray-500 rounded-full flex items-center justify-center">
+                            <svg class="h-4 w-4 text-white opacity-0 transition-opacity duration-200" 
+                                 :class="{'opacity-100': ruleCategories.includes('{{ $key }}')}"
+                                 fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                             </svg>
                         </div>
-                    </div>
-                    <div class="peer-checked:hidden">
-                        <div class="h-6 w-6 border-2 border-gray-300 dark:border-gray-500 rounded-full"></div>
+                        <div class="absolute inset-0 h-6 w-6 bg-{{ $category['color'] }}-600 rounded-full transition-all duration-200 -z-10"
+                             :class="{'scale-100 opacity-100': ruleCategories.includes('{{ $key }}'), 'scale-0 opacity-0': !ruleCategories.includes('{{ $key }}')}"></div>
                     </div>
                 </div>
 

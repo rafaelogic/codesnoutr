@@ -5,6 +5,7 @@ namespace Rafaelogic\CodeSnoutr\Livewire;
 use Livewire\Component;
 use Rafaelogic\CodeSnoutr\ScanManager;
 use Rafaelogic\CodeSnoutr\Models\Scan;
+use Rafaelogic\CodeSnoutr\Models\Setting;
 use Rafaelogic\CodeSnoutr\Services\QueueService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -146,7 +147,13 @@ class ScanForm extends Component
 
     public function mount()
     {
-        $this->ruleCategories = ['security', 'performance', 'quality', 'laravel'];
+        // Load default rules from settings or use hardcoded fallback
+        $defaultRules = Setting::get('default_rules');
+        if (is_string($defaultRules)) {
+            $defaultRules = json_decode($defaultRules, true);
+        }
+        $this->ruleCategories = $defaultRules ?: ['security', 'performance', 'quality', 'laravel'];
+        
         $this->scanOptions = [
             'ignore_vendor' => true,
             'ignore_node_modules' => true,
@@ -477,7 +484,12 @@ class ScanForm extends Component
 
     public function selectAllCategories()
     {
-        $this->ruleCategories = ['security', 'performance', 'quality', 'laravel'];
+        // Load all available categories from settings or use default
+        $defaultRules = Setting::get('default_rules');
+        if (is_string($defaultRules)) {
+            $defaultRules = json_decode($defaultRules, true);
+        }
+        $this->ruleCategories = $defaultRules ?: ['security', 'performance', 'quality', 'laravel'];
         $this->resetErrorBag('ruleCategories');
     }
 

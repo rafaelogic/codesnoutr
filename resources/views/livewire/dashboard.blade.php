@@ -71,15 +71,15 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 <div class="flex-shrink-0">
-                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-600/30 rounded-xl flex items-center justify-center">
                         <x-atoms.icon name="lightning-bolt" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-600">
                         Fix All Issues with AI
                     </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-900 mt-1">
                         Let AI automatically fix {{ number_format(($stats['total_issues'] ?? 0) - ($stats['resolved_issues'] ?? 0)) }} remaining issues across your codebase
                     </p>
                 </div>

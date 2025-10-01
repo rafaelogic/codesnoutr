@@ -4,6 +4,7 @@ namespace Rafaelogic\CodeSnoutr\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
+use Rafaelogic\CodeSnoutr\Models\Setting;
 use Rafaelogic\CodeSnoutr\Contracts\Services\Wizard\StepNavigationServiceContract;
 use Rafaelogic\CodeSnoutr\Contracts\Services\Wizard\FileBrowserServiceContract;
 use Rafaelogic\CodeSnoutr\Contracts\Services\Wizard\ScanExecutionServiceContract;
@@ -117,8 +118,13 @@ class ScanWizard extends Component
 
     public function mount()
     {
-        // Only do essential initialization
-        $this->ruleCategories = ['security', 'performance', 'quality', 'laravel']; // Default categories
+        // Load default rules from settings or use hardcoded fallback
+        $defaultRules = Setting::get('default_rules');
+        if (is_string($defaultRules)) {
+            $defaultRules = json_decode($defaultRules, true);
+        }
+        $this->ruleCategories = $defaultRules ?: ['security', 'performance', 'quality', 'laravel'];
+        
         $this->rulesApplied = count($this->ruleCategories) * 10; // Rough estimate
         $this->browserCurrentPath = base_path();
         $this->activityLog = [];

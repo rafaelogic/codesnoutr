@@ -69,7 +69,7 @@ class ScanCodebaseJob implements ShouldQueue
                 'status' => 'completed',
                 'completed_at' => now(),
                 'total_files' => $result['files_scanned'] ?? 0,
-                'total_issues' => $result['issues_found'] ?? 0,
+                'total_issues' => $result['total_issues'] ?? 0,
                 'scan_duration' => now()->diffInSeconds($scan->started_at),
             ]);
 

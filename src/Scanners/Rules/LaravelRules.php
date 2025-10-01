@@ -115,9 +115,10 @@ class LaravelRules extends AbstractRuleEngine
         foreach ($lines as $lineNumber => $line) {
             $lineNumber++; // 1-based
             
-            // Check for routes without names
-            if (preg_match('/Route::(get|post|put|patch|delete)/', $line) && 
-                !preg_match('/->name\(/', $line)) {
+            // Check for routes without names (only route definitions, not utility methods)
+            if (preg_match('/Route::(get|post|put|patch|delete)\s*\(/', $line) && 
+                !preg_match('/->name\(/', $line) &&
+                !preg_match('/Route::(getRoutes|has|current|is|currentRouteName|getCurrentRoute)\s*\(/', $line)) {
                 $this->addIssue($this->createIssue(
                     $filePath,
                     $lineNumber,

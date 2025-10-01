@@ -48,14 +48,6 @@
             </div>
         @endif
     @else
-        <div class="text-center py-12">
-            <div class="mx-auto w-24 h-24 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4">
-                <svg class="w-12 h-12 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Issues Found</h3>
-            <p class="text-gray-500 dark:text-gray-400">Your code looks clean! No security vulnerabilities, performance issues, or code quality problems were detected.</p>
-        </div>
+        @include('codesnoutr::components.celebration-success', ['scan' => $scan])
     @endif
 </div>

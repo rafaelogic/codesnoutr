@@ -343,7 +343,7 @@ class ScanResultsViewService implements ScanResultsViewServiceInterface
                         'fix_method' => $issue->fix_method,
                         'fixed_at' => $issue->fixed_at,
                         'created_at' => $issue->created_at,
-                        'ai_fix' => $issue->ai_fix,
+                        'ai_fix' => $this->parseAiFixForDisplay($issue->ai_fix),
                         'ai_explanation' => $issue->ai_explanation ?? null,
                         'ai_confidence' => $issue->ai_confidence ?? null,
                         'severity' => $issue->severity,
@@ -356,6 +356,31 @@ class ScanResultsViewService implements ScanResultsViewServiceInterface
                 })->toArray(),
             ];
         });
+    }
+
+    /**
+     * Parse AI fix data for display purposes
+     */
+    protected function parseAiFixForDisplay(?string $aiFixData): ?string
+    {
+        if (empty($aiFixData)) {
+            return null;
+        }
+
+        // Try to parse as JSON first
+        $jsonData = json_decode(trim($aiFixData), true);
+        
+        if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
+            // Successfully parsed JSON - extract the code/explanation for display
+            if (isset($jsonData['code']) && !empty($jsonData['code'])) {
+                return $jsonData['code'];
+            } elseif (isset($jsonData['explanation']) && !empty($jsonData['explanation'])) {
+                return $jsonData['explanation'];
+            }
+        }
+
+        // Fallback to original content if not JSON or no useful content
+        return $aiFixData;
     }
 
     /**

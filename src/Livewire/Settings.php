@@ -52,8 +52,30 @@ class Settings extends Component
 
     protected function loadSettings()
     {
-        $defaultSettings = config('codesnoutr', []);
-        $dbSettings = Setting::pluck('value', 'key')->toArray();
+        // Get default values from the setting groups configuration
+        $settingGroups = $this->getSettingGroups();
+        $defaultSettings = [];
+        
+        foreach ($settingGroups as $group => $settings) {
+            foreach ($settings as $key => $config) {
+                $defaultSettings[$key] = $config['default'] ?? null;
+            }
+        }
+        
+        // Load settings from database with proper JSON decoding
+        $dbSettings = [];
+        $settings = Setting::all();
+        foreach ($settings as $setting) {
+            $value = $setting->value;
+            // Try to decode JSON if it looks like JSON
+            if (is_string($value) && (str_starts_with($value, '[') || str_starts_with($value, '{'))) {
+                $decoded = json_decode($value, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $value = $decoded;
+                }
+            }
+            $dbSettings[$setting->key] = $value;
+        }
         
         $this->settings = array_merge($defaultSettings, $dbSettings);
     }
@@ -104,7 +126,7 @@ class Settings extends Component
                 'file_extensions' => [
                     'label' => 'File Extensions',
                     'type' => 'text',
-                    'default' => 'php',
+                    'default' => 'php,blade.php',
                     'description' => 'Comma-separated list of file extensions to scan',
                 ],
                 'default_rules' => [
@@ -216,11 +238,16 @@ class Settings extends Component
             'reports' => [
                 'report_retention_days' => [
                     'label' => 'Report Retention (days)',
-                    'type' => 'number',
-                    'min' => 1,
-                    'max' => 365,
-                    'default' => 30,
-                    'description' => 'Number of days to keep scan reports',
+                    'type' => 'select',
+                    'options' => [
+                        '7' => '7 days',
+                        '30' => '30 days',
+                        '90' => '90 days',
+                        '365' => '1 year',
+                        '-1' => 'Forever',
+                    ],
+                    'default' => '-1',
+                    'description' => 'How long to keep scan reports (-1 = forever)',
                 ],
                 'auto_export' => [
                     'label' => 'Auto Export Reports',

@@ -162,6 +162,23 @@ class DashboardController
     }
 
     /**
+     * Display scan results grouped by issues
+     */
+    public function scanResultsByIssues($scanId): View|RedirectResponse
+    {
+        // Handle string scan IDs that might be invalid
+        if (!is_numeric($scanId) || $scanId === 'undefined' || $scanId === 'null') {
+            // Redirect to general results page with an error message
+            return redirect()->route('codesnoutr.results')
+                ->with('error', 'Invalid scan ID provided. Showing all scans instead.');
+        }
+
+        $scan = Scan::findOrFail($scanId);
+        
+        return view('codesnoutr::pages.scan-results-by-issues', compact('scan'));
+    }
+
+    /**
      * Display the settings page
      */
     public function settings(): View

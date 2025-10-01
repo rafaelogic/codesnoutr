@@ -154,6 +154,9 @@
                                                 id="{{ $settingKey }}_{{ $value }}"
                                                 type="checkbox"
                                                 value="{{ $value }}"
+                                                @if(is_array($settings[$settingKey] ?? $setting['default'] ?? []) && in_array($value, $settings[$settingKey] ?? $setting['default'] ?? []))
+                                                    checked
+                                                @endif
                                                 class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700"
                                             />
                                             <label for="{{ $settingKey }}_{{ $value }}" class="ml-3 text-sm text-gray-700 dark:text-gray-300">

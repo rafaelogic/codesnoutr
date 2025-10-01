@@ -60,7 +60,7 @@ class AiFixGenerator
 
         return "You are an expert PHP code analyzer. Analyze this specific code issue and provide a precise fix.
 
-**Issue Information:**
+ISSUE DETAILS:
 - Category: {$issue->category}
 - Severity: {$issue->severity}
 - Rule: {$issue->rule_name}
@@ -68,30 +68,48 @@ class AiFixGenerator
 - File: {$issue->file_path}
 - Line: {$issue->line_number}
 
-**Code Context:**
+CONTEXT CODE:
 ```php
 {$codeContext}
 ```
 
-**Instructions:**
-1. Analyze the specific issue in the code
-2. Provide a clear, concise fix explanation
-3. Show the exact code changes needed
-4. Include any important considerations or warnings
+CRITICAL: You must respond ONLY with valid JSON. No markdown, no explanations outside the JSON.
 
-**Response Format:**
-Provide your response in this exact format:
+Required JSON format:
+{
+  \"code\": \"exact PHP code to replace/insert (no markdown formatting)\",
+  \"explanation\": \"detailed explanation in markdown format for frontend display\",
+  \"confidence\": 0.85,
+  \"safe_to_automate\": true,
+  \"affected_lines\": [" . $issue->line_number . "],
+  \"type\": \"replace\"
+}
 
-EXPLANATION:
-[Clear explanation of the issue and why it needs to be fixed]
+IMPORTANT RULES:
+- 'code' field: Pure PHP code only, no markdown formatting, no backticks
+- 'explanation' field: Can contain markdown for frontend rendering  
+- 'type': Use 'replace' for line replacement, 'insert' for adding code, 'delete' for removal
+- Only suggest safe fixes that maintain functionality
 
-FIX:
-```php
-[Show the corrected code]
-```
+LARAVEL/PHP SPECIFIC RULES:
+- Class docblocks (/** @package, * Class Name */) should be placed BEFORE the class declaration
+- Property/method docblocks should be placed BEFORE the property/method they document  
+- Use 'public', 'protected', 'private' visibility for all class properties (Laravel convention)
+- Maintain proper PSR-4 namespacing and class structure
+- For class-level documentation, provide ONLY the docblock comment, NOT the class declaration
+- When adding class docblocks, do NOT include 'class ClassName' - the system will place the docblock correctly
 
-CONSIDERATIONS:
-[Any important notes, warnings, or additional steps needed]";
+CRITICAL PLACEMENT RULES:
+- Class docblocks: provide ONLY the /** ... */ comment block, never include the class declaration line
+- Method docblocks: provide ONLY the /** ... */ comment block, never include the method declaration line  
+- Property docblocks: provide ONLY the /** ... */ comment block, never include the property declaration line
+- Method implementations: provide the complete method code including visibility, function declaration, and body
+- The system will automatically place the code in the correct position and handle proper indentation
+
+CODE FORMATTING RULES:
+- For method refactoring: provide the complete method implementation from 'public/private/protected' to final '}'
+- Maintain proper PSR-12 formatting with consistent indentation
+- When replacing methods, include the full method signature and body";
     }
 
     /**
@@ -170,10 +188,11 @@ CONSIDERATIONS:
                 ];
             }
 
+            // Store the raw AI response for later parsing by AutoFixService
             return [
                 'success' => true,
                 'content' => $content,
-                'confidence' => 0.75 // Default confidence
+                'confidence' => 0.75 // Default confidence, will be parsed from JSON later
             ];
 
         } catch (\Exception $e) {

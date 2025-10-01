@@ -169,11 +169,18 @@ class AiAutoFix extends Component
                 $this->fixApplied = true;
                 $this->backupPath = $result['backup_path'];
                 
+                // Mark issue as resolved
+                $this->issue->update([
+                    'fixed' => true,
+                    'fix_method' => 'ai_auto',
+                    'fixed_at' => now()
+                ]);
+                
                 // Refresh the issue
                 $this->issue->refresh();
                 
                 $this->dispatch('notification', [
-                    'message' => 'Fix applied successfully! A backup has been created.',
+                    'message' => 'Fix applied successfully! Issue marked as resolved.',
                     'type' => 'success'
                 ]);
 
