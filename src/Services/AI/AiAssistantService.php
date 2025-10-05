@@ -291,6 +291,11 @@ class AiAssistantService
                 $data = $response->json();
                 $content = $data['choices'][0]['message']['content'] ?? '';
                 
+                // Track usage costs if available
+                if (isset($data['usage'])) {
+                    $this->trackApiUsage($data['usage']);
+                }
+                
                 // Try to parse JSON response
                 $jsonData = json_decode($content, true);
                 if (json_last_error() === JSON_ERROR_NONE) {
@@ -308,6 +313,76 @@ class AiAssistantService
             Log::error('OpenAI API call exception: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Track API usage and costs
+     */
+    protected function trackApiUsage(array $usage): void
+    {
+        try {
+            // Extract token usage from OpenAI response
+            $promptTokens = $usage['prompt_tokens'] ?? 0;
+            $completionTokens = $usage['completion_tokens'] ?? 0;
+            $totalTokens = $usage['total_tokens'] ?? ($promptTokens + $completionTokens);
+            
+            // Calculate approximate cost based on OpenAI pricing
+            // GPT-4: $0.03/1K prompt tokens, $0.06/1K completion tokens
+            // GPT-3.5-turbo: $0.0015/1K prompt tokens, $0.002/1K completion tokens
+            $cost = 0;
+            
+            if (str_contains($this->model, 'gpt-4')) {
+                $cost = ($promptTokens * 0.03 / 1000) + ($completionTokens * 0.06 / 1000);
+            } else {
+                // Default to GPT-3.5-turbo pricing
+                $cost = ($promptTokens * 0.0015 / 1000) + ($completionTokens * 0.002 / 1000);
+            }
+            
+            // Add the cost to the current usage
+            Setting::addAiUsage($cost);
+            
+            // Log usage for monitoring
+            Log::info('AI API Usage Tracked', [
+                'model' => $this->model,
+                'prompt_tokens' => $promptTokens,
+                'completion_tokens' => $completionTokens,
+                'total_tokens' => $totalTokens,
+                'estimated_cost' => $cost,
+                'current_usage' => Setting::get('ai_current_usage', 0)
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to track AI usage: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get current AI usage statistics
+     */
+    public function getUsageStats(): array
+    {
+        return [
+            'current_usage' => Setting::get('ai_current_usage', 0.00),
+            'monthly_limit' => Setting::get('ai_monthly_limit', 50.00),
+            'percentage_used' => $this->getUsagePercentage(),
+            'enabled' => $this->enabled,
+            'available' => $this->isAvailable()
+        ];
+    }
+
+    /**
+     * Get usage percentage
+     */
+    public function getUsagePercentage(): float
+    {
+        $currentUsage = (float) Setting::get('ai_current_usage', 0.00);
+        $monthlyLimit = (float) Setting::get('ai_monthly_limit', 50.00);
+        
+        if ($monthlyLimit <= 0) {
+            return 0;
+        }
+        
+        return min(100, round(($currentUsage / $monthlyLimit) * 100, 2));
     }
 
     /**

@@ -62,13 +62,21 @@
             icon="lightning-bolt"
             :color="($stats['ai_spending_percentage'] ?? 0) > 80 ? 'red' : (($stats['ai_spending_percentage'] ?? 0) > 50 ? 'yellow' : 'blue')"
             class="hover-lift surface--elevated {{ ($stats['ai_spending_percentage'] ?? 0) > 80 ? 'surface--warning' : '' }}"
-        />
+        >
+            <x-slot name="extra">
+                @if(app()->environment('local'))
+                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Debug: Current={{ $stats['ai_spending'] ?? 0 }} | Limit={{ $stats['ai_monthly_limit'] ?? 0 }}
+                    </div>
+                @endif
+            </x-slot>
+        </x-molecules.metric-card>
     </div>
 
     <!-- AI Fix All CTA -->
     @if(($stats['total_issues'] ?? 0) > ($stats['resolved_issues'] ?? 0))
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-6 mb-8">
-        <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 group cursor-pointer hover:shadow-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in">
+        <div class="flex items-center justify-between w-full">
             <div class="flex items-center space-x-4">
                 <div class="flex-shrink-0">
                     <div class="w-12 h-12 bg-blue-100 dark:bg-blue-600/30 rounded-xl flex items-center justify-center">
@@ -76,12 +84,21 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-600">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         Fix All Issues with AI
                     </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-900 mt-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         Let AI automatically fix {{ number_format(($stats['total_issues'] ?? 0) - ($stats['resolved_issues'] ?? 0)) }} remaining issues across your codebase
                     </p>
+                    @if($currentFixingIssue)
+                        <div class="mt-2 flex items-center space-x-2 text-xs text-blue-600 dark:text-blue-400">
+                            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Fixing: {{ $currentFixingIssue['title'] ?? 'Issue' }} in {{ $currentFixingIssue['file'] }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="flex-shrink-0">
@@ -89,12 +106,25 @@
                     wire:click="fixAllIssues"
                     wire:loading.attr="disabled"
                     wire:target="fixAllIssues"
+                    :disabled="$fixAllInProgress"
                     variant="primary"
                     size="lg"
                     icon="lightning-bolt"
                     class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
-                    <span wire:loading.remove wire:target="fixAllIssues">Fix All Issues</span>
+                    <span wire:loading.remove wire:target="fixAllIssues">
+                        @if($fixAllInProgress)
+                            <span class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Fixing Issues...
+                            </span>
+                        @else
+                            Fix All Issues
+                        @endif
+                    </span>
                     <span wire:loading wire:target="fixAllIssues" class="flex items-center">
                         <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -104,6 +134,94 @@
                     </span>
                 </x-atoms.button>
             </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- AI Fix All Results -->
+    @if($showFixAllResults && !empty($fixAllResults))
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-6 mb-8 shadow-lg">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-green-100 dark:bg-green-600/30 rounded-xl flex items-center justify-center">
+                    <x-atoms.icon name="check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        AI Fix All Complete
+                    </h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ collect($fixAllResults)->where('status', 'success')->count() }} issues fixed, 
+                        {{ collect($fixAllResults)->where('status', 'failed')->count() }} failed
+                    </p>
+                </div>
+            </div>
+            <x-atoms.button 
+                wire:click="hideFixAllResults"
+                variant="ghost"
+                size="sm"
+                icon="x-mark"
+                iconPosition="only"
+                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            />
+        </div>
+
+        <div class="space-y-4 max-h-96 overflow-y-auto">
+            @foreach($fixAllResults as $result)
+                <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $result['status'] === 'success' ? 'bg-green-100 dark:bg-green-600/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-600/30 text-red-600 dark:text-red-400' }}">
+                                <x-atoms.icon :name="$result['status'] === 'success' ? 'check' : 'x-mark'" size="sm" />
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ $result['title'] }}
+                                </h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $result['file'] }} • {{ $result['message'] }}
+                                </p>
+                            </div>
+                        </div>
+                        <x-atoms.badge 
+                            :variant="$result['status'] === 'success' ? 'success' : 'danger'"
+                            size="sm"
+                        >
+                            {{ ucfirst($result['status']) }}
+                        </x-atoms.badge>
+                    </div>
+
+                    @if($result['ai_fix'] && $result['status'] === 'success')
+                        <div class="p-4 bg-white dark:bg-gray-750">
+                            <div class="mb-3">
+                                <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">AI Fix Applied:</h5>
+                                @if(isset($result['ai_fix']['explanation']))
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ $result['ai_fix']['explanation'] }}</p>
+                                @endif
+                            </div>
+                            
+                            @if(isset($result['ai_fix']['code']))
+                                <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                                    <pre class="text-sm text-gray-100"><code>{{ $result['ai_fix']['code'] }}</code></pre>
+                                </div>
+                            @endif
+                            
+                            @if(isset($result['ai_fix']['confidence']))
+                                <div class="mt-3 flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">Confidence:</span>
+                                    <div class="flex-1 max-w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                        <div 
+                                            class="bg-blue-600 h-2 rounded-full" 
+                                            style="width: {{ ($result['ai_fix']['confidence'] * 100) }}%"
+                                        ></div>
+                                    </div>
+                                    <span class="text-xs text-gray-600 dark:text-gray-300">{{ round($result['ai_fix']['confidence'] * 100) }}%</span>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            @endforeach
         </div>
     </div>
     @endif

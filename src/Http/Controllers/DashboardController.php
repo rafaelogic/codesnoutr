@@ -207,6 +207,14 @@ class DashboardController
     }
 
     /**
+     * Display the Fix All progress page
+     */
+    public function fixAllProgress(string $sessionId): View
+    {
+        return view('codesnoutr::pages.fix-all-progress', compact('sessionId'));
+    }
+
+    /**
      * Export scan results
      */
     public function export(Scan $scan, string $format = 'json'): Response|JsonResponse

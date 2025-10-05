@@ -47,6 +47,7 @@
 - ✅ Category-based filtering (security, performance, quality, laravel)
 - ✅ Intelligent queue management with auto-start functionality
 - ✅ Real-time queue status monitoring and automatic worker detection
+- ✅ **Queue worker protection** - Prevents job dispatch when worker not running, saves AI tokens
 
 🔧 **Developer Integration**
 - ✅ Comprehensive Artisan commands with flexible options
@@ -128,6 +129,16 @@ CODESNOUTR_QUEUE_ENABLED=true
 CODESNOUTR_QUEUE_CONNECTION=database
 CODESNOUTR_QUEUE_AUTO_START=true
 
+# Cache Driver (REQUIRED for Fix All Progress Tracking)
+# ⚠️ CRITICAL: Do NOT use 'array' driver - it doesn't persist between processes!
+CACHE_DRIVER=file          # Recommended for development
+# CACHE_DRIVER=redis       # Recommended for production
+# CACHE_DRIVER=database    # Alternative if you have cache table
+
+# Queue Driver (Required for Background Processing)
+QUEUE_CONNECTION=database  # Recommended for most cases
+# QUEUE_CONNECTION=redis   # Better for high-volume production
+
 # AI Integration (Optional)
 CODESNOUTR_AI_ENABLED=false
 OPENAI_API_KEY=your_openai_api_key_here
@@ -137,18 +148,81 @@ CODESNOUTR_AI_MODEL=gpt-4
 CODESNOUTR_ACCESS_MIDDLEWARE=web
 ```
 
-### Step 4: Configure Queue Worker (Recommended)
+> **⚠️ Important Cache Configuration**
+> 
+> The **Fix All Issues** feature requires a persistent cache driver to track progress between the queue worker and web interface. The `array` cache driver will **NOT work** because it's per-process memory and doesn't share data between processes.
+> 
+> **Supported Cache Drivers:**
+> - ✅ `file` - Works out of the box, good for development
+> - ✅ `redis` - Best performance, recommended for production
+> - ✅ `database` - Requires `php artisan cache:table && php artisan migrate`
+> - ❌ `array` - **Does NOT work** (no cross-process sharing)
+>
+> **Why This Matters:**
+> - Queue workers run in separate processes from your web server
+> - Progress updates must be shared between these processes
+> - Without proper cache driver, progress bars won't update
+> - AI fixes may waste tokens if jobs run unexpectedly
 
-For optimal performance, set up a queue worker. CodeSnoutr can auto-manage queues, but manual setup provides better control:
+### Step 4: Configure Queue & Cache (Required for Fix All Features)
+
+#### 🎯 Quick Setup
+
+For the **Fix All Issues** feature to work properly, you MUST configure both queue and cache drivers:
 
 ```bash
-# Start a dedicated queue worker
-php artisan queue:work --queue=codesnoutr --timeout=300
+# 1. Set cache driver in .env (DO NOT use 'array')
+CACHE_DRIVER=file
 
-# Or use Supervisor for production (create /etc/supervisor/conf.d/codesnoutr.conf)
+# 2. Set queue driver in .env
+QUEUE_CONNECTION=database
+
+# 3. If using database queue, create the table (only once)
+php artisan queue:table
+php artisan migrate
+
+# 4. Start queue worker (required for background processing)
+php artisan queue:work --verbose
+```
+
+#### 📋 Cache Driver Requirements
+
+The Fix All progress tracking **requires** a cache driver that persists across processes:
+
+| Driver | Status | Setup | Use Case |
+|--------|--------|-------|----------|
+| **file** | ✅ Recommended | Works out of box | Development, Small teams |
+| **redis** | ✅ Best | Requires Redis server | Production, High traffic |
+| **database** | ✅ Supported | Run `php artisan cache:table` | Shared hosting |
+| **array** | ❌ **Won't Work** | N/A | Queue workers can't share data |
+
+**Why This Matters:**
+```
+Web Server Process        Queue Worker Process
+    ↓                           ↓
+[Read Progress]  ←─── [Shared Cache] ←─── [Write Progress]
+                      (file/redis/db)
+
+❌ With 'array': Each process has its own memory - NO SHARING
+✅ With 'file': Both read/write to same file - WORKS
+```
+
+#### 🔧 Queue Worker Configuration
+
+**Development:**
+```bash
+# Simple command (run in terminal)
+php artisan queue:work --verbose --timeout=300
+```
+
+**Production with Supervisor:**
+
+Create `/etc/supervisor/conf.d/codesnoutr.conf`:
+
+```ini
 [program:codesnoutr-worker]
 process_name=%(program_name)s_%(process_num)02d
-command=php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --max-time=3600 --queue=codesnoutr
+command=php /path/to/your/app/artisan queue:work --sleep=3 --tries=3 --max-time=3600 --queue=default
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -158,6 +232,69 @@ numprocs=2
 redirect_stderr=true
 stdout_logfile=/path/to/your/app/storage/logs/worker.log
 stopwaitsecs=3600
+```
+
+Then reload Supervisor:
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start codesnoutr-worker:*
+```
+
+#### 🛡️ Queue Worker Protection
+
+CodeSnoutr includes **automatic queue worker detection** to prevent wasting AI tokens:
+
+- ✅ **Before Fix All**: Checks if queue worker is running
+- ❌ **Blocks Dispatch**: If no worker detected, shows error with instructions
+- 💰 **Saves Tokens**: Prevents jobs from accumulating and running unexpectedly
+- 🔔 **User Notification**: Clear error message with recommendations
+
+**What You'll See:**
+```
+❌ Queue Worker Not Running
+
+Cannot dispatch Fix All job. Jobs would accumulate and run 
+unexpectedly later, wasting AI tokens.
+
+Recommendations:
+✓ Start queue worker: php artisan queue:work
+✓ Or run synchronously: Use "Run Fix All (Sync)" button
+✓ Or enable auto-start in config: CODESNOUTR_QUEUE_AUTO_START=true
+```
+
+#### 📊 Monitoring Progress
+
+The Fix All feature includes comprehensive logging:
+
+**Browser Console (F12):**
+```javascript
+🔄 wire:poll #5 (1000ms since last)
+✅ Changes detected: currentStep: 2→3, fixedCount: 0→1
+```
+
+**Laravel Logs:**
+```bash
+# Watch progress updates in real-time
+tail -f storage/logs/laravel.log | grep "wire:poll"
+
+# Or use the provided monitoring script
+./watch_poll_logs.sh
+```
+
+**Troubleshooting:**
+```bash
+# Check if queue worker is running
+ps aux | grep "queue:work"
+
+# Check failed jobs
+php artisan queue:failed
+
+# Clear failed jobs
+php artisan queue:flush
+
+# Restart queue worker
+php artisan queue:restart
 ```
 
 ### Step 5: Access the Dashboard
@@ -209,6 +346,9 @@ php artisan cache:clear
 ```
 
 #### Queue Worker Issues
+
+**Important:** CodeSnoutr now includes **queue worker protection** to prevent wasting AI tokens. If you try to run Fix All without a queue worker running, you'll see an error message and the job will not be dispatched.
+
 ```bash
 # Check queue status
 php artisan queue:status
@@ -218,7 +358,18 @@ php artisan queue:restart
 
 # Test queue functionality
 php artisan queue:work --once
+
+# Start queue worker for Fix All jobs
+php artisan queue:work --verbose
 ```
+
+**Why This Matters:**
+- Prevents jobs from being queued when they can't execute
+- Saves AI API tokens by not dispatching unprocessable jobs
+- Provides immediate feedback when queue worker is missing
+- Clear instructions on how to start the worker
+
+See [QUEUE_WORKER_PROTECTION.md](QUEUE_WORKER_PROTECTION.md) for detailed documentation.
 
 ### Manual Installation (Advanced)
 

@@ -98,6 +98,9 @@ Route::middleware(['web'])
         Route::get('/codesnoutr/scan-results/{scan}/group/{title}/{category}/{severity}', [DashboardController::class, 'groupFileDetails'])
             ->name('scan-results.group-details');
             
+        // Fix All Progress
+        Route::get('/codesnoutr/fix-all/{sessionId}', [DashboardController::class, 'fixAllProgress'])->name('fix-all.progress');
+        
         // Settings
         Route::get('/codesnoutr/settings', [DashboardController::class, 'settings'])->name('settings');
         

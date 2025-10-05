@@ -12,48 +12,48 @@
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" 
-      x-data="{ 
-          darkMode: localStorage.getItem('codesnoutr-theme') === 'dark' || (!localStorage.getItem('codesnoutr-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
-          sidebarOpen: false,
-          initDarkMode() {
-              // Watch for dark mode changes
-              this.$watch('darkMode', val => {
-                  localStorage.setItem('codesnoutr-theme', val ? 'dark' : 'light');
-                  document.documentElement.classList.toggle('dark', val);
-                  
-                  // Sync with any Livewire components
-                  window.dispatchEvent(new CustomEvent('theme-updated', {
-                      detail: { darkMode: val }
-                  }));
-                  
-                  console.log('🎨 Alpine theme changed:', val ? 'dark' : 'light');
-              });
-              
-              // Listen for external theme changes from Livewire
-              window.addEventListener('theme-sync', (e) => {
-                  if (this.darkMode !== e.detail.darkMode) {
-                      this.darkMode = e.detail.darkMode;
-                      console.log('🎨 Alpine synced with Livewire theme:', e.detail.darkMode ? 'dark' : 'light');
-                  }
-              });
-              
-              // Listen for system theme changes
-              const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-              mediaQuery.addEventListener('change', (e) => {
-                  // Only auto-switch if no manual preference is saved
-                  if (!localStorage.getItem('codesnoutr-theme')) {
-                      this.darkMode = e.matches;
-                      console.log('🎨 Alpine auto-switched to system theme:', e.matches ? 'dark' : 'light');
-                  }
-              });
-              
-              // Apply initial theme
-              document.documentElement.classList.toggle('dark', this.darkMode);
-              console.log('🎨 Alpine initialized with theme:', this.darkMode ? 'dark' : 'light');
-          }
-      }" 
-      x-init="initDarkMode()" 
-      :class="{ 'dark': darkMode }">
+    x-data="{ 
+        darkMode: localStorage.getItem('codesnoutr-theme') === 'dark' || (!localStorage.getItem('codesnoutr-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+        sidebarOpen: false,
+        initDarkMode() {
+                // Watch for dark mode changes
+                this.$watch('darkMode', val => {
+                    localStorage.setItem('codesnoutr-theme', val ? 'dark' : 'light');
+                    document.documentElement.classList.toggle('dark', val);
+                    
+                    // Sync with any Livewire components
+                    window.dispatchEvent(new CustomEvent('theme-updated', {
+                        detail: { darkMode: val }
+                    }));
+                    
+                    console.log('🎨 Alpine theme changed:', val ? 'dark' : 'light');
+                });
+                
+                // Listen for external theme changes from Livewire
+                window.addEventListener('theme-sync', (e) => {
+                    if (this.darkMode !== e.detail.darkMode) {
+                        this.darkMode = e.detail.darkMode;
+                        console.log('🎨 Alpine synced with Livewire theme:', e.detail.darkMode ? 'dark' : 'light');
+                    }
+                });
+                
+                // Listen for system theme changes
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addEventListener('change', (e) => {
+                    // Only auto-switch if no manual preference is saved
+                    if (!localStorage.getItem('codesnoutr-theme')) {
+                        this.darkMode = e.matches;
+                        console.log('🎨 Alpine auto-switched to system theme:', e.matches ? 'dark' : 'light');
+                    }
+                });
+                
+                // Apply initial theme
+                document.documentElement.classList.toggle('dark', this.darkMode);
+                console.log('🎨 Alpine initialized with theme:', this.darkMode ? 'dark' : 'light');
+            }
+        }" 
+    x-init="initDarkMode()" 
+    :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -91,7 +91,7 @@
         <script src="{{ asset($jsFile) }}" defer></script>
     @elseif(file_exists(public_path('build/manifest.json')))
         <!-- Use main app Vite assets if available -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/css/codesnoutr.css', 'resources/js/app.js'])
     @else
         <!-- Development or fallback styles -->
         <script src="https://cdn.tailwindcss.com"></script>
@@ -451,7 +451,7 @@
                         <div class="flex items-center justify-between px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
                             <span>Dark Mode</span>
                             <button @click="darkMode = !darkMode" 
-                                    class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                    class="relative inline-flex justify-center items-center h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                                     :class="darkMode ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-gray-200 dark:bg-gray-600'">
                                 <span class="sr-only">Toggle dark mode</span>
                                 <span class="pointer-events-none relative inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"

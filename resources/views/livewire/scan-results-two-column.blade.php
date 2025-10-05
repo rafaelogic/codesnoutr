@@ -294,8 +294,14 @@
                                                 'low' => ['bg' => 'bg-blue-500', 'text' => 'Low'],
                                                 default => ['bg' => 'bg-gray-500', 'text' => 'Info']
                                             };
+
+                                            $isFixed = $file['resolved_count'] === $file['issues_count'];
                                         @endphp
+                                        @if ($isFixed)
+                                        <div class="w-3 h-3 bg-green-600 rounded-full" title="Fixed all issues"></div>
+                                        @else
                                         <div class="w-3 h-3 {{ $severityConfig['bg'] }} rounded-full" title="{{ $severityConfig['text'] }} Severity"></div>
+                                        @endif
                                     </div>
                                 </div>
                             </button>

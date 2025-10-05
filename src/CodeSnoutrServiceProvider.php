@@ -9,6 +9,9 @@ use Rafaelogic\CodeSnoutr\Commands\InstallCommand;
 use Rafaelogic\CodeSnoutr\Commands\AssetStatusCommand;
 use Rafaelogic\CodeSnoutr\Commands\UpdateResolvedIssuesCounts;
 use Rafaelogic\CodeSnoutr\Commands\DeduplicateIssuesCommand;
+use Rafaelogic\CodeSnoutr\Commands\TestFixAllCommand;
+use Rafaelogic\CodeSnoutr\Commands\MonitorFixAllCommand;
+use Rafaelogic\CodeSnoutr\Commands\VerifyBackgroundSetupCommand;
 
 // New service imports
 use Rafaelogic\CodeSnoutr\Services\AI\{AiFixGenerator, AiAssistantService, AutoFixService};
@@ -183,6 +186,9 @@ class CodeSnoutrServiceProvider extends ServiceProvider
                 AssetStatusCommand::class,
                 UpdateResolvedIssuesCounts::class,
                 DeduplicateIssuesCommand::class,
+                TestFixAllCommand::class,
+                MonitorFixAllCommand::class,
+                VerifyBackgroundSetupCommand::class,
             ]);
         }
 
@@ -221,6 +227,7 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             \Livewire\Livewire::component('codesnoutr-ai-auto-fix', \Rafaelogic\CodeSnoutr\Livewire\AiAutoFix::class);
             \Livewire\Livewire::component('codesnoutr-group-file-details', \Rafaelogic\CodeSnoutr\Livewire\GroupFileDetails::class);
             \Livewire\Livewire::component('codesnoutr-queue-status', \Rafaelogic\CodeSnoutr\Livewire\QueueStatus::class);
+            \Livewire\Livewire::component('codesnoutr-fix-all-progress', \Rafaelogic\CodeSnoutr\Livewire\FixAllProgress::class);
             \Illuminate\Support\Facades\Log::info('CodeSnoutr Livewire components registered successfully');
         } else {
             \Illuminate\Support\Facades\Log::error('Livewire class not found during CodeSnoutr component registration');

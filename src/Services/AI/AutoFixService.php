@@ -87,6 +87,24 @@ class AutoFixService
             $originalContent = File::get($issue->file_path);
             $lines = explode("\n", $originalContent);
 
+            // Pre-validate the AI fix BEFORE applying
+            if (!$this->validateAiFixData($fixData, $issue)) {
+                $result['message'] = 'AI fix validation failed - fix appears incomplete or invalid';
+                return $result;
+            }
+            
+            // CRITICAL: Check if we're trying to insert class-level code inside an array
+            if ($this->isInsertingClassCodeInArray($lines, $issue->line_number - 1, $fixData['code'])) {
+                Log::warning('❌ AI trying to insert class-level code inside array - SKIPPING', [
+                    'issue_id' => $issue->id,
+                    'target_line' => $issue->line_number,
+                    'line_content' => $lines[$issue->line_number - 1] ?? '',
+                    'generated_code' => $fixData['code'],
+                ]);
+                $result['message'] = 'Cannot insert class-level code (const/property/method) inside an array';
+                return $result;
+            }
+
             // Apply the fix
             $modifiedContent = $this->applyFixToContent($lines, $issue, $fixData);
 
@@ -95,17 +113,13 @@ class AutoFixService
                 return $result;
             }
 
-        // Pre-validate the AI fix before applying
-        if (!$this->validateAiFixData($fixData, $issue)) {
-            $result['message'] = 'AI fix validation failed - fix appears incomplete or invalid';
-            return $result;
-        }
-
-        // Validate the modified content
-        if (!$this->validateModifiedContent($modifiedContent, $issue->file_path)) {
-            $result['message'] = 'Modified content failed validation';
-            return $result;
-        }            // Write the modified content
+            // Validate the modified content
+            if (!$this->validateModifiedContent($modifiedContent, $issue->file_path)) {
+                $result['message'] = 'Modified content failed validation';
+                return $result;
+            }
+            
+            // Write the modified content
             File::put($issue->file_path, $modifiedContent);
 
             // Mark issue as fixed
@@ -2042,6 +2056,77 @@ class AutoFixService
         }
         
         return false;
+    }
+
+    /**
+     * Check if we're trying to insert class-level code inside an array
+     * 
+     * This prevents AI from generating const/property/method declarations
+     * in response to issues inside array definitions (e.g., magic numbers in arrays)
+     */
+    protected function isInsertingClassCodeInArray(array $lines, int $targetLine, string $code): bool
+    {
+        // Check if the generated code is class-level (const, property, method)
+        $trimmedCode = trim($code);
+        $isClassLevelCode = preg_match('/^(public|protected|private|const)\s+/', $trimmedCode);
+        
+        Log::info('🔍 Array detection check', [
+            'target_line' => $targetLine + 1, // Convert to 1-indexed
+            'code' => substr($trimmedCode, 0, 100),
+            'is_class_level_code' => $isClassLevelCode,
+            'line_content' => substr($lines[$targetLine] ?? 'N/A', 0, 100),
+        ]);
+        
+        if (!$isClassLevelCode) {
+            Log::info('✅ Not class-level code, safe to proceed');
+            return false; // Not class-level code, so it's safe
+        }
+        
+        // Check if the target line is inside an array
+        // Look backwards for unclosed array opening
+        $openBrackets = 0;
+        $inArray = false;
+        
+        for ($i = $targetLine; $i >= 0 && $i >= $targetLine - 50; $i--) {
+            $line = $lines[$i] ?? '';
+            
+            // Count brackets on this line
+            $openCount = substr_count($line, '[');
+            $closeCount = substr_count($line, ']');
+            $openBrackets += ($closeCount - $openCount); // Going backwards, so reversed
+            
+            Log::debug('Bracket counting', [
+                'line_num' => $i + 1,
+                'line' => substr($line, 0, 80),
+                'open_count' => $openCount,
+                'close_count' => $closeCount,
+                'cumulative_open_brackets' => $openBrackets,
+            ]);
+            
+            // If we find an opening bracket without close, we're in an array
+            if ($openBrackets > 0) {
+                $inArray = true;
+                Log::warning('🚫 DETECTED: Inside array context!', [
+                    'stopped_at_line' => $i + 1,
+                    'open_brackets' => $openBrackets,
+                ]);
+                break;
+            }
+            
+            // If we hit a semicolon or closing brace at the start of a line, we've exited any array
+            if (preg_match('/^\s*[;{}]/', $line)) {
+                Log::info('Found statement terminator, stopping search', [
+                    'line' => $i + 1,
+                ]);
+                break;
+            }
+        }
+        
+        Log::info($inArray ? '❌ BLOCKING: Class code in array' : '✅ Not in array, allowing', [
+            'in_array' => $inArray,
+        ]);
+        
+        return $inArray;
     }
 
 }

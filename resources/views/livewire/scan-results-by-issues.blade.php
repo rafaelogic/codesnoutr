@@ -509,15 +509,50 @@
                                                             <span wire:loading.remove wire:target="applyAiFix({{ $instance['id'] }})">Apply AI Fix</span>
                                                             <span wire:loading wire:target="applyAiFix({{ $instance['id'] }})">Applying...</span>
                                                         </button>
-                                                        <button onclick="alert('AI Fix Preview: \\n\\n' + @js($instance['ai_fix']))" 
-                                                                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-green-700 bg-green-100 hover:bg-green-200 dark:text-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 border border-green-300 dark:border-green-700 rounded-md shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                                                            <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                            </svg>
-                                                            Preview Fix
-                                                        </button>
+
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Inline AI Fix Preview -->
+                                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                                                <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                                                    <div class="flex items-center space-x-2">
+                                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                        </svg>
+                                                        <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">AI Generated Fix</h4>
+                                                    </div>
+                                                </div>
+                                                <div class="p-4">
+                                                    @php
+                                                        $parsedFix = $this->parseAiFixData($instance['ai_fix']);
+                                                    @endphp
+                                                    
+                                                    @if($parsedFix['explanation'])
+                                                        <div class="mb-4">
+                                                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $parsedFix['explanation'] }}</p>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($parsedFix['code'])
+                                                        <div class="bg-gray-900 rounded-lg p-4 overflow-x-auto mb-4">
+                                                            <pre class="text-sm text-gray-100"><code>{{ $parsedFix['code'] }}</code></pre>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($parsedFix['confidence'])
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400">Confidence:</span>
+                                                            <div class="flex-1 max-w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                                <div 
+                                                                    class="bg-green-600 h-2 rounded-full" 
+                                                                    style="width: {{ ($parsedFix['confidence'] * 100) }}%"
+                                                                ></div>
+                                                            </div>
+                                                            <span class="text-xs text-gray-600 dark:text-gray-300">{{ round($parsedFix['confidence'] * 100) }}%</span>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>

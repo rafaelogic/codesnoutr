@@ -19,7 +19,7 @@ class QualityRuleEngine extends AbstractRuleEngine
         $this->rules = [
             new CodingStandardsRule(),
             new ComplexityRule(),
-            new DocumentationRule(),
+            // new DocumentationRule(),  // Disabled - no documentation checks
             new NamingConventionsRule(),
             new BestPracticesRule(),
         ];

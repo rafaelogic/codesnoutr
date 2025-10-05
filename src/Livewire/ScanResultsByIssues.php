@@ -745,6 +745,54 @@ class ScanResultsByIssues extends Component
     }
 
     /**
+     * Parse AI fix data for structured display
+     */
+    protected function parseAiFixData($aiFixData): array
+    {
+        if (empty($aiFixData)) {
+            return [
+                'explanation' => null,
+                'code' => null,
+                'confidence' => null
+            ];
+        }
+
+        try {
+            // If it's already an array, use it
+            if (is_array($aiFixData)) {
+                return [
+                    'explanation' => $aiFixData['explanation'] ?? null,
+                    'code' => $aiFixData['code'] ?? null,
+                    'confidence' => $aiFixData['confidence'] ?? 0.8
+                ];
+            }
+
+            // Try to decode JSON
+            $decoded = json_decode($aiFixData, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return [
+                    'explanation' => $decoded['explanation'] ?? null,
+                    'code' => $decoded['code'] ?? null,
+                    'confidence' => $decoded['confidence'] ?? 0.8
+                ];
+            }
+
+            // Fallback for legacy format
+            return [
+                'explanation' => 'AI fix generated',
+                'code' => $aiFixData,
+                'confidence' => 0.7
+            ];
+        } catch (\Exception $e) {
+            return [
+                'explanation' => 'Could not parse AI fix data',
+                'code' => is_string($aiFixData) ? $aiFixData : 'Invalid fix data',
+                'confidence' => 0.5
+            ];
+        }
+    }
+
+    /**
      * Get scan display title
      */
     public function getScanDisplayTitle(): string
