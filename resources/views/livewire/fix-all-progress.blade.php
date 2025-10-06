@@ -38,11 +38,11 @@
                 <div class="flex items-center space-x-6">
                     <div class="flex-shrink-0">
                         <div class="w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner
-                            {{ $currentStatus === 'completed' ? 'bg-green-100 dark:bg-green-600/30' : '' }}
-                            {{ $currentStatus === 'failed' ? 'bg-red-100 dark:bg-red-600/30' : '' }}
-                            {{ $currentStatus === 'processing' ? 'bg-blue-100 dark:bg-blue-600/30' : '' }}
-                            {{ $currentStatus === 'starting' ? 'bg-yellow-100 dark:bg-yellow-600/30' : '' }}
-                            {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting']) ? 'bg-gray-100 dark:bg-gray-600/30' : '' }}
+                            {{ $currentStatus === 'completed' ? 'bg-green-100 dark:bg-green-900/30' : '' }}
+                            {{ $currentStatus === 'failed' ? 'bg-red-100 dark:bg-red-900/30' : '' }}
+                            {{ $currentStatus === 'processing' ? 'bg-blue-100 dark:bg-blue-900/30' : '' }}
+                            {{ $currentStatus === 'starting' ? 'bg-yellow-100 dark:bg-yellow-900/30' : '' }}
+                            {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting']) ? 'bg-gray-100 dark:bg-gray-900/30' : '' }}
                         ">
                             <span class="text-3xl {{ $currentStatus === 'processing' ? 'animate-spin' : '' }}">{{ $statusIcon }}</span>
                         </div>
@@ -183,13 +183,13 @@
                         default => 'gray'
                     };
                 @endphp            <!-- Card Header -->
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700
-                {{ $currentStatus === 'completed' ? 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20' : '' }}
-                {{ $currentStatus === 'failed' ? 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20' : '' }}
-                {{ $currentStatus === 'processing' ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20' : '' }}
-                {{ $currentStatus === 'starting' ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20' : '' }}
-                {{ $currentStatus === 'stopping' ? 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20' : '' }}
-                {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting', 'stopping']) ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20' : '' }}
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-800
+                {{ $currentStatus === 'completed' ? 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/25 dark:to-green-800/25' : '' }}
+                {{ $currentStatus === 'failed' ? 'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/25 dark:to-red-800/25' : '' }}
+                {{ $currentStatus === 'processing' ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-800/25' : '' }}
+                {{ $currentStatus === 'starting' ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/25 dark:to-yellow-800/25' : '' }}
+                {{ $currentStatus === 'stopping' ? 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/25 dark:to-orange-800/25' : '' }}
+                {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting', 'stopping']) ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800' : '' }}
             ">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4">
@@ -232,10 +232,10 @@
                             <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Overall Progress</h4>
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl font-bold
-                                    {{ $currentStatus === 'completed' ? 'text-green-600 dark:text-green-400' : '' }}
-                                    {{ $currentStatus === 'failed' ? 'text-red-600 dark:text-red-400' : '' }}
-                                    {{ $currentStatus === 'processing' ? 'text-blue-600 dark:text-blue-400' : '' }}
-                                    {{ $currentStatus === 'starting' ? 'text-yellow-600 dark:text-yellow-400' : '' }}
+                                    {{ $currentStatus === 'completed' ? 'text-green-600 dark:text-green-300' : '' }}
+                                    {{ $currentStatus === 'failed' ? 'text-red-600 dark:text-red-300' : '' }}
+                                    {{ $currentStatus === 'processing' ? 'text-blue-600 dark:text-blue-300' : '' }}
+                                    {{ $currentStatus === 'starting' ? 'text-yellow-600 dark:text-yellow-300' : '' }}
                                     {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting']) ? 'text-gray-600 dark:text-gray-400' : '' }}
                                 ">{{ $progressPercentage }}%</span>
                                 <span class="text-sm text-gray-500 dark:text-gray-400">complete</span>
@@ -243,7 +243,7 @@
                         </div>
                         
                         <div class="relative">
-                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 shadow-inner">
+                            <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-4 shadow-inner">
                                 <div 
                                     class="h-4 rounded-full transition-all duration-500 ease-out shadow-sm {{ $currentStatus === 'processing' ? 'animate-pulse' : '' }}
                                         {{ $currentStatus === 'completed' ? 'bg-gradient-to-r from-green-500 to-green-600' : '' }}
@@ -267,90 +267,36 @@
                     </div>
                 @endif
 
-                <!-- Current File Being Processed -->
-                @if($currentFile ?? null)
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0">
-                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-600/30 rounded-xl flex items-center justify-center shadow-sm">
-                                    <x-atoms.icon name="cog" size="md" class="text-blue-600 dark:text-blue-400 animate-spin" />
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <h4 class="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                                        Currently Processing
-                                    </h4>
-                                    <div class="flex space-x-1">
-                                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-                                        <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="bg-white dark:bg-gray-800 rounded-lg p-3 mb-3">
-                                    <p class="text-sm font-mono text-gray-900 dark:text-gray-100 truncate">
-                                        {{ $currentFile['file'] ?? 'Unknown file' }}
-                                    </p>
-                                </div>
-                                
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                                    <div class="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2">
-                                        <span class="text-gray-500 dark:text-gray-400 block">Line</span>
-                                        <span class="font-semibold text-blue-900 dark:text-blue-100">{{ $currentFile['line'] ?? 'N/A' }}</span>
-                                    </div>
-                                    <div class="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2">
-                                        <span class="text-gray-500 dark:text-gray-400 block">Rule</span>
-                                        <span class="font-semibold text-blue-900 dark:text-blue-100">{{ $currentFile['rule_id'] ?? 'N/A' }}</span>
-                                    </div>
-                                    <div class="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2 col-span-2">
-                                        <span class="text-gray-500 dark:text-gray-400 block">Issue ID</span>
-                                        <span class="font-semibold text-blue-900 dark:text-blue-100">{{ $currentFile['id'] ?? 'N/A' }}</span>
-                                    </div>
-                                </div>
-                                
-                                @if($currentFile['title'] ?? null)
-                                    <div class="mt-3 p-2 bg-blue-100/50 dark:bg-blue-900/30 rounded-lg">
-                                        <p class="text-sm text-blue-800 dark:text-blue-200">
-                                            {{ $currentFile['title'] }}
-                                        </p>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
                 <!-- Summary Stats -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Fixed Count -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800/50 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/25 dark:to-emerald-900/25 rounded-xl p-6 border border-green-200 dark:border-green-800/40 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{{ $fixedCount ?? 0 }}</div>
-                                <div class="text-sm font-medium text-green-700 dark:text-green-300">Issues Fixed</div>
+                                <div class="text-3xl font-bold text-green-600 dark:text-green-300 mb-1">{{ $fixedCount ?? 0 }}</div>
+                                <div class="text-sm font-medium text-green-700 dark:text-green-200">Issues Fixed</div>
                             </div>
-                            <div class="w-12 h-12 bg-green-100 dark:bg-green-600/30 rounded-xl flex items-center justify-center">
-                                <x-atoms.icon name="check-circle" size="lg" class="text-green-600 dark:text-green-400" />
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                                <x-atoms.icon name="check-circle" size="lg" class="text-green-600 dark:text-green-300" />
                             </div>
                         </div>
                     </div>
                     
                     <!-- Failed Count -->
-                    <div class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800/50 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/25 dark:to-rose-900/25 rounded-xl p-6 border border-red-200 dark:border-red-800/40 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
-                                <div class="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">{{ $failedCount ?? 0 }}</div>
-                                <div class="text-sm font-medium text-red-700 dark:text-red-300">Failed Fixes</div>
+                                <div class="text-3xl font-bold text-red-600 dark:text-red-300 mb-1">{{ $failedCount ?? 0 }}</div>
+                                <div class="text-sm font-medium text-red-700 dark:text-red-200">Failed Fixes</div>
                             </div>
-                            <div class="w-12 h-12 bg-red-100 dark:bg-red-600/30 rounded-xl flex items-center justify-center">
-                                <x-atoms.icon name="x-circle" size="lg" class="text-red-600 dark:text-red-400" />
+                            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center">
+                                <x-atoms.icon name="x-circle" size="lg" class="text-red-600 dark:text-red-300" />
                             </div>
                         </div>
                     </div>
                     
                     <!-- Total Count -->
-                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800 dark:to-slate-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
                                 @php
@@ -381,11 +327,11 @@
                                         }
                                     }
                                 @endphp
-                                <div class="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-1">{{ $totalCount }}</div>
+                                <div class="text-3xl font-bold text-gray-700 dark:text-gray-200 mb-1">{{ $totalCount }}</div>
                                 <div class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $countLabel }}</div>
                             </div>
-                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                                <x-atoms.icon name="list" size="lg" class="text-gray-600 dark:text-gray-400" />
+                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-900/40 rounded-xl flex items-center justify-center">
+                                <x-atoms.icon name="list" size="lg" class="text-gray-600 dark:text-gray-300" />
                             </div>
                         </div>
                     </div>

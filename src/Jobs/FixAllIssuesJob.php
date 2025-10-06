@@ -104,6 +104,7 @@ class FixAllIssuesJob implements ShouldQueue
 
             $fixedCount = 0;
             $failedCount = 0;
+            $skippedCount = 0;
             $results = [];
             
             // Get action invoker for processing issues
@@ -129,6 +130,7 @@ class FixAllIssuesJob implements ShouldQueue
                         'current_step' => $processedCount,
                         'fixed_count' => $fixedCount,
                         'failed_count' => $failedCount,
+                        'skipped_count' => $skippedCount,
                         'results' => $results,
                         'completed_at' => now()->toISOString(),
                         'stopped' => true
@@ -162,20 +164,19 @@ class FixAllIssuesJob implements ShouldQueue
                         Log::info('FixAllIssuesJob: Generating AI fix', ['issue_id' => $issue->id]);
                         $generateResult = $actionInvoker->executeAction('generate_ai_fix', $issue);
                         if (!$generateResult['success']) {
-                            $failedCount++;
-                            $results[] = [
-                                'issue_id' => $issue->id,
-                                'title' => $issue->title ?? 'Unknown Issue',
-                                'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
-                                'full_path' => $issue->file_path,
-                                'line' => $issue->line_number ?? 0,
-                                'status' => 'failed',
-                                'step' => 'generate',
-                                'message' => 'Failed to generate AI fix: ' . ($generateResult['message'] ?? 'Unknown error'),
-                                'timestamp' => now()->toISOString()
-                            ];
-                            
-                            Log::warning('FixAllIssuesJob: Failed to generate AI fix', [
+                        $failedCount++;
+                        $results[] = [
+                            'issue_id' => $issue->id,
+                            'title' => $issue->title ?? 'Unknown Issue',
+                            'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
+                            'full_path' => $issue->file_path,
+                            'line' => $issue->line_number ?? 0,
+                            'rule_id' => $issue->rule_id ?? 'N/A',
+                            'status' => 'failed',
+                            'step' => 'generate',
+                            'message' => 'Failed to generate AI fix: ' . ($generateResult['message'] ?? 'Unknown error'),
+                            'timestamp' => now()->toISOString()
+                        ];                            Log::warning('FixAllIssuesJob: Failed to generate AI fix', [
                                 'issue_id' => $issue->id,
                                 'error' => $generateResult['message'] ?? 'Unknown'
                             ]);
@@ -198,6 +199,7 @@ class FixAllIssuesJob implements ShouldQueue
                             'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
                             'full_path' => $issue->file_path,
                             'line' => $issue->line_number ?? 0,
+                            'rule_id' => $issue->rule_id ?? 'N/A',
                             'status' => 'success',
                             'step' => 'applied',
                             'message' => 'Successfully applied AI fix',
@@ -205,6 +207,26 @@ class FixAllIssuesJob implements ShouldQueue
                         ];
                         
                         Log::info('FixAllIssuesJob: AI fix applied successfully', ['issue_id' => $issue->id]);
+                    } elseif (isset($applyResult['skipped']) && $applyResult['skipped']) {
+                        // Track skipped issues separately
+                        $skippedCount++;
+                        $results[] = [
+                            'issue_id' => $issue->id,
+                            'title' => $issue->title ?? 'Unknown Issue',
+                            'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
+                            'full_path' => $issue->file_path,
+                            'line' => $issue->line_number ?? 0,
+                            'rule_id' => $issue->rule_id ?? 'N/A',
+                            'status' => 'skipped',
+                            'step' => 'apply',
+                            'message' => $applyResult['message'] ?? 'AI skipped: context unclear',
+                            'timestamp' => now()->toISOString()
+                        ];
+                        
+                        Log::info('FixAllIssuesJob: AI skipped issue', [
+                            'issue_id' => $issue->id,
+                            'reason' => $applyResult['message'] ?? 'Unknown'
+                        ]);
                     } else {
                         $failedCount++;
                         $results[] = [
@@ -213,6 +235,7 @@ class FixAllIssuesJob implements ShouldQueue
                             'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
                             'full_path' => $issue->file_path,
                             'line' => $issue->line_number ?? 0,
+                            'rule_id' => $issue->rule_id ?? 'N/A',
                             'status' => 'failed',
                             'step' => 'apply',
                             'message' => 'Failed to apply fix: ' . ($applyResult['message'] ?? 'Unknown error'),
@@ -232,6 +255,7 @@ class FixAllIssuesJob implements ShouldQueue
                         'file' => $issue->file_path ? basename($issue->file_path) : 'Unknown',
                         'full_path' => $issue->file_path,
                         'line' => $issue->line_number ?? 0,
+                        'rule_id' => $issue->rule_id ?? 'N/A',
                         'status' => 'failed',
                         'step' => 'exception',
                         'message' => 'Exception: ' . $e->getMessage(),
@@ -250,7 +274,8 @@ class FixAllIssuesJob implements ShouldQueue
                     'current_step' => $currentStep,
                     'results' => $results,
                     'fixed_count' => $fixedCount,
-                    'failed_count' => $failedCount
+                    'failed_count' => $failedCount,
+                    'skipped_count' => $skippedCount
                 ]);
 
                 // Small delay to prevent overwhelming the system and AI API
@@ -262,9 +287,10 @@ class FixAllIssuesJob implements ShouldQueue
                 'status' => 'completed',
                 'current_step' => $processedCount,
                 'current_file' => null,
-                'message' => "Fix All completed! Fixed: {$fixedCount} issues, Failed: {$failedCount} issues",
+                'message' => "Fix All completed! Fixed: {$fixedCount}, Skipped: {$skippedCount}, Failed: {$failedCount}",
                 'fixed_count' => $fixedCount,
                 'failed_count' => $failedCount,
+                'skipped_count' => $skippedCount,
                 'results' => $results,
                 'completed_at' => now()->toISOString()
             ]);

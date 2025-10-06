@@ -65,7 +65,33 @@ class AutoFixService
             
             // Validate fix data
             if (!$this->validateFixData($fixData)) {
+                $issue->recordFixAttempt('failed', 'Invalid fix data', ['fix_data' => $fixData]);
                 $result['message'] = 'Invalid fix data';
+                return $result;
+            }
+            
+            // Check if AI decided to skip this fix
+            if (isset($fixData['type']) && $fixData['type'] === 'skip') {
+                $skipReason = $fixData['explanation'] ?? 'Context unclear or unsafe';
+                
+                Log::info('✋ AI skipped fix due to unclear/unsafe context', [
+                    'issue_id' => $issue->id,
+                    'explanation' => $skipReason,
+                    'confidence' => $fixData['confidence'] ?? 0,
+                ]);
+                
+                // Mark issue as skipped
+                $issue->markAsSkipped($skipReason);
+                
+                // Record the skip attempt
+                $issue->recordFixAttempt('skipped', null, [
+                    'reason' => $skipReason,
+                    'confidence' => $fixData['confidence'] ?? 0,
+                ]);
+                
+                $result['success'] = false;
+                $result['message'] = 'AI skipped: ' . $skipReason;
+                $result['skipped'] = true;
                 return $result;
             }
 
@@ -93,8 +119,18 @@ class AutoFixService
                 return $result;
             }
             
+            // Check if AI decided to skip this fix due to unclear context
+            if (isset($fixData['type']) && $fixData['type'] === 'skip') {
+                Log::info('✋ AI skipped fix due to unclear/unsafe context', [
+                    'issue_id' => $issue->id,
+                    'explanation' => $fixData['explanation'] ?? 'No explanation provided',
+                ]);
+                $result['message'] = 'AI skipped: ' . ($fixData['explanation'] ?? 'Context unclear or unsafe for automated fix');
+                return $result;
+            }
+            
             // CRITICAL: Check if we're trying to insert class-level code inside an array
-            if ($this->isInsertingClassCodeInArray($lines, $issue->line_number - 1, $fixData['code'])) {
+            if ($this->isInsertingClassCodeInArray($lines, $issue->line_number - 1, $fixData['code'] ?? '')) {
                 Log::warning('❌ AI trying to insert class-level code inside array - SKIPPING', [
                     'issue_id' => $issue->id,
                     'target_line' => $issue->line_number,
@@ -115,6 +151,7 @@ class AutoFixService
 
             // Validate the modified content
             if (!$this->validateModifiedContent($modifiedContent, $issue->file_path)) {
+                $issue->recordFixAttempt('failed', 'Modified content failed syntax validation');
                 $result['message'] = 'Modified content failed validation';
                 return $result;
             }
@@ -136,6 +173,12 @@ class AutoFixService
                     'fix_timestamp' => now()->toISOString()
                 ])
             ]);
+            
+            // Record successful fix attempt
+            $issue->recordFixAttempt('success', null, [
+                'backup_path' => $backupPath,
+                'confidence' => $fixData['confidence'] ?? 0,
+            ]);
 
             $result['success'] = true;
             $result['message'] = 'Fix applied successfully';
@@ -153,6 +196,13 @@ class AutoFixService
             Log::error('AI fix application failed', [
                 'issue_id' => $issue->id,
                 'error' => $e->getMessage()
+            ]);
+            
+            // Record failed attempt
+            $issue->recordFixAttempt('failed', $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ]);
 
             $result['message'] = 'Failed to apply fix: ' . $e->getMessage();
@@ -785,12 +835,28 @@ class AutoFixService
      */
     protected function validateFixData(array $fixData): bool
     {
-        return isset($fixData['code']) && 
-               isset($fixData['type']) && 
-               isset($fixData['confidence']) &&
-               $fixData['confidence'] >= 0.3 && // Minimum confidence threshold
-               in_array($fixData['type'], ['replace', 'insert', 'delete']) &&
-               !empty(trim($fixData['code'])); // Ensure code is not empty
+        // Check basic required fields
+        if (!isset($fixData['type']) || !isset($fixData['confidence'])) {
+            return false;
+        }
+        
+        // Check confidence threshold
+        if ($fixData['confidence'] < 0.3) {
+            return false;
+        }
+        
+        // Validate type
+        if (!in_array($fixData['type'], ['replace', 'insert', 'delete', 'skip'])) {
+            return false;
+        }
+        
+        // For skip type, code can be empty - just need type and explanation
+        if ($fixData['type'] === 'skip') {
+            return isset($fixData['explanation']) && !empty(trim($fixData['explanation']));
+        }
+        
+        // For other types, code must be present and non-empty
+        return isset($fixData['code']) && !empty(trim($fixData['code']));
     }
 
     /**
@@ -938,6 +1004,21 @@ class AutoFixService
             (preg_match('/^(?:abstract\\s+|final\\s+)?class\\s+/', $targetLineContent) && strpos($newCode, '/**') !== false)) {
             $insertBefore = true;
         }
+        
+        // If inserting a property and target line is class declaration, find the right spot
+        if (preg_match('/^(?:abstract\\s+|final\\s+)?class\\s+/', $targetLineContent) && 
+            preg_match('/^\s*(?:public|protected|private)\s+\$/', $newCode)) {
+            $insertAfterLine = $this->findPropertyInsertionPoint($lines, $targetLine);
+            if ($insertAfterLine !== $targetLine) {
+                $targetLine = $insertAfterLine;
+                $insertBefore = false; // Insert after the trait line
+                // Update indentation from new target
+                if (isset($lines[$targetLine])) {
+                    preg_match('/^(\s*)/', $lines[$targetLine], $matches);
+                    $originalIndent = $matches[1] ?? '';
+                }
+            }
+        }
 
         // Apply indentation to new code
         $indentedCode = $originalIndent . ltrim($newCode);
@@ -956,6 +1037,40 @@ class AutoFixService
         return implode("\n", $result);
     }
 
+    /**
+     * Find the correct insertion point for properties (after traits)
+     */
+    protected function findPropertyInsertionPoint(array $lines, int $classLine): int
+    {
+        // Start searching from the line after class declaration
+        $searchStart = $classLine + 1;
+        $lastTraitLine = $classLine;
+        
+        // Look for 'use TraitName;' statements (up to 20 lines)
+        for ($i = $searchStart; $i < min($searchStart + 20, count($lines)); $i++) {
+            $line = trim($lines[$i] ?? '');
+            
+            // Check if this is a trait use statement
+            if (preg_match('/^use\s+[A-Z]/', $line)) {
+                $lastTraitLine = $i;
+                continue;
+            }
+            
+            // If we hit a property, method, or closing brace, stop
+            if (preg_match('/^(?:public|protected|private|function|})/', $line)) {
+                break;
+            }
+        }
+        
+        Log::info('Property insertion point', [
+            'class_line' => $classLine + 1,
+            'last_trait_line' => $lastTraitLine + 1,
+            'insert_after' => $lastTraitLine + 1
+        ]);
+        
+        return $lastTraitLine;
+    }
+    
     /**
      * Apply a deletion fix
      */
@@ -1650,6 +1765,11 @@ class AutoFixService
         $code = $fixData['code'] ?? '';
         $type = $fixData['type'] ?? 'replace';
 
+        // If type is 'skip', code can be empty - this is valid
+        if ($type === 'skip') {
+            return true; // Skip is always valid
+        }
+
         // Check if code is empty
         if (empty(trim($code))) {
             Log::warning('AI fix validation failed: Empty code', [
@@ -1664,7 +1784,11 @@ class AutoFixService
             $trimmedCode = trim($code);
             
             // Check if it's just a return statement without method structure
-            if (preg_match('/^return\s+/', $trimmedCode) && !str_contains($trimmedCode, 'function')) {
+            // BUT: Allow return statements that end with semicolon - they're meant to replace a line in a method
+            $isJustReturn = preg_match('/^return\s+/', $trimmedCode) && !str_contains($trimmedCode, 'function');
+            $hasProperEnding = str_ends_with($trimmedCode, ';') || str_ends_with($trimmedCode, '}');
+            
+            if ($isJustReturn && !$hasProperEnding) {
                 Log::warning('AI fix validation failed: Incomplete method - just return statement', [
                     'issue_id' => $issue->id,
                     'code_preview' => substr($trimmedCode, 0, 100)
@@ -1907,6 +2031,17 @@ class AutoFixService
      */
     protected function shouldHaveReturnStatement(Issue $issue, string $code): bool
     {
+        // Skip validation for property declarations (not methods)
+        $trimmedCode = trim($code);
+        if (preg_match('/^(public|protected|private)\s+\$\w+/', $trimmedCode)) {
+            return false; // Property declaration, no return statement needed
+        }
+        
+        // Skip validation for constants
+        if (preg_match('/^(public|protected|private|const)\s+[A-Z_]+/', $trimmedCode)) {
+            return false; // Constant declaration, no return statement needed
+        }
+        
         // If the original file has a return statement, the fix should preserve it
         if (!File::exists($issue->file_path)) {
             return false;
@@ -2067,12 +2202,19 @@ class AutoFixService
     protected function isInsertingClassCodeInArray(array $lines, int $targetLine, string $code): bool
     {
         // Check if the generated code is class-level (const, property, method)
+        // Remove docblock comments and whitespace to check the actual code
         $trimmedCode = trim($code);
-        $isClassLevelCode = preg_match('/^(public|protected|private|const)\s+/', $trimmedCode);
+        $codeWithoutDocblock = preg_replace('/^\/\*\*.*?\*\//s', '', $trimmedCode);
+        $codeWithoutDocblock = trim($codeWithoutDocblock);
+        
+        // Check if it starts with class-level keywords OR contains them after docblock
+        $isClassLevelCode = preg_match('/^(public|protected|private|const)\s+/', $trimmedCode) ||
+                           preg_match('/^(public|protected|private|const)\s+/', $codeWithoutDocblock);
         
         Log::info('🔍 Array detection check', [
             'target_line' => $targetLine + 1, // Convert to 1-indexed
             'code' => substr($trimmedCode, 0, 100),
+            'code_without_docblock' => substr($codeWithoutDocblock, 0, 100),
             'is_class_level_code' => $isClassLevelCode,
             'line_content' => substr($lines[$targetLine] ?? 'N/A', 0, 100),
         ]);

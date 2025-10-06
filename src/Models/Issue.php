@@ -32,6 +32,12 @@ class Issue extends Model
         'fixed',
         'fixed_at',
         'fix_method',
+        'skipped',
+        'skipped_at',
+        'skip_reason',
+        'fix_attempts',
+        'fix_attempt_count',
+        'last_fix_attempt_at',
         'ignored',
         'ignored_at',
         'false_positive',
@@ -42,7 +48,11 @@ class Issue extends Model
         'context' => 'array',
         'metadata' => 'array',
         'fixed' => 'boolean',
+        'skipped' => 'boolean',
         'fixed_at' => 'datetime',
+        'skipped_at' => 'datetime',
+        'last_fix_attempt_at' => 'datetime',
+        'fix_attempts' => 'array',
         'ai_confidence' => 'decimal:2',
     ];
 
@@ -112,6 +122,61 @@ class Issue extends Model
             'fixed_at' => now(),
             'fix_method' => $method,
         ]);
+    }
+    
+    /**
+     * Mark issue as skipped
+     */
+    public function markAsSkipped(string $reason): void
+    {
+        $this->update([
+            'skipped' => true,
+            'skipped_at' => now(),
+            'skip_reason' => $reason,
+        ]);
+    }
+    
+    /**
+     * Record a fix attempt
+     */
+    public function recordFixAttempt(string $status, ?string $error = null, ?array $data = null): void
+    {
+        $attempts = $this->fix_attempts ?? [];
+        
+        $attempts[] = [
+            'timestamp' => now()->toIso8601String(),
+            'status' => $status, // 'success', 'failed', 'skipped'
+            'error' => $error,
+            'data' => $data,
+        ];
+        
+        // Keep only last 10 attempts
+        if (count($attempts) > 10) {
+            $attempts = array_slice($attempts, -10);
+        }
+        
+        $this->update([
+            'fix_attempts' => $attempts,
+            'fix_attempt_count' => count($attempts),
+            'last_fix_attempt_at' => now(),
+        ]);
+    }
+    
+    /**
+     * Check if issue is skipped
+     */
+    public function isSkipped(): bool
+    {
+        return $this->skipped;
+    }
+    
+    /**
+     * Get last fix attempt
+     */
+    public function getLastFixAttempt(): ?array
+    {
+        $attempts = $this->fix_attempts ?? [];
+        return empty($attempts) ? null : end($attempts);
     }
 
     /**

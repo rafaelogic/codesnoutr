@@ -77,7 +77,7 @@ CRITICAL: You must respond ONLY with valid JSON. No markdown, no explanations ou
 
 Required JSON format:
 {
-  \"code\": \"exact PHP code to replace/insert (no markdown formatting)\",
+  \"code\": \"exact PHP code to replace/insert (no markdown formatting, empty string if type=skip)\",
   \"explanation\": \"detailed explanation in markdown format for frontend display\",
   \"confidence\": 0.85,
   \"safe_to_automate\": true,
@@ -86,18 +86,58 @@ Required JSON format:
 }
 
 IMPORTANT RULES:
-- 'code' field: Pure PHP code only, no markdown formatting, no backticks
+- 'code' field: Pure PHP code only, no markdown formatting, no backticks. Use empty string \"\" if type is 'skip'
 - 'explanation' field: Can contain markdown for frontend rendering  
-- 'type': Use 'replace' for line replacement, 'insert' for adding code, 'delete' for removal
-- Only suggest safe fixes that maintain functionality
+- 'type': Use 'replace' for line replacement, 'insert' for adding code, 'delete' for removal, 'skip' for unclear/unsafe contexts
+- Only suggest safe fixes that maintain functionality and are appropriate for the CODE CONTEXT
+- If you're unsure about the context (e.g., might be inside an array), use 'type': 'skip' with clear explanation
 
 LARAVEL/PHP SPECIFIC RULES:
-- Class docblocks (/** @package, * Class Name */) should be placed BEFORE the class declaration
-- Property/method docblocks should be placed BEFORE the property/method they document  
 - Use 'public', 'protected', 'private' visibility for all class properties (Laravel convention)
+- EXCEPTION: Laravel model properties that override parent class properties MUST use the SAME visibility as parent
+  * \$timestamps property MUST be 'public' (as in Illuminate\Database\Eloquent\Model)
+  * \$fillable, \$guarded, \$casts, \$dates - use 'protected' (standard Laravel convention)
 - Maintain proper PSR-4 namespacing and class structure
 - For class-level documentation, provide ONLY the docblock comment, NOT the class declaration
 - When adding class docblocks, do NOT include 'class ClassName' - the system will place the docblock correctly
+
+CRITICAL CONTEXT-AWARE RULES:
+1. BEFORE suggesting a fix, analyze the CODE CONTEXT above to understand WHERE you are:
+   - If the flagged line is inside a class declaration (after 'class ClassName {'), you can suggest class members
+   - If the flagged line is inside an array (between [ ]), DO NOT suggest class-level code (const, properties, methods)
+   - If the flagged line is inside a method body, suggest only valid statements for that context
+
+2. FOR MISSING PROPERTIES (like \$timestamps):
+   - ONLY suggest adding properties if the flagged line is INSIDE a class body (after opening {)
+   - Properties should be placed AFTER any 'use TraitName;' statements in the class
+   - The system will automatically handle placement after traits - just provide the property code
+   - NEVER suggest class properties if the context shows you're inside arrays, method calls, or array definitions
+   - If unclear about the context, suggest 'type': 'skip' with explanation
+   - For \$timestamps specifically: MUST use 'public \$timestamps' (not protected) as it overrides parent visibility
+
+3. MULTI-LINE STATEMENT DETECTION (CRITICAL):
+   - If the flagged line starts with '->' it is a METHOD CHAIN CONTINUATION, not a standalone statement
+   - Example: '->where('tenant_uuid', ...)' is part of 'return self::where(...)->where(...)->firstOrFail();'
+   - DO NOT generate a complete new statement starting with 'return' or '\$variable ='
+   - ONLY generate the chained method call part: '->where(...)'
+   - If the flagged line is inside an array element (like 'width' => 400), do NOT generate just the value
+   - For array elements: generate the complete key-value pair or use 'skip'
+   - If you cannot fix JUST the flagged line without breaking syntax, use 'type': 'skip'
+
+4. CONTEXT DETECTION:
+   - Look for array syntax: [ ... ] or array( ... ) around the flagged line
+   - Look for class declaration: 'class ClassName extends/implements' 
+   - Look for method chains: lines starting with '->' indicate continuation
+   - Look for array elements: 'key' => value patterns
+   - If you see array syntax in context, DO NOT suggest const, public, protected, or private declarations
+   - When in doubt, choose 'type': 'skip' and explain why the context is ambiguous
+
+5. SAFE FIX TYPES BY CONTEXT:
+   - Inside class body (but not in arrays): properties, methods, constants OK
+   - Inside arrays: only array element modifications OK (complete 'key' => value)
+   - Inside methods: only valid PHP statements OK
+   - Inside function calls/parameters: only valid expressions OK
+   - Method chain continuations: only chained method calls starting with '->'
 
 CRITICAL PLACEMENT RULES:
 - Class docblocks: provide ONLY the /** ... */ comment block, never include the class declaration line
@@ -109,7 +149,8 @@ CRITICAL PLACEMENT RULES:
 CODE FORMATTING RULES:
 - For method refactoring: provide the complete method implementation from 'public/private/protected' to final '}'
 - Maintain proper PSR-12 formatting with consistent indentation
-- When replacing methods, include the full method signature and body";
+- When replacing methods, include the full method signature and body
+- If the context is ambiguous or unclear, use 'type': 'skip' to avoid incorrect fixes";
     }
 
     /**

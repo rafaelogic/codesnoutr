@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Rafaelogic\CodeSnoutr\Services\AI\AutoFixService;
 use Rafaelogic\CodeSnoutr\Services\AI\AiAssistantService;
 use Rafaelogic\CodeSnoutr\Models\Issue;
+use Rafaelogic\CodeSnoutr\Models\Scan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Mockery;
@@ -18,6 +19,7 @@ class AutoFixServiceTest extends TestCase
     protected AutoFixService $autoFixService;
     protected $mockAiService;
     protected string $testFilesPath;
+    protected Scan $testScan;
 
     protected function setUp(): void
     {
@@ -28,6 +30,21 @@ class AutoFixServiceTest extends TestCase
         $this->mockAiService->shouldReceive('isAvailable')->andReturn(true);
         
         $this->autoFixService = new AutoFixService($this->mockAiService);
+        
+        // Create a test scan for all issues
+        $this->testScan = Scan::create([
+            'type' => 'test',
+            'target' => 'test',
+            'status' => 'running',
+            'scan_options' => [],
+            'paths_scanned' => [],
+            'total_files' => 0,
+            'total_issues' => 0,
+            'critical_issues' => 0,
+            'warning_issues' => 0,
+            'info_issues' => 0,
+            'started_at' => now(),
+        ]);
         
         // Create test files directory
         $this->testFilesPath = storage_path('testing/auto_fix_tests');
@@ -62,7 +79,7 @@ class TestFilter extends BaseFilter
     private $filterList = [\'name\'];
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         
         // Create test issue
         $issue = $this->createTestIssue($testFilePath, 7, 'Missing class docblock');
@@ -115,7 +132,7 @@ class TestFilter
     }
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 7, 'Missing method docblock');
         
         $aiResponse = [
@@ -159,7 +176,7 @@ class TestFilter
     private $filterList = [\'name\'];
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 5, 'Missing class docblock');
         
         // AI generates combined docblock + class (this was causing duplicate class declarations)
@@ -207,7 +224,7 @@ class TestFilter
     }
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 7, 'Method too long, needs refactoring');
         
         // AI generates complete method implementation
@@ -241,7 +258,7 @@ class TestFilter
     /** @test */
     public function it_handles_invalid_json_from_ai_gracefully()
     {
-        $testFilePath = $this->createTestFile('TestFilter.php', '<?php class TestFilter {}');
+    $testFilePath = $this->createTestFile('<?php class TestFilter {}', 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 1, 'Test issue');
         
         // Invalid JSON response from AI
@@ -255,7 +272,7 @@ class TestFilter
     /** @test */
     public function it_handles_malformed_docblocks_with_control_characters()
     {
-        $testFilePath = $this->createTestFile('TestFilter.php', '<?php class TestFilter {}');
+    $testFilePath = $this->createTestFile('<?php class TestFilter {}', 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 1, 'Test issue');
         
         // AI response with control characters (common issue we encountered)
@@ -280,7 +297,7 @@ class TestFilter
     {
         // Create a test file in a non-writable location to force backup failure
         $originalContent = '<?php class TestFilter {}';
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         
         // Make the backup directory non-writable
         $backupPath = dirname($testFilePath) . '/backups';
@@ -321,7 +338,7 @@ class TestFilter
     }
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 5, 'Test issue');
         
         // AI response that would create invalid PHP syntax
@@ -370,7 +387,7 @@ class TestFilter
     }
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 5, 'Refactor complex method');
         
         $aiResponse = [
@@ -422,7 +439,7 @@ class TestFilter
     }
 }';
 
-        $testFilePath = $this->createTestFile('TestFilter.php', $originalContent);
+    $testFilePath = $this->createTestFile($originalContent, 'TestFilter.php');
         $issue = $this->createTestIssue($testFilePath, 8, 'Add method docblock');
         
         $aiResponse = [
@@ -458,7 +475,7 @@ class TestFilter
 
     // Helper methods
 
-    protected function createTestFile(string $filename, string $content): string
+    protected function createTestFile(string $content, string $filename = 'test.php'): string
     {
         $filePath = $this->testFilesPath . '/' . $filename;
         File::put($filePath, $content);
@@ -468,13 +485,17 @@ class TestFilter
     protected function createTestIssue(string $filePath, int $lineNumber, string $description): Issue
     {
         return Issue::create([
+            'scan_id' => $this->testScan->id,
             'file_path' => $filePath,
             'line_number' => $lineNumber,
+            'rule_id' => 'test_rule',
             'description' => $description,
+            'title' => 'Test issue',
+            'suggestion' => 'Test suggestion',
+            'context' => ['line' => $lineNumber],
             'category' => 'style',
             'severity' => 'medium',
             'rule_name' => 'test_rule',
-            'scan_id' => 1
         ]);
     }
 

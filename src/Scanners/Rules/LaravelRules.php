@@ -76,8 +76,8 @@ class LaravelRules extends AbstractRuleEngine
                         'info',
                         'laravel.missing_timestamps_property',
                         'Missing Timestamps Property',
-                        'Explicitly define $timestamps property in models for clarity.',
-                        'Add public $timestamps = true; or false; to your model.',
+                        'Explicitly define $timestamps property in models for clarity. Must use public visibility (Laravel requirement).',
+                        'Add public $timestamps = true; (or false) to your model. Note: Must be public, not protected.',
                         $this->getCodeContext($content, $lineNumber)
                     ));
                 }

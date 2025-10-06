@@ -26,6 +26,8 @@ class Scan extends Model
         'warning_issues',
         'info_issues',
         'resolved_issues',
+        'fixed_issues',
+        'skipped_issues',
         'started_at',
         'completed_at',
         'duration_seconds',
