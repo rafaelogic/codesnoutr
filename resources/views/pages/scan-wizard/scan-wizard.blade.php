@@ -157,8 +157,6 @@ document.addEventListener('livewire:init', () => {
     let progressInterval;
     
     Livewire.on('start-progress-polling', (data) => {
-        console.log('Raw event data:', data);
-        
         // Handle different ways Livewire might pass the data
         let scanId;
         if (Array.isArray(data) && data.length > 0) {
@@ -169,10 +167,7 @@ document.addEventListener('livewire:init', () => {
             scanId = data;
         }
         
-        console.log('Starting progress polling for scan:', scanId);
-        
         if (!scanId) {
-            console.error('No scan ID provided for progress polling');
             return;
         }
         
@@ -182,7 +177,6 @@ document.addEventListener('livewire:init', () => {
     });
     
     Livewire.on('stop-progress-polling', () => {
-        console.log('Stopping progress polling');
         if (progressInterval) {
             clearInterval(progressInterval);
             progressInterval = null;
@@ -190,7 +184,6 @@ document.addEventListener('livewire:init', () => {
     });
     
     Livewire.on('scan-completed', (data) => {
-        console.log('Raw completion data:', data);
         
         // Handle different ways Livewire might pass the data
         let scanId;
@@ -201,8 +194,6 @@ document.addEventListener('livewire:init', () => {
         } else {
             scanId = data;
         }
-        
-        console.log('Scan completed:', scanId);
         
         if (scanId) {
             // Show success message or redirect

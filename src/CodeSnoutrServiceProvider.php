@@ -228,7 +228,6 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             \Livewire\Livewire::component('codesnoutr-group-file-details', \Rafaelogic\CodeSnoutr\Livewire\GroupFileDetails::class);
             \Livewire\Livewire::component('codesnoutr-queue-status', \Rafaelogic\CodeSnoutr\Livewire\QueueStatus::class);
             \Livewire\Livewire::component('codesnoutr-fix-all-progress', \Rafaelogic\CodeSnoutr\Livewire\FixAllProgress::class);
-            \Illuminate\Support\Facades\Log::info('CodeSnoutr Livewire components registered successfully');
         } else {
             \Illuminate\Support\Facades\Log::error('Livewire class not found during CodeSnoutr component registration');
         }
@@ -249,7 +248,6 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.spinner', 'atoms.spinner');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.progress-bar', 'atoms.progress-bar');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.alert', 'atoms.alert');
-            $this->app['blade.compiler']->component('codesnoutr::components.atoms.tooltip', 'atoms.tooltip');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.avatar', 'atoms.avatar');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.label', 'atoms.label');
             $this->app['blade.compiler']->component('codesnoutr::components.atoms.toggle', 'atoms.toggle');
@@ -275,8 +273,21 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.recent-scans-list', 'molecules.recent-scans-list');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.navigation', 'molecules.navigation');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.empty-state', 'molecules.empty-state');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.dropdown', 'molecules.dropdown');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.dropdown-item', 'molecules.dropdown-item');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.dropdown-divider', 'molecules.dropdown-divider');
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.file-upload', 'molecules.file-upload');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.modal', 'molecules.modal');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.tabs', 'molecules.tabs');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.form', 'molecules.form');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.settings-form', 'molecules.settings-form');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.pagination', 'molecules.pagination');
+            
+            // Register Fix All molecule components
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.fix-all-header', 'molecules.fix-all-header');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.fix-all-stats', 'molecules.fix-all-stats');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.fix-all-current-file', 'molecules.fix-all-current-file');
+            $this->app['blade.compiler']->component('codesnoutr::components.molecules.fix-all-results', 'molecules.fix-all-results');
             
             // Register table molecule components
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.table-toolbar', 'molecules.table-toolbar');
@@ -290,11 +301,11 @@ class CodeSnoutrServiceProvider extends ServiceProvider
             $this->app['blade.compiler']->component('codesnoutr::components.molecules.table-pagination', 'molecules.table-pagination');
             
             // Register organism components
-            $this->app['blade.compiler']->component('codesnoutr::components.organisms.header', 'organisms.header');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.navigation', 'organisms.navigation');
             $this->app['blade.compiler']->component('codesnoutr::components.organisms.sidebar', 'organisms.sidebar');
-            $this->app['blade.compiler']->component('codesnoutr::components.organisms.scan-form', 'organisms.scan-form');
             $this->app['blade.compiler']->component('codesnoutr::components.organisms.scan-results', 'organisms.scan-results');
             $this->app['blade.compiler']->component('codesnoutr::components.organisms.data-table', 'organisms.data-table');
+            $this->app['blade.compiler']->component('codesnoutr::components.organisms.data-table-enhanced', 'organisms.data-table-enhanced');
             
             // Register template components
             $this->app['blade.compiler']->component('codesnoutr::components.templates.app-layout', 'templates.app-layout');

@@ -368,7 +368,7 @@
                                             size="xs"
                                             icon="trash"
                                             iconPosition="only"
-                                            class="text-gray-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                            class="text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 opacity-0 group-hover:opacity-100 transition-all duration-200"
                                         />
                                     </div>
                                 </div>

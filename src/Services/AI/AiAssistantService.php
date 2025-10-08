@@ -25,15 +25,6 @@ class AiAssistantService
             $this->maxTokens = Setting::getValue('max_tokens', 1000);
             $this->enabled = Setting::getValue('ai_enabled', false);
             
-            // Debug logging
-            Log::info('AI Service Constructor Debug:', [
-                'api_key_exists' => !empty($this->apiKey),
-                'api_key_length' => strlen($this->apiKey ?? ''),
-                'enabled' => $this->enabled,
-                'model' => $this->model,
-                'is_available' => $this->enabled && !empty($this->apiKey)
-            ]);
-            
         } catch (\Exception $e) {
             // Handle database connection or migration issues gracefully
             $this->apiKey = null;

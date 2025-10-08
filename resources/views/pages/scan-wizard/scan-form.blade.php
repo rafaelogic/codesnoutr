@@ -517,21 +517,13 @@
         });
 
         Livewire.on('queue-status-updated', (event) => {
-            console.log('Queue status updated:', event);
-            
             // Handle different queue statuses
             if (event.status === 'ready') {
                 // Queue is ready, scan will start automatically
-                setTimeout(() => {
-                    console.log('Queue is ready, starting scan...');
-                }, 1000);
-            } else if (event.status === 'error') {
-                console.error('Queue setup failed:', event.message);
             }
         });
 
         Livewire.on('delayed-scan-start', () => {
-            console.log('Delayed scan start triggered');
             setTimeout(() => {
                 const component = Livewire.find('{{ $this->getId() }}');
                 if (component) {
@@ -542,7 +534,6 @@
 
         Livewire.on('scan-completed', (event) => {
             clearInterval(progressInterval);
-            console.log('Scan completed event received:', event);
             
             // Extract scanId from event data
             let scanId = null;
@@ -550,21 +541,11 @@
                 scanId = event.scanId || event.detail?.scanId || event[0]?.scanId;
             }
             
-            console.log('Extracted scan ID:', scanId);
-            
             setTimeout(() => {
-                if (scanId && scanId !== 'undefined' && scanId !== null) {
+                if (scanId) {
                     const redirectUrl = `/codesnoutr/results/${scanId}`;
-                    console.log('Redirecting to:', redirectUrl);
                     window.location.href = redirectUrl;
-                } else {
-                    console.error('Invalid scan ID received:', scanId);
-                    console.error('Full event data:', event);
-                    // Fallback to results page
-                    window.location.href = '{{ route("codesnoutr.results") }}';
                 }
-            }, 2000);
-        });
 
         Livewire.on('scan-cancelled', () => {
             clearInterval(progressInterval);

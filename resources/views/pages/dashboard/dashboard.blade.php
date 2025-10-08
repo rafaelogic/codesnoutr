@@ -233,7 +233,7 @@
                                 variant="danger"
                                 size="sm"
                             >
-                                <x-atoms.icon name="trash" size="sm" class="mr-1" />
+                                <x-atoms.icon name="trash" size="sm" class="mr-1 text-red-600 dark:text-red-400" />
                                 Delete
                             </x-atoms.button>
                         </div>

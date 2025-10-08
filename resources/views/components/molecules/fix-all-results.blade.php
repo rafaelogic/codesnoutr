@@ -102,7 +102,8 @@
                         class="flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
                     >
                         <span x-bind:class="activeTab === 'fixed' ? 'text-green-600 dark:text-green-300' : 'text-gray-600 dark:text-gray-300'">
-                            ✓ Fixed ({{ $fixedCount }})
+                            <x-atoms.icon name="check-circle" class="w-3 h-3 inline-block mr-1" />
+                            Fixed ({{ $fixedCount }})
                         </span>
                     </button>
 
@@ -113,7 +114,8 @@
                         class="flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
                     >
                         <span x-bind:class="activeTab === 'skipped' ? 'text-yellow-600 dark:text-yellow-300' : 'text-gray-600 dark:text-gray-300'">
-                            ⊘ Skipped ({{ $skippedCount }})
+                            <x-atoms.icon name="minus-circle" class="w-3 h-3 inline-block mr-1" />
+                            Skipped ({{ $skippedCount }})
                         </span>
                     </button>
 
@@ -124,7 +126,8 @@
                         class="flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
                     >
                         <span x-bind:class="activeTab === 'failed' ? 'text-red-600 dark:text-red-300' : 'text-gray-600 dark:text-gray-300'">
-                            ✗ Failed ({{ $failedCount }})
+                            <x-atoms.icon name="x-circle" class="w-3 h-3 inline-block mr-1" />
+                            Failed ({{ $failedCount }})
                         </span>
                     </button>
                 </div>
@@ -297,12 +300,21 @@
 
                                                 <div class="flex-1 min-w-0 space-y-1">
                                                     <div class="flex items-center justify-between">
-                                                        <span class="font-semibold
+                                                        <span class="flex items-center gap-1 font-semibold
                                                             {{ $attemptIsSuccess ? 'text-green-700 dark:text-green-300' : '' }}
                                                             {{ $attemptIsSkipped ? 'text-yellow-700 dark:text-yellow-300' : '' }}
                                                             {{ $attemptIsFailed ? 'text-red-700 dark:text-red-300' : '' }}
                                                         ">
-                                                            {{ $attemptIsSuccess ? '✓ Success' : ($attemptIsSkipped ? '⊘ Skipped' : '✗ Failed') }}
+                                                            @if($attemptIsSuccess)
+                                                                <x-atoms.icon name="check-circle" class="w-4 h-4" />
+                                                                Success
+                                                            @elseif($attemptIsSkipped)
+                                                                <x-atoms.icon name="minus-circle" class="w-4 h-4" />
+                                                                Skipped
+                                                            @else
+                                                                <x-atoms.icon name="x-circle" class="w-4 h-4" />
+                                                                Failed
+                                                            @endif
                                                         </span>
                                                         <span class="text-gray-500 dark:text-gray-300">
                                                             {{ data_get($attempt, 'timestamp') ? \Carbon\Carbon::parse(data_get($attempt, 'timestamp'))->format('M d, H:i:s') : 'N/A' }}

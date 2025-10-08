@@ -199,15 +199,15 @@
 
         // Listen for queue events
         Livewire.on('queue-started', (event) => {
-            console.log('Queue started:', event);
+            // Queue started successfully
         });
 
         Livewire.on('queue-stopped', (event) => {
-            console.log('Queue stopped:', event);
+            // Queue stopped successfully
         });
 
         Livewire.on('queue-status-refreshed', (event) => {
-            console.log('Queue status refreshed:', event);
+            // Queue status refreshed
         });
     });
 </script>

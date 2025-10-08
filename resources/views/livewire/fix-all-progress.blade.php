@@ -17,14 +17,14 @@
                         default => 'gray'
                     };
                     $statusIcon = match($currentStatus) {
-                        'completed' => '✓',
-                        'failed' => '✗',
-                        'processing' => '⚙️', 
-                        'starting' => '▶️',
-                        'stopping' => '⏹️',
-                        'stopped' => '⏸️',
-                        'idle' => '⏸️',
-                        default => '🕒'
+                        'completed' => 'check-circle',
+                        'failed' => 'x-circle',
+                        'processing' => 'cog', 
+                        'starting' => 'play',
+                        'stopping' => 'stop',
+                        'stopped' => 'pause',
+                        'idle' => 'pause',
+                        default => 'clock'
                     };
                 @endphp
                 
@@ -37,7 +37,7 @@
                             {{ $currentStatus === 'starting' ? 'bg-yellow-100 dark:bg-yellow-900/30' : '' }}
                             {{ !in_array($currentStatus, ['completed', 'failed', 'processing', 'starting']) ? 'bg-gray-100 dark:bg-gray-900/30' : '' }}
                         ">
-                            <span class="text-3xl {{ $currentStatus === 'processing' ? 'animate-spin' : '' }}">{{ $statusIcon }}</span>
+                            <x-atoms.icon :name="$statusIcon" size="xl" class="{{ $currentStatus === 'processing' ? 'animate-spin' : '' }}" />
                         </div>
                     </div>
                     
@@ -131,8 +131,9 @@
                             </svg>
                         </div>
                         <div class="ml-3 flex-1">
-                            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                ⚠️ Queue Worker May Not Be Running
+                            <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+                                <x-atoms.icon name="exclamation-triangle" size="sm" />
+                                Queue Worker May Not Be Running
                             </h3>
                             <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
                                 <p class="mb-2">
@@ -389,7 +390,7 @@
                         variant="primary"
                         size="lg"
                         icon="home"
-                        class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+                        class="w-full text-white sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
                     >
                         Return to Dashboard
                     </x-atoms.button>
@@ -401,22 +402,6 @@
         @push('scripts')
         <script>
         document.addEventListener('livewire:init', () => {
-            console.log('Livewire Fix All Progress initialized');
-            console.log('Session ID:', '{{ $sessionId }}');
-            console.log('Initial status:', '{{ $status ?? "idle" }}');
-            console.log('wire:poll should be active for statuses: processing, starting');
-            
-            // Track polling activity
-            let pollCount = 0;
-            let lastPollTime = Date.now();
-            let lastValues = {
-                status: '{{ $status ?? "idle" }}',
-                currentStep: {{ $currentStep ?? 0 }},
-                totalSteps: {{ $totalSteps ?? 0 }},
-                fixedCount: {{ $fixedCount ?? 0 }},
-                failedCount: {{ $failedCount ?? 0 }}
-            };
-            
             // Auto-scroll to bottom of results when new ones are added
             const resultsContainer = document.querySelector('.max-h-96.overflow-y-auto');
             if (resultsContainer) {
@@ -431,8 +416,6 @@
                 const notification = Array.isArray(data) ? data[0] : data;
                 const type = notification?.type || 'info';
                 const message = notification?.message || 'Notification';
-                
-                console.log('Show notification:', type, message);
                 
                 // Show alert based on type
                 if (typeof Swal !== 'undefined') {
@@ -459,8 +442,6 @@
             
             // Handle queue setup errors
             Livewire.on('queue-setup-error', (data) => {
-                console.error('Queue setup error:', data);
-                
                 let recommendationsHtml = '';
                 if (data[0]?.recommendations && data[0].recommendations.length > 0) {
                     recommendationsHtml = '<ul class="list-disc list-inside mt-2 text-sm">';
@@ -487,7 +468,6 @@
             
             // Handle stopping event
             Livewire.on('fix-all-stopping', () => {
-                console.log('Fix All process is stopping...');
                 if ('Notification' in window && Notification.permission === 'granted') {
                     new Notification('CodeSnoutr', {
                         body: 'Fix All process is stopping...',
@@ -498,12 +478,11 @@
             
             // Handle queue worker warning
             Livewire.on('show-queue-warning', (data) => {
-                console.warn('Queue worker warning:', data);
                 
                 // Show persistent warning notification
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: '⚠️ Queue Worker Not Running',
+                        title: 'Queue Worker Not Running',
                         html: `
                             <div class="text-left">
                                 <p class="mb-4">${data[0]?.message || 'Job is queued but not processing'}</p>
@@ -532,71 +511,13 @@
                     });
                 } else {
                     // Fallback alert
-                    alert(`⚠️ Queue Worker Not Running!\n\n${data[0]?.message}\n\n${data[0]?.action}`);
+                    alert(`Queue Worker Not Running!\n\n${data[0]?.message}\n\n${data[0]?.action}`);
                 }
             });
             
-            // Track wire:poll refreshProgress calls
-            Livewire.hook('morph.updated', ({ el, component }) => {
-                if (component.name === 'fix-all-progress') {
-                    pollCount++;
-                    const now = Date.now();
-                    const timeSinceLastPoll = now - lastPollTime;
-                    lastPollTime = now;
-                    
-                    // Get current values from component
-                    const currentValues = {
-                        status: component.get('status'),
-                        currentStep: component.get('currentStep'),
-                        totalSteps: component.get('totalSteps'),
-                        fixedCount: component.get('fixedCount'),
-                        failedCount: component.get('failedCount')
-                    };
-                    
-                    // Detect changes
-                    const changes = {
-                        status: lastValues.status !== currentValues.status,
-                        currentStep: lastValues.currentStep !== currentValues.currentStep,
-                        totalSteps: lastValues.totalSteps !== currentValues.totalSteps,
-                        fixedCount: lastValues.fixedCount !== currentValues.fixedCount,
-                        failedCount: lastValues.failedCount !== currentValues.failedCount
-                    };
-                    
-                    const hasChanges = Object.values(changes).some(changed => changed);
-                    
-                    console.log(`[wire:poll #${pollCount}] ${hasChanges ? '✅ CHANGES DETECTED' : '⏸️ No changes'}`, {
-                        pollCount,
-                        timeSinceLastPoll: `${timeSinceLastPoll}ms`,
-                        hasChanges,
-                        changes,
-                        oldValues: lastValues,
-                        newValues: currentValues
-                    });
-                    
-                    // Log significant changes in detail
-                    if (changes.currentStep) {
-                        console.log(`📊 Progress Update: ${lastValues.currentStep}/${lastValues.totalSteps} → ${currentValues.currentStep}/${currentValues.totalSteps}`);
-                    }
-                    if (changes.fixedCount) {
-                        console.log(`✅ Fixed Count: ${lastValues.fixedCount} → ${currentValues.fixedCount} (+${currentValues.fixedCount - lastValues.fixedCount})`);
-                    }
-                    if (changes.failedCount) {
-                        console.log(`❌ Failed Count: ${lastValues.failedCount} → ${currentValues.failedCount} (+${currentValues.failedCount - lastValues.failedCount})`);
-                    }
-                    if (changes.status) {
-                        console.log(`🔄 Status Changed: ${lastValues.status} → ${currentValues.status}`);
-                    }
-                    
-                    // Update last values
-                    lastValues = currentValues;
-                }
-            });
-            
-            // Enhanced event handling
+            // Handle status changes
             Livewire.on('status-changed', (status) => {
-                console.log('🔔 Status changed event fired:', status);
                 if (status === 'completed') {
-                    console.log('Fix All process completed!');
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('CodeSnoutr', {
                             body: 'Fix All process completed!',
@@ -604,7 +525,6 @@
                         });
                     }
                 } else if (status === 'stopped') {
-                    console.log('Fix All process stopped by user');
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('CodeSnoutr', {
                             body: 'Fix All process stopped',
@@ -613,47 +533,6 @@
                     }
                 }
             });
-            
-            // Handle Livewire errors
-            document.addEventListener('livewire:error', (event) => {
-                console.error('Livewire error:', event.detail);
-            });
-            
-            // Debug button clicks
-            const startButton = document.querySelector('[wire\\:click="startFixAll"]');
-            if (startButton) {
-                startButton.addEventListener('click', function() {
-                    console.log('🚀 Start Fix All button clicked');
-                    pollCount = 0;
-                    lastPollTime = Date.now();
-                });
-            }
-            
-            // Log polling summary every 10 seconds
-            setInterval(() => {
-                if (pollCount > 0) {
-                    try {
-                        const status = @this.get('status');
-                        const currentStep = @this.get('currentStep');
-                        const totalSteps = @this.get('totalSteps');
-                        const fixedCount = @this.get('fixedCount');
-                        const failedCount = @this.get('failedCount');
-                        const isPollActive = ['processing', 'starting'].includes(status);
-                        
-                        console.log('📊 Polling Summary (last 10s):', {
-                            totalPolls: pollCount,
-                            currentStatus: status,
-                            pollingShouldBeActive: isPollActive,
-                            progress: `${currentStep}/${totalSteps}`,
-                            fixed: fixedCount,
-                            failed: failedCount,
-                            lastUpdate: new Date(lastPollTime).toLocaleTimeString()
-                        });
-                    } catch (e) {
-                        console.warn('⚠️ Could not get component data for summary:', e.message);
-                    }
-                }
-            }, 10000);
         });
         
         // Request notification permission on page load

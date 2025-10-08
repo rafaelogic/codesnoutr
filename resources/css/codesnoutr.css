@@ -50,9 +50,9 @@
 
 /* Button System - Enhanced with atomic principles */
 .btn {
-    @apply inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed outline-none;
     /* Enhanced accessibility and visual feedback */
-    @apply active:scale-95 focus:scale-105 hover:scale-[1.02];
+    @apply active:scale-95 hover:scale-[1.02];
     /* Better touch targets and contrast */
     min-height: 44px;
     min-width: 44px;
@@ -62,9 +62,17 @@
     @apply disabled:shadow-none disabled:transform-none disabled:bg-gray-300 dark:disabled:bg-gray-600;
 }
 
+/* Remove all focus outlines and rings */
+.btn:focus,
+.btn:focus-visible {
+    @apply outline-none shadow-none;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
 /* Primary color variations with semantic naming */
 .btn--primary {
-    @apply bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 focus:ring-blue-500 border border-transparent shadow-md hover:shadow-lg;
+    @apply bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500 border border-transparent shadow-md hover:shadow-lg;
     /* Enhanced contrast and depth */
     @apply ring-1 ring-blue-600/20 dark:ring-blue-400/30 hover:ring-blue-700/30 dark:hover:ring-blue-400/50;
     /* Better visual feedback */
@@ -72,7 +80,7 @@
 }
 
 .btn--secondary {
-    @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 focus:ring-gray-500 border-2 border-gray-400 dark:border-gray-500 shadow-md hover:shadow-lg;
+    @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 border-2 border-gray-400 dark:border-gray-500 shadow-md hover:shadow-lg;
     /* Enhanced contrast and visibility */
     @apply ring-1 ring-gray-300/50 dark:ring-gray-500/50 hover:ring-gray-400/70 dark:hover:ring-gray-400/70;
     /* Better visual feedback */
@@ -80,28 +88,28 @@
 }
 
 .btn--danger {
-    @apply bg-red-600 dark:bg-red-600 text-white hover:bg-red-700 dark:hover:bg-red-500 focus:ring-red-500 border border-transparent shadow-md hover:shadow-lg;
+    @apply bg-red-600 dark:bg-red-600 text-white hover:bg-red-700 dark:hover:bg-red-500 border border-transparent shadow-md hover:shadow-lg;
     /* Enhanced contrast and depth */
     @apply ring-1 ring-red-600/20 dark:ring-red-400/30 hover:ring-red-700/50;
     @apply active:bg-red-800 dark:active:bg-red-400 active:shadow-inner;
 }
 
 .btn--success {
-    @apply bg-green-600 dark:bg-green-600 text-white hover:bg-green-700 dark:hover:bg-green-500 focus:ring-green-500 border border-transparent shadow-md hover:shadow-lg;
+    @apply bg-green-600 dark:bg-green-600 text-white hover:bg-green-700 dark:hover:bg-green-500 border border-transparent shadow-md hover:shadow-lg;
     /* Enhanced contrast and depth */
     @apply ring-1 ring-green-600/20 dark:ring-green-400/30 hover:ring-green-700/50;
     @apply active:bg-green-800 dark:active:bg-green-400 active:shadow-inner;
 }
 
 .btn--warning {
-    @apply bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-500 focus:ring-yellow-500 border border-transparent shadow-md hover:shadow-lg;
+    @apply bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-500 border border-transparent shadow-md hover:shadow-lg;
     /* Enhanced contrast and depth */
     @apply ring-1 ring-yellow-500/20 dark:ring-yellow-400/30 hover:ring-yellow-600/50;
     @apply active:bg-yellow-700 dark:active:bg-yellow-400 active:shadow-inner;
 }
 
 .btn--ghost {
-    @apply text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-gray-500 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500;
+    @apply text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500;
     /* Enhanced contrast and visual feedback */
     @apply shadow-sm hover:shadow-md;
     @apply active:bg-gray-200 dark:active:bg-gray-600 active:shadow-inner;
@@ -109,14 +117,14 @@
 
 /* Enhanced outline variants */
 .btn--outline-primary {
-    @apply border-2 border-blue-600 dark:border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white focus:ring-blue-500 shadow-sm hover:shadow-md;
+    @apply border-2 border-blue-600 dark:border-blue-400 text-blue-700 dark:text-blue-300 hover:bg-blue-600 dark:hover:bg-blue-600 hover:text-white dark:hover:text-white shadow-sm hover:shadow-md;
     /* Enhanced contrast and visual feedback */
     @apply ring-1 ring-blue-600/20 dark:ring-blue-400/30 hover:ring-blue-600/50;
     @apply active:bg-blue-700 dark:active:bg-blue-500 active:shadow-inner;
 }
 
 .btn--outline-secondary {
-    @apply border-2 border-gray-600 dark:border-gray-400 text-gray-700 dark:text-gray-300 hover:bg-gray-600 dark:hover:bg-gray-400 hover:text-white dark:hover:text-gray-900 focus:ring-gray-500 shadow-sm hover:shadow-md;
+    @apply border-2 border-gray-600 dark:border-gray-400 text-gray-700 dark:text-gray-300 hover:bg-gray-600 dark:hover:bg-gray-400 hover:text-white dark:hover:text-gray-900 shadow-sm hover:shadow-md;
     /* Enhanced contrast and visual feedback */
     @apply ring-1 ring-gray-600/20 dark:ring-gray-400/30 hover:ring-gray-600/50;
     @apply active:bg-gray-700 dark:active:bg-gray-300 active:shadow-inner;
@@ -154,9 +162,19 @@
     @apply scale-100;
 }
 
-/* Button Focus Improvements */
-.btn:focus-visible {
-    @apply ring-4 ring-offset-2 ring-opacity-50;
+/* Remove focus rings from all interactive elements */
+a:focus,
+a:focus-visible,
+button:focus,
+button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Ensure hover effects work properly */
+a,
+button {
+    @apply outline-none;
 }
 
 /* Button Group Support */
@@ -639,29 +657,25 @@
     @apply text-gray-400;
 }
 
-/* Button variants */
-.btn {
-    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors;
-}
-
+/* Button variants - Legacy styles (prefer using .btn-- variants above) */
 .btn-primary {
-    @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 transition-all duration-300;
 }
 
 .btn-secondary {
-    @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+    @apply bg-gray-600 text-white hover:bg-gray-700 transition-all duration-300;
 }
 
 .btn-success {
-    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+    @apply bg-green-600 text-white hover:bg-green-700 transition-all duration-300;
 }
 
 .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    @apply bg-red-600 text-white hover:bg-red-700 transition-all duration-300;
 }
 
 .btn-outline {
-    @apply bg-white border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-indigo-500;
+    @apply bg-white border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300;
 }
 
 .dark .btn-outline {
@@ -984,15 +998,15 @@
 
 /* Hover Effects */
 .hover-lift {
-    @apply transition-transform duration-200 hover:-translate-y-1;
+    @apply transition-transform duration-300 hover:-translate-y-1;
 }
 
 .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
+    @apply transition-transform duration-300 hover:scale-105;
 }
 
 .hover-glow {
-    @apply transition-shadow duration-200 hover:shadow-lg hover:shadow-blue-500/25;
+    @apply transition-shadow duration-300 hover:shadow-lg hover:shadow-blue-500/25;
 }
 
 /* =================================

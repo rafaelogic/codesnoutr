@@ -25,7 +25,7 @@ Before creating an issue, please:
 
 We love feature suggestions! Please:
 
-1. **Check the roadmap** in [FEATURES.md](FEATURES.md) first
+1. **Check the roadmap** first - [ROADMAP.md](ROADMAP.md)
 2. **Open a discussion** before creating a pull request for major features
 3. **Provide clear use cases** and benefits
 4. **Consider backwards compatibility**
@@ -59,7 +59,7 @@ We love feature suggestions! Please:
 
 1. **Clone your fork**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/codesnoutr.git
+   git clone https://github.com/rafaelogic/codesnoutr.git
    cd codesnoutr
    ```
 
@@ -237,7 +237,7 @@ Update CHANGELOG.md with:
 
 **Do not report security vulnerabilities through public GitHub issues.**
 
-Please email security@example.com with:
+Please email 40rrafael@gmail.com with:
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -268,6 +268,48 @@ Run performance tests:
 composer benchmark
 ```
 
+## Contributing to AI Features
+
+### OpenAI Client Implementation
+
+We have a detailed roadmap for AI integration improvements. See [ROADMAP.md](ROADMAP.md) for:
+
+- Current implementation status
+- Planned phases and features
+- Technical debt and known issues
+- Success metrics and KPIs
+- High-priority contribution areas
+
+**High Priority AI Contributions:**
+1. **JSON Parsing** - Fix docblock escaping and namespace backslash issues
+2. **Prompt Engineering** - Optimize prompts to reduce token usage
+3. **Caching System** - Implement intelligent caching for similar fixes
+4. **Error Handling** - Add retry logic and rate limit handling
+5. **Testing** - Expand test coverage for AI features
+
+**AI Feature Guidelines:**
+- All AI features must include safety checks (validation, backups, preview)
+- Test with multiple OpenAI models (GPT-4, GPT-3.5-turbo)
+- Include cost estimates in PRs that affect token usage
+- Document prompt changes with before/after examples
+- Add rollback support for any destructive changes
+
+### AI Testing
+
+When contributing AI features:
+
+```bash
+# Test with different models
+CODESNOUTR_AI_MODEL=gpt-4 composer test
+CODESNOUTR_AI_MODEL=gpt-3.5-turbo composer test
+
+# Test cost tracking
+php artisan codesnoutr:test-ai-cost
+
+# Validate safety checks
+php artisan codesnoutr:test-ai-safety
+```
+
 ## Getting Help
 
 ### Communication Channels
@@ -279,7 +321,7 @@ composer benchmark
 ### Documentation
 
 - [README.md](README.md): Getting started guide
-- [FEATURES.md](FEATURES.md): Complete feature documentation
+- [ROADMAP.md](ROADMAP.md): AI integration roadmap
 - [API Documentation]: Detailed API reference (coming soon)
 
 ## Recognition
