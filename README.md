@@ -10,6 +10,8 @@ A comprehensive Laravel code scanner that detects security vulnerabilities, perf
 
 > **⚠️ Important**: This package is designed for **local development environments only**. It is not recommended for production use.
 
+![Image](https://github.com/user-attachments/assets/db1ea42d-4c8a-4cf9-af68-0a3d7a31dafd)
+
 ## 📚 Table of Contents
 
 - [✨ Features](#-features)
