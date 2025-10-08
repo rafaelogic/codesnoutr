@@ -45,7 +45,7 @@ body {
     }
     
     .btn-outline {
-        @apply border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-indigo-500;
+        @apply border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-indigo-500;
     }
     
     .btn-danger {
@@ -58,11 +58,11 @@ body {
     
     /* Card components */
     .card {
-        @apply bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-300;
+        @apply bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-600 rounded-lg transition-colors duration-300;
     }
     
     .card-header {
-        @apply px-6 py-4 border-b border-gray-200 dark:border-gray-700;
+        @apply px-6 py-4 border-b border-gray-200 dark:border-gray-600;
     }
     
     .card-body {
@@ -70,24 +70,24 @@ body {
     }
     
     .card-footer {
-        @apply px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800;
+        @apply px-6 py-4 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50;
     }
     
     /* Form styles */
     .form-input {
-        @apply block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 px-3 py-3;
+        @apply block w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 px-3 py-3;
     }
     
     .form-select {
-        @apply block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 px-3 py-3;
+        @apply block w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 px-3 py-3;
     }
     
     .form-checkbox {
-        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded transition-colors duration-200;
+        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-500 rounded transition-colors duration-200;
     }
     
     .form-radio {
-        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 transition-colors duration-200;
+        @apply h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-500 transition-colors duration-200;
     }
     
     /* Status badges */
@@ -96,23 +96,23 @@ body {
     }
     
     .badge-success {
-        @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+        @apply bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200;
     }
     
     .badge-warning {
-        @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
+        @apply bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200;
     }
     
     .badge-danger {
-        @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300;
+        @apply bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200;
     }
     
     .badge-info {
-        @apply bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300;
+        @apply bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200;
     }
     
     .badge-secondary {
-        @apply bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300;
+        @apply bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100;
     }
     
     /* Loading states */
@@ -122,28 +122,28 @@ body {
     
     /* Code highlighting */
     .code-block {
-        @apply bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 font-mono text-sm overflow-x-auto;
+        @apply bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 rounded-lg p-4 font-mono text-sm overflow-x-auto;
     }
     
     /* Issue severity colors */
     .severity-critical {
-        @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50 text-red-900 dark:text-red-200;
+        @apply bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-900 dark:text-red-100;
     }
     
     .severity-high {
-        @apply bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/50 text-orange-900 dark:text-orange-200;
+        @apply bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 text-orange-900 dark:text-orange-100;
     }
     
     .severity-medium {
-        @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50 text-yellow-900 dark:text-yellow-200;
+        @apply bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-700 text-yellow-900 dark:text-yellow-100;
     }
     
     .severity-low {
-        @apply bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 text-blue-900 dark:text-blue-200;
+        @apply bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-900 dark:text-blue-100;
     }
     
     .severity-info {
-        @apply bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700/50 text-gray-900 dark:text-gray-200;
+        @apply bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100;
     }
 }
 

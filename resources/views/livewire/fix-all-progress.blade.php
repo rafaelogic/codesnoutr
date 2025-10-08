@@ -1,12 +1,5 @@
 <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- CSS Load Indicator (for debugging) -->
-        <div class="max-w-7xl mx-auto mb-4">
-            <x-atoms.badge variant="success" size="sm" :dot="true">
-                Atomic UI Loaded
-            </x-atoms.badge>
-        </div>
-        
         <div class="max-w-7xl mx-auto space-y-8" @if(in_array($status ?? 'idle', ['processing', 'starting'])) wire:poll.1s="refreshProgress" @endif>
         <!-- Header Section -->
         <x-atoms.surface variant="default" padding="default" rounded="lg" shadow="sm">
@@ -53,8 +46,8 @@
                             Fix All Issues with AI
                         </h1>
                         <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <x-atoms.badge variant="primary" size="sm">
-                                Session: {{ Str::limit($sessionId ?? 'N/A', 8) }}
+                            <x-atoms.badge variant="info" size="sm">
+                                Session: {{ $sessionId ?? 'N/A' }}
                             </x-atoms.badge>
                             @if($startedAt)
                                 @php
@@ -270,7 +263,7 @@
                 <!-- Summary Stats -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Fixed Count -->
-                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/25 dark:to-emerald-900/25 rounded-xl p-6 border border-green-200 dark:border-green-800/40 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-xl p-6 border border-green-200 dark:border-green-800/40 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-3xl font-bold text-green-600 dark:text-green-300 mb-1">{{ $fixedCount ?? 0 }}</div>
@@ -283,7 +276,7 @@
                     </div>
                     
                     <!-- Failed Count -->
-                    <div class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-900/25 dark:to-rose-900/25 rounded-xl p-6 border border-red-200 dark:border-red-800/40 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-xl p-6 border border-red-200 dark:border-red-800/40 shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-3xl font-bold text-red-600 dark:text-red-300 mb-1">{{ $failedCount ?? 0 }}</div>
@@ -296,7 +289,7 @@
                     </div>
                     
                     <!-- Total Count -->
-                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900 dark:to-slate-900 rounded-xl p-6 border border-gray-200  shadow-sm hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between">
                             <div>
                                 @php
@@ -330,7 +323,7 @@
                                 <div class="text-3xl font-bold text-gray-700 dark:text-gray-200 mb-1">{{ $totalCount }}</div>
                                 <div class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ $countLabel }}</div>
                             </div>
-                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-900/40 rounded-xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-gray-100/30 dark:bg-gray-800/30 rounded-xl flex items-center justify-center">
                                 <x-atoms.icon name="list" size="lg" class="text-gray-600 dark:text-gray-300" />
                             </div>
                         </div>
@@ -368,42 +361,6 @@
                         <span wire:loading.remove>Start Fix All Process</span>
                         <span wire:loading>Starting Process...</span>
                     </x-atoms.button>
-                    
-                    <!-- Debug buttons -->
-                    <x-atoms.surface variant="bordered" padding="default" rounded="lg" class="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
-                        <h4 class="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-3">Debug Tools</h4>
-                        <div class="flex flex-wrap gap-2">
-                            <x-atoms.button 
-                                wire:click="testStatusUpdate"
-                                variant="outline-secondary"
-                                size="sm"
-                                class="border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-200 bg-white dark:bg-yellow-800/20 hover:bg-yellow-50 dark:hover:bg-yellow-700/30"
-                            >
-                                Test Status Update
-                            </x-atoms.button>
-                            
-                            <x-atoms.button 
-                                wire:click="startFixAllSync"
-                                variant="outline-secondary"
-                                size="sm"
-                                class="border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-200 bg-white dark:bg-yellow-800/20 hover:bg-yellow-50 dark:hover:bg-yellow-700/30"
-                                wire:loading.attr="disabled"
-                            >
-                                <span wire:loading.remove>Run Sync (Debug)</span>
-                                <span wire:loading>Running...</span>
-                            </x-atoms.button>
-                            
-                            <x-atoms.button 
-                                wire:click="checkQueueConfig"
-                                variant="outline-secondary"
-                                size="sm"
-                                class="border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-200 bg-white dark:bg-yellow-800/20 hover:bg-yellow-50 dark:hover:bg-yellow-700/30"
-                            >
-                                Check Queue Config
-                            </x-atoms.button>
-                        </div>
-                        <p class="text-xs text-yellow-600 dark:text-yellow-400 mt-2">These buttons help debug job execution issues. Check browser console and Laravel logs.</p>
-                    </x-atoms.surface>
                 </div>
             </x-atoms.surface>
         @endif

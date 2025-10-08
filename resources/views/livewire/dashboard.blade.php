@@ -75,19 +75,19 @@
 
     <!-- AI Fix All CTA -->
     @if(($stats['total_issues'] ?? 0) > ($stats['resolved_issues'] ?? 0))
-    <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 group cursor-pointer hover:shadow-lg border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 animate-fade-in">
+    <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-700/50 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 group cursor-pointer hover:shadow-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 animate-fade-in">
         <div class="flex items-center justify-between w-full">
             <div class="flex items-center space-x-4">
                 <div class="flex-shrink-0">
-                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-600/30 rounded-xl flex items-center justify-center">
-                        <x-atoms.icon name="lightning-bolt" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-600/40 rounded-xl flex items-center justify-center">
+                        <x-atoms.icon name="lightning-bolt" class="w-6 h-6 text-blue-600 dark:text-blue-300" />
                     </div>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         Fix All Issues with AI
                     </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    <p class="text-sm text-gray-600 dark:text-gray-200 mt-1">
                         Let AI automatically fix {{ number_format(($stats['total_issues'] ?? 0) - ($stats['resolved_issues'] ?? 0)) }} remaining issues across your codebase
                     </p>
                     @if($currentFixingIssue)
@@ -143,14 +143,14 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-6 mb-8 shadow-lg">
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-green-100 dark:bg-green-600/30 rounded-xl flex items-center justify-center">
-                    <x-atoms.icon name="check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div class="w-10 h-10 bg-green-100 dark:bg-green-600/40 rounded-xl flex items-center justify-center">
+                    <x-atoms.icon name="check-circle" class="w-6 h-6 text-green-600 dark:text-green-300" />
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         AI Fix All Complete
                     </h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                         {{ collect($fixAllResults)->where('status', 'success')->count() }} issues fixed, 
                         {{ collect($fixAllResults)->where('status', 'failed')->count() }} failed
                     </p>
@@ -169,16 +169,16 @@
         <div class="space-y-4 max-h-96 overflow-y-auto">
             @foreach($fixAllResults as $result)
                 <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
-                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
+                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50">
                         <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $result['status'] === 'success' ? 'bg-green-100 dark:bg-green-600/30 text-green-600 dark:text-green-400' : 'bg-red-100 dark:bg-red-600/30 text-red-600 dark:text-red-400' }}">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $result['status'] === 'success' ? 'bg-green-100 dark:bg-green-600/40 text-green-600 dark:text-green-300' : 'bg-red-100 dark:bg-red-600/40 text-red-600 dark:text-red-300' }}">
                                 <x-atoms.icon :name="$result['status'] === 'success' ? 'check' : 'x-mark'" size="sm" />
                             </div>
                             <div>
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
                                     {{ $result['title'] }}
                                 </h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                <p class="text-xs text-gray-500 dark:text-gray-300">
                                     {{ $result['file'] }} • {{ $result['message'] }}
                                 </p>
                             </div>
@@ -192,7 +192,7 @@
                     </div>
 
                     @if($result['ai_fix'] && $result['status'] === 'success')
-                        <div class="p-4 bg-white dark:bg-gray-750">
+                        <div class="p-4 bg-white dark:bg-gray-700/50">
                             <div class="mb-3">
                                 <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">AI Fix Applied:</h5>
                                 @if(isset($result['ai_fix']['explanation']))

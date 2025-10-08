@@ -7,9 +7,9 @@
 
 @php
     $variantClasses = [
-        'default' => 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
+        'default' => 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600',
         'elevated' => 'bg-white dark:bg-gray-800',
-        'bordered' => 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700',
+        'bordered' => 'bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600',
         'ghost' => 'bg-transparent border border-transparent'
     ];
     

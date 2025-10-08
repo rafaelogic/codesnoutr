@@ -10,29 +10,29 @@
 @php
     $colorClasses = [
         'blue' => [
-            'bg' => 'bg-blue-50 dark:bg-blue-900/20',
-            'icon' => 'text-blue-600 dark:text-blue-400',
-            'change' => 'text-blue-600 dark:text-blue-400'
+            'bg' => 'bg-blue-50 dark:bg-blue-900/30',
+            'icon' => 'text-blue-600 dark:text-blue-300',
+            'change' => 'text-blue-600 dark:text-blue-300'
         ],
         'green' => [
-            'bg' => 'bg-green-50 dark:bg-green-900/20',
-            'icon' => 'text-green-600 dark:text-green-400',
-            'change' => 'text-green-600 dark:text-green-400'
+            'bg' => 'bg-green-50 dark:bg-green-900/30',
+            'icon' => 'text-green-600 dark:text-green-300',
+            'change' => 'text-green-600 dark:text-green-300'
         ],
         'red' => [
-            'bg' => 'bg-red-50 dark:bg-red-900/20',
-            'icon' => 'text-red-600 dark:text-red-400',
-            'change' => 'text-red-600 dark:text-red-400'
+            'bg' => 'bg-red-50 dark:bg-red-900/30',
+            'icon' => 'text-red-600 dark:text-red-300',
+            'change' => 'text-red-600 dark:text-red-300'
         ],
         'yellow' => [
-            'bg' => 'bg-yellow-50 dark:bg-yellow-900/20',
-            'icon' => 'text-yellow-600 dark:text-yellow-400',
-            'change' => 'text-yellow-600 dark:text-yellow-400'
+            'bg' => 'bg-yellow-50 dark:bg-yellow-900/30',
+            'icon' => 'text-yellow-600 dark:text-yellow-300',
+            'change' => 'text-yellow-600 dark:text-yellow-300'
         ],
         'gray' => [
-            'bg' => 'bg-gray-50 dark:bg-gray-900/20',
-            'icon' => 'text-gray-600 dark:text-gray-400',
-            'change' => 'text-gray-600 dark:text-gray-400'
+            'bg' => 'bg-gray-50 dark:bg-gray-900/30',
+            'icon' => 'text-gray-600 dark:text-gray-300',
+            'change' => 'text-gray-600 dark:text-gray-300'
         ]
     ];
     
@@ -57,7 +57,7 @@
         
         <div class="ml-5 w-0 flex-1">
             <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-300 truncate">
                     {{ $title }}
                 </dt>
                 <dd class="flex items-baseline">

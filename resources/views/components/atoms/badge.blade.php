@@ -10,13 +10,13 @@
     $baseClasses = 'inline-flex items-center font-medium rounded-full';
     
     $variantClasses = [
-        'primary' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
-        'secondary' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
-        'success' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
-        'danger' => 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
-        'warning' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200',
-        'info' => 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
-        'gray' => 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+        'primary' => 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-100',
+        'secondary' => 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100',
+        'success' => 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-100',
+        'danger' => 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-100',
+        'warning' => 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-100',
+        'info' => 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-100',
+        'gray' => 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-100'
     ];
     
     $sizeClasses = [

@@ -31,7 +31,7 @@
     
     <!-- Table Container -->
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="{{ $tableId }}">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600" id="{{ $tableId }}">
             <!-- Table Header -->
             <x-molecules.table-header 
                 :headers="$headers"

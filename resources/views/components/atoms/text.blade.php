@@ -26,9 +26,9 @@
     
     $colorClasses = [
         'default' => 'text-gray-900 dark:text-white',
-        'muted' => 'text-gray-500 dark:text-gray-400',
+        'muted' => 'text-gray-500 dark:text-gray-300',
         'primary' => 'text-blue-600 dark:text-blue-400',
-        'secondary' => 'text-gray-600 dark:text-gray-300',
+        'secondary' => 'text-gray-600 dark:text-gray-200',
         'danger' => 'text-red-600 dark:text-red-400',
         'success' => 'text-green-600 dark:text-green-400',
         'warning' => 'text-yellow-600 dark:text-yellow-400'

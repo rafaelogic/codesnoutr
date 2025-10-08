@@ -11,11 +11,11 @@
 
     <div class="space-y-6 min-h-[calc(100vh-180px)] h-full">
         <!-- Filters -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg p-6 transition-colors duration-300">
+        <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-600 rounded-lg p-6 transition-colors duration-300">
             <form method="GET" action="{{ route('codesnoutr.results') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
-                    <select name="status" id="status" class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Status</label>
+                    <select name="status" id="status" class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="">All Statuses</option>
                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                         <option value="running" {{ request('status') == 'running' ? 'selected' : '' }}>Running</option>
@@ -25,8 +25,8 @@
                 </div>
                 
                 <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
-                    <select name="type" id="type" class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Type</label>
+                    <select name="type" id="type" class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="">All Types</option>
                         <option value="file" {{ request('type') == 'file' ? 'selected' : '' }}>File</option>
                         <option value="directory" {{ request('type') == 'directory' ? 'selected' : '' }}>Directory</option>
@@ -35,9 +35,9 @@
                 </div>
                 
                 <div>
-                    <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-300">From Date</label>
+                    <label for="date_from" class="block text-sm font-medium text-gray-700 dark:text-gray-200">From Date</label>
                     <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" 
-                           class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                           class="mt-1 p-2 block w-full border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
                 
                 <div class="flex items-end">
@@ -50,24 +50,24 @@
 
         <!-- Scans List -->
         @if($scans->count() > 0)
-            <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-300">
+            <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden transition-colors duration-300">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                     Scan Details
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                     Issues
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                     Duration
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-200 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
