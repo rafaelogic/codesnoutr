@@ -101,10 +101,11 @@ class InstallCommand extends Command
                 ]);
             }
 
-            // Verify assets were published
-            $assetsPublished = File::exists(public_path('vendor/codesnoutr/css/codesnoutr.css'));
+            // Verify assets were published (check for build directory or CSS files)
+            $buildPublished = File::exists(public_path('vendor/codesnoutr/build/manifest.json'));
+            $cssPublished = File::exists(public_path('vendor/codesnoutr/css/codesnoutr.css'));
             
-            if (!$assetsPublished) {
+            if (!$buildPublished && !$cssPublished) {
                 $this->warn('Assets may not have been published correctly. Trying alternative method...');
                 
                 // Manual asset copying as fallback
@@ -134,11 +135,20 @@ class InstallCommand extends Command
 
         // Create target directories
         $publicDir = public_path('vendor/codesnoutr');
-        File::makeDirectory($publicDir . '/css', 0755, true);
-        File::makeDirectory($publicDir . '/js', 0755, true);
-        File::makeDirectory($publicDir . '/images', 0755, true);
+        File::makeDirectory($publicDir . '/css', 0755, true, true);
+        File::makeDirectory($publicDir . '/js', 0755, true, true);
+        File::makeDirectory($publicDir . '/images', 0755, true, true);
+        File::makeDirectory($publicDir . '/build', 0755, true, true);
 
-        // Copy asset files
+        // Copy built assets from public/build (compiled Vite assets)
+        $buildDir = $packagePath . '/public/build';
+        if (File::exists($buildDir)) {
+            // Copy the entire build directory
+            File::copyDirectory($buildDir, $publicDir . '/build');
+            $this->info('✓ Copied compiled assets from build directory');
+        }
+
+        // Copy raw asset files as fallback
         $assetFiles = [
             'resources/css/codesnoutr.css' => 'css/codesnoutr.css',
             'resources/js/codesnoutr.js' => 'js/codesnoutr.js',

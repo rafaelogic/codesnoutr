@@ -67,24 +67,44 @@
         $hasBuiltAssets = file_exists($manifestPath);
         $manifest = $hasBuiltAssets ? json_decode(file_get_contents($manifestPath), true) : [];
         
-        $cssFile = null;
+        $cssFiles = [];
         $jsFile = null;
         
         if ($hasBuiltAssets && $manifest) {
-            foreach ($manifest as $file => $details) {
-                if (str_ends_with($file, '.css')) {
-                    $cssFile = 'vendor/codesnoutr/build/' . $details['file'];
-                } elseif (str_ends_with($file, '.js')) {
-                    $jsFile = 'vendor/codesnoutr/build/' . $details['file'];
+            // Look for CSS files - they might be keyed by source path or file name
+            if (isset($manifest['resources/css/codesnoutr.css'])) {
+                $cssFiles[] = 'vendor/codesnoutr/build/' . $manifest['resources/css/codesnoutr.css']['file'];
+            }
+            if (isset($manifest['resources/css/app.css'])) {
+                $cssFiles[] = 'vendor/codesnoutr/build/' . $manifest['resources/css/app.css']['file'];
+            }
+            
+            // Look for JS file
+            if (isset($manifest['resources/js/app.js'])) {
+                $jsFile = 'vendor/codesnoutr/build/' . $manifest['resources/js/app.js']['file'];
+            }
+            
+            // Fallback: iterate through all entries
+            if (empty($cssFiles) || !$jsFile) {
+                foreach ($manifest as $file => $details) {
+                    if (str_contains($file, '.css') || str_contains($details['file'] ?? '', '.css')) {
+                        $cssFiles[] = 'vendor/codesnoutr/build/' . $details['file'];
+                    } elseif (str_contains($file, '.js') || str_contains($details['file'] ?? '', '.js')) {
+                        $jsFile = 'vendor/codesnoutr/build/' . $details['file'];
+                    }
                 }
             }
         }
     @endphp
     
-    @if($hasBuiltAssets && $cssFile && $jsFile)
+    @if($hasBuiltAssets && !empty($cssFiles))
         <!-- Use built assets from package -->
-        <link rel="stylesheet" href="{{ asset($cssFile) }}">
-        <script src="{{ asset($jsFile) }}" defer></script>
+        @foreach($cssFiles as $cssFile)
+            <link rel="stylesheet" href="{{ asset($cssFile) }}">
+        @endforeach
+        @if($jsFile)
+            <script src="{{ asset($jsFile) }}" defer></script>
+        @endif
     @elseif(file_exists(public_path('build/manifest.json')))
         <!-- Use main app Vite assets if available -->
         @vite(['resources/css/app.css', 'resources/css/codesnoutr.css', 'resources/js/app.js'])

@@ -1420,6 +1420,15 @@ A: Make sure your web server has read permissions on your codebase and write per
 **Q: Web interface not loading properly**
 A: Clear Laravel caches (`php artisan cache:clear`) and ensure assets are published (`php artisan vendor:publish --tag=codesnoutr-assets --force`).
 
+**Q: UI appears broken with no CSS styling**
+A: This means the assets weren't published correctly. Run:
+```bash
+php artisan codesnoutr:install --force
+# or
+php artisan vendor:publish --provider="Rafaelogic\CodeSnoutr\CodeSnoutrServiceProvider" --tag="codesnoutr-assets" --force
+```
+Verify assets exist at `public/vendor/codesnoutr/build/`. See [CSS_TROUBLESHOOTING.md](./CSS_TROUBLESHOOTING.md) for detailed help.
+
 ---
 
 ## 🆘 Support & Community

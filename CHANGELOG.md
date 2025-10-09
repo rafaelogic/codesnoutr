@@ -5,6 +5,40 @@ All notable changes to CodeSnoutr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-10-09
+
+### Fixed
+- **CSS Asset Loading** - Resolved critical UI styling issue where CSS was not applied after installation
+  - Fixed `app-layout.blade.php` asset loading logic to correctly read from manifest.json
+  - Now properly loads CSS files using correct manifest keys (`resources/css/codesnoutr.css`)
+  - Added fallback iteration through all manifest entries for better compatibility
+  - Enhanced asset verification to check both build directory and individual CSS files
+
+### Enhanced
+- **InstallCommand** - Improved asset publishing and installation process
+  - Added automatic copying of entire `public/build/` directory during installation
+  - Enhanced `copyAssetsManually()` method to handle compiled Vite assets
+  - Improved asset verification with checks for both manifest.json and CSS files
+  - Better error handling and fallback mechanisms for asset publishing
+  - Ensures assets are properly copied to `public/vendor/codesnoutr/build/`
+
+### Added
+- **CSS Troubleshooting Documentation** - Comprehensive guides for diagnosing and fixing CSS issues
+  - Created `CSS_TROUBLESHOOTING.md` - Complete troubleshooting guide with solutions
+  - Created `CSS_FIX_SUMMARY.md` - Quick reference for the CSS fix
+  - Updated README.md with CSS troubleshooting section
+  - Added FAQ entry for "UI appears broken with no CSS styling"
+
+### Technical
+- **Asset Loading Priority** - Improved asset loading strategy
+  1. Package built assets from `public/vendor/codesnoutr/build/` (preferred)
+  2. Main app Vite build using `@vite()` directive (fallback)
+  3. CDN Tailwind CSS (last resort for development)
+- **Manifest Handling** - Better support for Vite manifest structure
+  - Handles source path keys (`resources/css/codesnoutr.css`)
+  - Supports both explicit keys and wildcard iteration
+  - Proper error handling for missing or malformed manifests
+
 ## [1.0.0] - 2025-10-09
 
 🎉 **Initial Production Release** - Complete Laravel code scanner with AI-powered auto-fix capabilities, designed for local development environments.
